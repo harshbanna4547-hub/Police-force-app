@@ -114,7 +114,7 @@ function normalizeGeoName(value) {
 function getUsedBeltNumbers(records) {
   return new Set((records || []).flatMap((employee) => {
     const cadre = String(employee.CADER || "").trim().toUpperCase();
-    if (cadre !== "HC" && !cadre.startsWith("FC")) return [];
+    if (!cadre.startsWith("HC") && !cadre.startsWith("FC")) return [];
     const belt = employee["BELT NO"] || employee["BELT NO."] || employee.BELT_NO || employee["Belt No"] || employee.BELT || "";
     const number = String(belt).match(/\d+/)?.[0];
     return number ? [String(Number(number))] : [];
@@ -179,34 +179,34 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       ...(!form.TAHSIL ? districtGeo.VILLAGES : []),
       ...selectedAreaRows.map((row) => cleanDev(row.VILLAGE || row["VILLAGE "])),
       ...postalLocations.filter((location) =>
-        (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
-        (!form.BLOCK || !location.block || location.block === form.BLOCK)
+        (!form.TAHSIL || normalizeGeoName(location.taluk || location.block) === normalizeGeoName(form.TAHSIL)) &&
+        (!form.BLOCK || normalizeGeoName(location.block || location.taluk) === normalizeGeoName(form.BLOCK))
       ).map((location) => location.village),
       ...districtLocations.filter((location) =>
-        (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
-        (!form.BLOCK || !location.block || location.block === form.BLOCK)
+        (!form.TAHSIL || normalizeGeoName(location.taluk || location.block) === normalizeGeoName(form.TAHSIL)) &&
+        (!form.BLOCK || normalizeGeoName(location.block || location.taluk) === normalizeGeoName(form.BLOCK))
       ).map((location) => location.village),
       ...localGeoLocations.filter((location) =>
-        (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
-        (!form.BLOCK || !location.block || location.block === form.BLOCK)
+        (!form.TAHSIL || normalizeGeoName(location.taluk || location.block) === normalizeGeoName(form.TAHSIL)) &&
+        (!form.BLOCK || normalizeGeoName(location.block || location.taluk) === normalizeGeoName(form.BLOCK))
       ).map((location) => location.village)
     ].filter(Boolean)
   ), [districtGeo, selectedAreaRows, postalLocations, districtLocations, localGeoLocations, form.BLOCK, form.TAHSIL]);
   const tahsilOptions = useMemo(() => uniqueGeoNames([
     ...districtGeo.TAHSIL,
     ...districtRows.map((row) => cleanDev(row.TAHSIL || row.CIRCLE)).filter(Boolean),
-    ...postalLocations.map((location) => location.block).filter(Boolean),
-    ...districtLocations.map((location) => location.block).filter(Boolean),
-    ...localGeoLocations.map((location) => location.block).filter(Boolean)
+    ...postalLocations.map((location) => location.taluk || location.block).filter(Boolean),
+    ...districtLocations.map((location) => location.taluk || location.block).filter(Boolean),
+    ...localGeoLocations.map((location) => location.taluk || location.block).filter(Boolean)
   ]), [districtGeo, districtRows, postalLocations, districtLocations, localGeoLocations]);
   const blockOptions = useMemo(() => {
     const selectedTahsilBlocks = selectedTahsilRows.map((row) => cleanDev(row.BLOCK)).filter(Boolean);
     const blocks = selectedTahsilBlocks.length ? selectedTahsilBlocks : [...districtGeo.BLOCK];
     return uniqueGeoNames([
       ...blocks,
-      ...postalLocations.map((location) => location.block).filter(Boolean),
-      ...districtLocations.map((location) => location.block).filter(Boolean),
-      ...localGeoLocations.map((location) => location.block).filter(Boolean)
+      ...postalLocations.map((location) => location.block || location.taluk).filter(Boolean),
+      ...districtLocations.map((location) => location.block || location.taluk).filter(Boolean),
+      ...localGeoLocations.map((location) => location.block || location.taluk).filter(Boolean)
     ]);
   }, [selectedTahsilRows, districtGeo, postalLocations, districtLocations, localGeoLocations]);
   const homePsOptions = useMemo(() => [...new Set([
@@ -224,6 +224,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   ]);
   const legacyGeoValues = new Set([
     ...RAJ_ALL_DISTRICTS_DEVLYS,
+    ...districtGeo.VILLAGES,
     ...districtGeo.TAHSIL,
     ...districtGeo.BLOCK,
     ...districtGeo.PS,
@@ -246,14 +247,16 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
           normalizeGeoName(district) === normalizeGeoName(first.district) ||
           (matchingState === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(first.district)))
         ) || first.district;
-        const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block).filter(Boolean));
+        const uniqueTahsils = uniqueGeoNames(locations.map((location) => location.taluk || location.block).filter(Boolean));
+        const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block || location.taluk).filter(Boolean));
+        const defaultTahsil = uniqueTahsils.length === 1 ? uniqueTahsils[0] : "";
         const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
         setPostalLocations(locations);
         setForm((prev) => ({
           ...prev,
           STATE: matchingState,
           DISTRICT: districtName,
-          TAHSIL: defaultBlock,
+          TAHSIL: defaultTahsil,
           BLOCK: defaultBlock,
           VILLAGE: "",
           "HOME PS": ""
@@ -265,7 +268,9 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
         setPostalLocations(locations);
         if (locations.length) {
           const first = locations[0];
-          const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block).filter(Boolean));
+          const uniqueTahsils = uniqueGeoNames(locations.map((location) => location.taluk || location.block).filter(Boolean));
+          const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block || location.taluk).filter(Boolean));
+          const defaultTahsil = uniqueTahsils.length === 1 ? uniqueTahsils[0] : "";
           const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
           const stateName = INDIA_STATES.find((state) => normalizeGeoName(state) === normalizeGeoName(first.state)) || first.state;
           const districtName = (INDIA_STATES_DISTRICTS[stateName] || []).find((district) =>
@@ -276,7 +281,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
             ...prev,
             STATE: stateName || prev.STATE,
             DISTRICT: districtName || prev.DISTRICT,
-            TAHSIL: defaultBlock,
+            TAHSIL: defaultTahsil,
             BLOCK: defaultBlock,
             VILLAGE: "",
             "HOME PS": ""
@@ -363,15 +368,20 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   };
 
   const selectVillage = (village) => {
-    const match = selectedAreaRows.find((row) => cleanDev(row.VILLAGE || row["VILLAGE "]) === village);
-    const postalMatch = [...postalLocations, ...districtLocations].find((location) => location.village === village);
+    const villageKey = normalizeGeoName(village);
+    const match = selectedAreaRows.find((row) =>
+      normalizeGeoName(cleanDev(row.VILLAGE || row["VILLAGE "])) === villageKey
+    );
+    const postalMatch = [...postalLocations, ...districtLocations].find((location) =>
+      normalizeGeoName(location.village) === villageKey
+    );
     const chittorgarh = legacyDistrict === "fpÙkkSMx<+";
     const blockHomePs = RAJASTHAN_BLOCK_HOME_PS[postalMatch?.block] || "";
     setForm((prev) => ({
       ...prev,
       VILLAGE: village,
-      TAHSIL: postalMatch?.block || prev.TAHSIL,
-      BLOCK: postalMatch?.block || prev.BLOCK,
+      TAHSIL: postalMatch?.taluk || postalMatch?.block || prev.TAHSIL,
+      BLOCK: postalMatch?.block || postalMatch?.taluk || prev.BLOCK,
       "HOME PS": cleanDev(match?.["HOME PS"] || match?.["POLICE STATION"] || postalMatch?.homePS || blockHomePs) ||
         (chittorgarh ? [...districtGeo.PS][0] || "" : "")
     }));

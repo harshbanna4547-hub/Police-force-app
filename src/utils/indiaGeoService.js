@@ -170,13 +170,18 @@ function getPostOffices(payload) {
   return bodies.flatMap((body) => {
     const offices = body?.PostOffice || body?.postOffices || body?.data || body?.results || [];
     return Array.isArray(offices) ? offices : [];
-  }).map((office) => ({
-    village: cleanPostOfficeName(readFirst(office, ["Name", "name", "Village", "village", "PostOffice"])),
-    district: readFirst(office, ["District", "district"]),
-    state: readFirst(office, ["State", "state"]),
-    block: normalizePostalBlock(readFirst(office, ["Block", "block", "Taluk", "taluk", "Circle", "circle"])),
-    pincode: readFirst(office, ["Pincode", "PINCode", "pincode", "PinCode", "pinCode"])
-  })).filter((office) => office.village);
+  }).map((office) => {
+    const block = normalizePostalBlock(readFirst(office, ["Block", "block"]));
+    const taluk = normalizePostalBlock(readFirst(office, ["Taluk", "taluk", "Circle", "circle"]));
+    return {
+      village: cleanPostOfficeName(readFirst(office, ["Name", "name", "Village", "village", "PostOffice"])),
+      district: readFirst(office, ["District", "district"]),
+      state: readFirst(office, ["State", "state"]),
+      block: block || taluk,
+      taluk: taluk || block,
+      pincode: readFirst(office, ["Pincode", "PINCode", "pincode", "PinCode", "pinCode"])
+    };
+  }).filter((office) => office.village);
 }
 
 async function fetchGeoUrl(url, signal) {
@@ -236,13 +241,18 @@ export function getOfflinePincodeGeo(pincode, records = [], knownLocations = {})
     readFirst(record, ["PINCODE", "PIN CODE", "PIN", "POSTAL CODE", "POSTCODE"]) === pin
   );
   const known = knownLocations[pin];
-  const fromRecords = localRecords.map((record) => ({
-    village: cleanPostOfficeName(readFirst(record, ["VILLAGE", "VILLAGE ", "POST OFFICE", "POST OFFICE NAME"])),
-    district: readFirst(record, ["DISTRICT"]),
-    state: readFirst(record, ["STATE", "STATE NAME"]) || (/^3[0-4]/.test(pin) ? "Rajasthan" : ""),
-    block: readFirst(record, ["BLOCK", "TAHSIL", "CIRCLE"]),
-    pincode: pin
-  })).filter((location) => location.village);
+  const fromRecords = localRecords.map((record) => {
+    const block = readFirst(record, ["BLOCK", "TAHSIL", "CIRCLE"]);
+    const taluk = readFirst(record, ["TAHSIL", "CIRCLE", "BLOCK"]);
+    return {
+      village: cleanPostOfficeName(readFirst(record, ["VILLAGE", "VILLAGE ", "POST OFFICE", "POST OFFICE NAME"])),
+      district: readFirst(record, ["DISTRICT"]),
+      state: readFirst(record, ["STATE", "STATE NAME"]) || (/^3[0-4]/.test(pin) ? "Rajasthan" : ""),
+      block,
+      taluk,
+      pincode: pin
+    };
+  }).filter((location) => location.village);
   if (fromRecords.length) return fromRecords;
   if (known) return known.map((location) => ({ ...location, pincode: pin }));
   return [];
