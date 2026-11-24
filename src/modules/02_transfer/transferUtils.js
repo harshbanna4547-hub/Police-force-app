@@ -103,31 +103,64 @@ export function getTransferRank(employee, convertLegacy = (value) => value) {
 
 export function getTransferDisplayCader(employee, convertLegacy = (value) => value) {
   const cader = String(convertLegacy(employee?.CADER || "") || "").trim();
-  const compactCader = cader.toLocaleUpperCase("en").replace(/[^A-Z]/g, "");
+  const belt = String(convertLegacy(employee?.["BELT NO"] || "") || "").trim();
+  const combined = `${cader} ${belt}`;
+  const upperCombined = combined.toLocaleUpperCase("en");
+  const compactCader = upperCombined.replace(/[^A-Z]/g, "");
+  const englishTokens = upperCombined.replace(/[^A-Z]+/g, " ").trim();
+  const compactHindiCader = combined.normalize("NFC").replace(/\s+/g, "");
 
   if (
     compactCader.includes("DYSP") ||
     compactCader === "DSP" ||
     compactCader.includes("DEPUTYSUPERINTENDENT") ||
-    /(?:उप\s*पुलिस|पुलिस\s*उप)\s*अधीक्षक/.test(cader)
+    /(?:उप\s*पुलिस|पुलिस\s*उप)\s*अधीक्षक/.test(combined)
   ) return "DySP";
   if (
     compactCader.includes("ASP") ||
     compactCader.includes("ADDITIONALSUPERINTENDENT") ||
-    /अतिरिक्त.*पुलिस\s*अधीक्षक/.test(cader)
+    /अतिरिक्त.*पुलिस\s*अधीक्षक/.test(combined)
   ) return "ASP";
   if (
-    compactCader === "SP" ||
+    /(^|\s)SP(\s|$)/.test(englishTokens) ||
     compactCader.includes("POLICESUPERINTENDENT") ||
-    /पुलिस\s*अधीक्षक/.test(cader)
+    /पुलिस\s*अधीक्षक/.test(combined)
   ) return "SP";
+  if (
+    compactCader.includes("ASI") ||
+    compactHindiCader.includes("सहायकउपनिरीक्षक")
+  ) return "ASI";
+  if (
+    compactCader.includes("SI") ||
+    compactCader.includes("SUBINSPECTOR") ||
+    compactHindiCader.includes("उपनिरीक्षक")
+  ) return "SI";
+  if (
+    compactCader.includes("CI") ||
+    compactCader.includes("INSPECTOR") ||
+    compactHindiCader.includes("निरीक्षक")
+  ) return "CI";
+  if (
+    compactCader.includes("HC") ||
+    compactCader.includes("HEADCONSTABLE") ||
+    compactHindiCader.includes("हैडकानिस्टेबल") ||
+    compactHindiCader.includes("हेडकानिस्टेबल")
+  ) return "HC";
+  if (
+    compactCader.includes("FC") ||
+    compactCader.includes("CT") ||
+    compactCader.includes("CONSTABLE") ||
+    compactHindiCader.includes("कानिस्टेबल") ||
+    compactHindiCader.includes("कांस्टेबल")
+  ) return "FC";
 
   const rank = getTransferRank(employee, convertLegacy);
-  return ["CI", "SI", "ASI", "HC", "FC"].includes(rank) ? rank : cader || "—";
+  if (["CI", "SI", "ASI", "HC"].includes(rank)) return rank;
+  return cader || "—";
 }
 
 export function getTransferDisplayBeltNumber(employee, convertLegacy = (value) => value) {
-  const rank = getTransferRank(employee, convertLegacy);
+  const rank = getTransferDisplayCader(employee, convertLegacy);
   if (rank !== "HC" && rank !== "FC") return "—";
   return String(convertLegacy(employee?.["BELT NO"] || "") || "").trim() || "—";
 }

@@ -52,6 +52,11 @@ test("keeps officer cadres in English and only displays belt numbers for HC and 
 
   assert.equal(getTransferDisplayBeltNumber({ CADER: "HC", "BELT NO": "HC-12" }), "HC-12");
   assert.equal(getTransferDisplayBeltNumber({ CADER: "FC", "BELT NO": "FC-34" }), "FC-34");
+  assert.equal(getTransferDisplayCader({ CADER: "पुलिस अधीक्षक" }), "SP");
+  assert.equal(getTransferDisplayCader({ CADER: "अतिरिक्त पुलिस अधीक्षक" }), "ASP");
+  assert.equal(getTransferDisplayCader({ CADER: "पुलिस उप अधीक्षक" }), "DySP");
+  assert.equal(getTransferDisplayCader({ CADER: "अज्ञात पद", "BELT NO": "123" }), "अज्ञात पद");
+  assert.equal(getTransferDisplayBeltNumber({ CADER: "अज्ञात पद", "BELT NO": "123" }), "—");
 });
 
 test("deduplicates station and chowki choices case-insensitively", () => {
