@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { DISTRICT_OPTIONS, normalizeDistrictId } from "./districtAuth";
+import {
+  OFFLINE_DEMO_EMAIL,
+  OFFLINE_DEMO_PASSWORD
+} from "./offlineDemoAuth.js";
 
 export default function AuthAndCloudSync({
   districtName,
@@ -35,20 +39,18 @@ export default function AuthAndCloudSync({
 }
 
 export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn }) {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(OFFLINE_DEMO_EMAIL);
   const [password, setPassword] = useState("");
   const [district, setDistrict] = useState("CHITTORGARH");
   const [otherDistrict, setOtherDistrict] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
 
-  const submit = async (event) => {
-    event.preventDefault();
+  const attemptSignIn = async (loginEmail, loginPassword, districtId) => {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const districtId = district === "OTHER" ? normalizeDistrictId(otherDistrict) : district;
-      await onSignIn(email.trim(), password, districtId);
+      await onSignIn(loginEmail.trim(), loginPassword, districtId);
     } catch (signInError) {
       console.error("District login failed:", signInError);
       setSubmitError(signInError.message || "लॉगिन असफल हुआ।");
@@ -56,6 +58,18 @@ export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn
       setSubmitting(false);
     }
   };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const districtId = district === "OTHER" ? normalizeDistrictId(otherDistrict) : district;
+    await attemptSignIn(email, password, districtId);
+  };
+
+  const loginDemo = () => attemptSignIn(
+    OFFLINE_DEMO_EMAIL,
+    OFFLINE_DEMO_PASSWORD,
+    "CHITTORGARH"
+  );
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px", background: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
@@ -67,7 +81,7 @@ export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn
         </div>
         <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
           जिला
-          <select value={district} onChange={(event) => setDistrict(event.target.value)} style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px" }}>
+          <select value={district} onChange={(event) => setDistrict(event.target.value)} disabled={!configured} style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px" }}>
             {DISTRICT_OPTIONS.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
             <option value="OTHER">अन्य जिला (प्रशासक द्वारा जोड़ा गया)</option>
           </select>
@@ -79,22 +93,27 @@ export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn
           </label>
         )}
         <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-          ईमेल
-          <input type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required disabled={!configured} style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
+          ईमेल / यूज़रनेम
+          <input type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
         </label>
         <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
           पासवर्ड
-          <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required disabled={!configured} style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
+          <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
         </label>
         {!configured && (
           <p role="status" style={{ margin: 0, padding: "10px", borderRadius: "8px", background: "#FEF3C7", color: "#92400E" }}>
-            Supabase credentials अभी सेट नहीं हैं। `.env.local` में URL और anon key जोड़कर ऐप पुनः शुरू करें।
+            Supabase credentials नहीं हैं। Offline Demo केवल अलग स्थानीय डेमो डेटा खोलता है; यह cloud या वास्तविक Chittorgarh डेटा नहीं खोलता।
           </p>
         )}
         {(submitError || error) && <p role="alert" style={{ margin: 0, color: "#B91C1C" }}>{submitError || error}</p>}
-        <button type="submit" disabled={!configured || loading || submitting} style={{ padding: "11px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: configured ? "pointer" : "not-allowed" }}>
+        <button type="submit" disabled={loading || submitting} style={{ padding: "11px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
           {loading || submitting ? "⏳ कृपया प्रतीक्षा करें…" : "🔐 Login"}
         </button>
+        {!configured && (
+          <button type="button" onClick={loginDemo} disabled={loading || submitting} style={{ padding: "11px", border: "1px solid #0F766E", borderRadius: "8px", background: "#ECFDF5", color: "#065F46", fontWeight: "bold", cursor: "pointer" }}>
+            ⚡ Quick Demo / Offline Login
+          </button>
+        )}
         <small style={{ color: "#64748B" }}>नया जिला यूज़र केवल प्रशासक Supabase में provision कर सकता है।</small>
       </form>
     </main>

@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
+import {
+  createOfflineDemoIdentity,
+  isOfflineDemoCredentialsValid,
+  OFFLINE_AUTH_STORAGE_KEY
+} from "./offlineDemoAuth.js";
 
 const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || "").trim();
 const SUPABASE_ANON_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
@@ -56,11 +61,31 @@ async function getDistrictProfile(client, userId) {
   };
 }
 
+function readOfflineAuthState() {
+  if (isCloudConfigured || typeof window === "undefined") {
+    return { user: null, profile: null, error: "" };
+  }
+  try {
+    if (window.localStorage.getItem(OFFLINE_AUTH_STORAGE_KEY) === "true") {
+      return { ...createOfflineDemoIdentity(), error: "" };
+    }
+    return { user: null, profile: null, error: "" };
+  } catch (storageError) {
+    console.error("Offline demo session could not be restored:", storageError);
+    return {
+      user: null,
+      profile: null,
+      error: "ऑफ़लाइन डेमो सत्र बहाल नहीं हो सका।"
+    };
+  }
+}
+
 export function useDistrictAuth() {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
+  const [initialOfflineState] = useState(readOfflineAuthState);
+  const [user, setUser] = useState(initialOfflineState.user);
+  const [profile, setProfile] = useState(initialOfflineState.profile);
   const [loading, setLoading] = useState(isCloudConfigured);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialOfflineState.error);
 
   useEffect(() => {
     const client = getSupabaseClient();
@@ -120,10 +145,20 @@ export function useDistrictAuth() {
 
   const signIn = useCallback(async (email, password, selectedDistrictId) => {
     const client = getSupabaseClient();
-    if (!client) throw new Error("Supabase सेटिंग उपलब्ध नहीं है। पहले .env.local कॉन्फ़िगर करें।");
     setLoading(true);
     setError("");
     try {
+      if (!client) {
+        if (!isOfflineDemoCredentialsValid(email, password)) {
+          throw new Error("ऑफ़लाइन डेमो लॉगिन के लिए मान्य यूज़रनेम और पासवर्ड दर्ज करें।");
+        }
+        const offlineIdentity = createOfflineDemoIdentity();
+        localStorage.setItem(OFFLINE_AUTH_STORAGE_KEY, "true");
+        setUser(offlineIdentity.user);
+        setProfile(offlineIdentity.profile);
+        return offlineIdentity.profile;
+      }
+
       const { data, error: signInError } = await client.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
       const districtProfile = await getDistrictProfile(client, data.user.id);
@@ -147,6 +182,8 @@ export function useDistrictAuth() {
     if (client) {
       const { error: signOutError } = await client.auth.signOut();
       if (signOutError) throw signOutError;
+    } else {
+      localStorage.removeItem(OFFLINE_AUTH_STORAGE_KEY);
     }
     setUser(null);
     setProfile(null);
