@@ -1,7 +1,7 @@
 export default function StatCards({ totalSanc, activeCount, attCount, depCount, setActiveView }) {
   const cards = [
     { title: "Total Sanctioned Strength", val: totalSanc, color: "#059669", bg: "#D1FAE5", icon: "👥", view: "STRENGTH" },
-    { title: "Active District Force", val: activeCount, color: "#1D63DC", bg: "#DBEAFE", icon: "🛡️", view: "POSTING" },
+    { title: "Active District Force", val: activeCount, color: "#1D63DC", bg: "#DBEAFE", icon: "🛡️", view: "STRENGTH" },
     { title: "On Attachment", val: attCount, color: "#EA580C", bg: "#FFEDD5", icon: "📎", view: "TRANSFER" },
     { title: "On Deputation", val: depCount, color: "#4F46E5", bg: "#EDE9FE", icon: "🖥️", view: "TRANSFER" }
   ];

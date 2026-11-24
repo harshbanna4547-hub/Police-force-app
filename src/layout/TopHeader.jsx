@@ -43,7 +43,7 @@ export default function TopHeader({
                 : lanSyncStatus === "checking"
                   ? "🟡 Checking GR Server…"
                   : lanSyncStatus === "key-required"
-                    ? "🔒 GR Server Office Access Key required"
+                    ? "🟡 Local Mode"
                     : lanSyncStatus === "conflict"
                       ? "⚠️ GR Server data conflict; review before continuing"
                       : lanSyncStatus === "error"

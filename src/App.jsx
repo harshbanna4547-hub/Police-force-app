@@ -3,43 +3,46 @@ import EmployeeFooterManager from "./core/EmployeeFooterManager";
 import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
+import ModuleCardGrid from "./layout/ModuleCardGrid";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
-import { DistrictPoliceLoginScreen } from "./core/AuthAndCloudSync";
-import { useDistrictAuth } from "./core/districtAuth";
+
+const DEFAULT_DISTRICT = { id: "CHITTORGARH", name: "Chittorgarh" };
+const ACTIVE_DISTRICT_STORAGE_KEY = "police_active_district";
+
+function readActiveDistrict() {
+  try {
+    const savedDistrict = JSON.parse(localStorage.getItem(ACTIVE_DISTRICT_STORAGE_KEY) || "null");
+    if (savedDistrict?.id && savedDistrict?.name) {
+      return { id: String(savedDistrict.id), name: String(savedDistrict.name) };
+    }
+  } catch (error) {
+    console.error("Saved district selection could not be read:", error);
+  }
+  return DEFAULT_DISTRICT;
+}
 
 export default function App() {
-  const auth = useDistrictAuth();
-  const portalData = usePortalData({
-    districtId: auth.profile?.district_id || "",
-    districtName: auth.profile?.district_name || "",
-    authUserId: (auth.profile?.offline_demo || auth.profile?.office_lan) ? "" : auth.user?.id || ""
-  });
+  const [currentDistrict, setCurrentDistrict] = useState(readActiveDistrict);
   const [activeView, setActiveView] = useState("HOME");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
+  const portalData = usePortalData({
+    districtId: currentDistrict.id,
+    districtName: currentDistrict.name
+  });
   const modules = MODULES_CONFIG;
-  const handleLogout = async () => {
+
+  const handleDistrictChange = (district) => {
+    if (!district?.id || !district?.name) return;
+    const nextDistrict = { id: String(district.id), name: String(district.name).trim() };
     try {
-      await auth.signOut();
-      setActiveView("HOME");
+      localStorage.setItem(ACTIVE_DISTRICT_STORAGE_KEY, JSON.stringify(nextDistrict));
     } catch (error) {
-      console.error("District logout failed:", error);
-      alert(`लॉगआउट असफल हुआ: ${error.message}`);
+      console.error("District selection could not be saved:", error);
     }
+    setCurrentDistrict(nextDistrict);
   };
 
-  if (auth.loading) {
-    return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "Segoe UI, sans-serif" }}>लॉगिन स्थिति जाँची जा रही है…</main>;
-  }
-  if (!auth.profile) {
-    return (
-      <DistrictPoliceLoginScreen
-        loading={auth.loading}
-        error={auth.error}
-        onSignIn={auth.signIn}
-      />
-    );
-  }
   if (!portalData.isDistrictDataReady) {
     return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "Segoe UI, sans-serif" }}>जिला डेटा सुरक्षित स्टोरेज से लोड हो रहा है…</main>;
   }
@@ -53,11 +56,8 @@ export default function App() {
         activeView={activeView}
         setActiveView={setActiveView}
         modules={modules}
-        authUser={auth.user}
-        authProfile={auth.profile}
-        cloudConfigured={auth.configured && !auth.profile?.offline_demo && !auth.profile?.office_lan}
-        onOfficeSignIn={auth.signInOffice}
-        onLogout={handleLogout}
+        currentDistrict={currentDistrict}
+        onDistrictChange={handleDistrictChange}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats
@@ -68,11 +68,15 @@ export default function App() {
           setSidebarOpen={setSidebarOpen}
         />
         <main style={{ padding: "12px 24px 24px", flex: 1 }}>
-          <PortalModuleContent
-            activeView={activeView}
-            portalData={portalData}
-            modules={modules}
-          />
+          {activeView === "HOME" ? (
+            <ModuleCardGrid modules={modules} onOpenModule={setActiveView} />
+          ) : (
+            <PortalModuleContent
+              activeView={activeView}
+              portalData={portalData}
+              modules={modules}
+            />
+          )}
         </main>
         <EmployeeFooterManager
           records={portalData.records}

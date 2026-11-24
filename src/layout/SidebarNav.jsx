@@ -1,4 +1,6 @@
+import { useState } from "react";
 import Sidebar from "./Sidebar";
+import { DistrictSwitcherModal } from "../core/AuthAndCloudSync";
 
 export default function SidebarNav({
   portalData,
@@ -7,29 +9,35 @@ export default function SidebarNav({
   activeView,
   setActiveView,
   modules,
-  authUser,
-  authProfile,
-  onLogout,
-  cloudConfigured,
-  onOfficeSignIn
+  currentDistrict,
+  onDistrictChange
 }) {
+  const [switcherOpen, setSwitcherOpen] = useState(false);
+
+  const handleDistrictChange = (district) => {
+    onDistrictChange(district);
+    setSwitcherOpen(false);
+    setActiveView("HOME");
+  };
+
   return (
-    <Sidebar
-      sidebarOpen={sidebarOpen}
-      setSidebarOpen={setSidebarOpen}
-      activeView={activeView}
-      setActiveView={setActiveView}
-      modules={modules}
-      activeProfile={portalData.activeProfile}
-      authUser={authUser}
-      authProfile={authProfile}
-      cloudConfigured={cloudConfigured}
-      onOfficeSignIn={onOfficeSignIn}
-      syncStatus={portalData.cloudSyncStatus}
-      syncing={portalData.isCloudSyncing}
-      onCloudSync={portalData.onCloudSync}
-      onLogout={onLogout}
-      onDownloadReports={portalData.downloadReports}
-    />
+    <>
+      <Sidebar
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        activeView={activeView}
+        setActiveView={setActiveView}
+        modules={modules}
+        activeProfile={portalData.activeProfile}
+        onOpenDistrictSwitcher={() => setSwitcherOpen(true)}
+      />
+      {switcherOpen && (
+        <DistrictSwitcherModal
+          currentDistrict={currentDistrict}
+          onClose={() => setSwitcherOpen(false)}
+          onSelect={handleDistrictChange}
+        />
+      )}
+    </>
   );
 }

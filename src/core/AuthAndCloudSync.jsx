@@ -1,118 +1,88 @@
 import { useState } from "react";
-import { DISTRICT_OPTIONS } from "./districtAuth";
+import { DISTRICT_OPTIONS } from "./districtAuth.js";
 
-export default function AuthAndCloudSync({
-  districtName,
-  email,
-  onLogout,
-  onCloudSync,
-  cloudConfigured,
-  syncStatus,
-  syncing,
-  isOfflineDemo,
-  onOfficeSignIn
-}) {
-  const [officeKey, setOfficeKey] = useState("");
-  const [officeError, setOfficeError] = useState("");
-  const [connectingOffice, setConnectingOffice] = useState(false);
-
-  const connectOffice = async () => {
-    setConnectingOffice(true);
-    setOfficeError("");
-    try {
-      await onOfficeSignIn(officeKey);
-      setOfficeKey("");
-    } catch (error) {
-      console.error("GR office connection failed:", error);
-      setOfficeError(error.message || "GR Server से कनेक्शन असफल हुआ।");
-    } finally {
-      setConnectingOffice(false);
-    }
-  };
-
-  return (
-    <section style={{ padding: "12px 10px", borderTop: "1px solid #1E293B", display: "grid", gap: "8px" }}>
-      <strong style={{ color: "#fff", whiteSpace: "normal" }}>👮‍♂️ District: {districtName}</strong>
-      <small style={{ color: "#94A3B8", overflowWrap: "anywhere" }}>{email}</small>
-      <button
-        type="button"
-        onClick={onCloudSync}
-        disabled={!cloudConfigured || syncing}
-        style={{ textAlign: "left", padding: "9px 10px", borderRadius: "8px", border: "none", cursor: cloudConfigured && !syncing ? "pointer" : "not-allowed", background: "#0F766E", color: "#fff", fontWeight: "bold", opacity: cloudConfigured ? 1 : 0.65 }}
-      >
-        {syncing ? "⏳ Cloud sync…" : "☁️ Cloud Sync / Backup"}
-      </button>
-      <small role="status" style={{ color: "#CBD5E1", whiteSpace: "normal" }}>{syncStatus}</small>
-      {isOfflineDemo && (
-        <>
-          <label style={{ display: "grid", gap: "6px", color: "#CBD5E1", whiteSpace: "normal" }}>
-            GR Server Access Key
-            <input type="password" value={officeKey} onChange={(event) => setOfficeKey(event.target.value)} autoComplete="off" style={{ minWidth: 0, padding: "8px", borderRadius: "6px", border: "1px solid #475569", fontFamily: "'Times New Roman', Times, serif" }} />
-          </label>
-          <button type="button" onClick={connectOffice} disabled={connectingOffice || officeKey.trim().length < 32} style={{ textAlign: "left", padding: "9px 10px", borderRadius: "8px", border: "1px solid #475569", cursor: connectingOffice ? "wait" : "pointer", background: "#1E3A5F", color: "#fff", fontWeight: "bold", opacity: connectingOffice ? 0.7 : 1 }}>
-            {connectingOffice ? "⏳ Connecting…" : "🔑 Connect to GR Server"}
-          </button>
-          {officeError && <small role="alert" style={{ color: "#FCA5A5", whiteSpace: "normal" }}>{officeError}</small>}
-        </>
-      )}
-      <button
-        type="button"
-        onClick={onLogout}
-        style={{ textAlign: "left", padding: "9px 10px", borderRadius: "8px", border: "1px solid #475569", cursor: "pointer", background: "transparent", color: "#FCA5A5", fontWeight: "bold" }}
-      >
-        Logout / Switch User
-      </button>
-    </section>
+function createDistrictSelection(value) {
+  const name = String(value || "").trim();
+  const knownDistrict = DISTRICT_OPTIONS.find((district) =>
+    district.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+    || district.hindiName === name
   );
+  if (knownDistrict) return { id: knownDistrict.code, name: knownDistrict.name };
+
+  const id = name.normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase();
+  const unicodeId = Array.from(name)
+    .map((character) => character.codePointAt(0).toString(16))
+    .join("_");
+  return {
+    id: id || `DISTRICT_${unicodeId}`,
+    name
+  };
 }
 
-export function DistrictPoliceLoginScreen({ loading, error, onSignIn }) {
-  const [userId, setUserId] = useState("admin");
-  const [password, setPassword] = useState("123456");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState("");
+export function DistrictSwitcherModal({ currentDistrict, onClose, onSelect }) {
+  const [districtName, setDistrictName] = useState(currentDistrict.name);
 
-  const submit = async (event) => {
+  const handleChange = (event) => {
+    const value = event.target.value;
+    setDistrictName(value);
+    const knownDistrict = DISTRICT_OPTIONS.find((district) =>
+      district.name.toLocaleLowerCase() === value.trim().toLocaleLowerCase()
+      || district.hindiName === value.trim()
+    );
+    if (knownDistrict) onSelect({ id: knownDistrict.code, name: knownDistrict.name });
+  };
+
+  const applyTypedDistrict = (event) => {
     event.preventDefault();
-    setSubmitting(true);
-    setSubmitError("");
-    try {
-      await onSignIn(userId.trim(), password, "CHITTORGARH");
-    } catch (signInError) {
-      console.error("District login failed:", signInError);
-      setSubmitError(signInError.message || "लॉगिन असफल हुआ।");
-    } finally {
-      setSubmitting(false);
-    }
+    const selection = createDistrictSelection(districtName);
+    if (selection.id) onSelect(selection);
   };
 
   return (
-    <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px", background: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
-      <form onSubmit={submit} style={{ width: "min(100%, 440px)", padding: "28px", background: "#fff", border: "1px solid #E2E8F0", borderRadius: "16px", boxShadow: "0 16px 40px rgba(15,23,42,0.12)", display: "grid", gap: "16px" }}>
+    <div
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      style={{ position: "fixed", inset: 0, zIndex: 1100, display: "grid", placeItems: "center", padding: "20px", background: "rgba(15,23,42,0.5)" }}
+    >
+      <form
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="district-switch-title"
+        onSubmit={applyTypedDistrict}
+        style={{ width: "min(100%, 380px)", display: "grid", gap: "14px", padding: "22px", borderRadius: "14px", background: "#fff", boxShadow: "0 18px 48px rgba(15,23,42,0.24)" }}
+      >
         <div>
-          <div style={{ fontSize: "2rem" }}>🛡️</div>
-          <h1 style={{ margin: "8px 0", color: "#0B1E3D" }}>District Police Login</h1>
-          <p style={{ margin: 0, color: "#475569" }}>जिला पुलिस स्थापना एवं बल प्रबंधन पोर्टल</p>
+          <h2 id="district-switch-title" style={{ margin: 0, color: "#0B1E3D", fontSize: "1.1rem" }}>जिला बदलें</h2>
+          <p style={{ margin: "6px 0 0", color: "#64748B", fontSize: "0.88rem" }}>सूची से चुनें या नया जिला नाम टाइप करें।</p>
         </div>
-        <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-          जिला
-          <select value="CHITTORGARH" disabled style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px" }}>
-            {DISTRICT_OPTIONS.filter((option) => option.code === "CHITTORGARH").map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
-          </select>
-        </label>
-        <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-          यूज़र ID
-          <input type="text" autoComplete="username" value={userId} onChange={(event) => setUserId(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
-        </label>
-        <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-          पासवर्ड
-          <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
-        </label>
-        {(submitError || error) && <p role="alert" style={{ margin: 0, color: "#B91C1C" }}>{submitError || error}</p>}
-        <button type="submit" disabled={loading || submitting} style={{ padding: "11px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-          {loading || submitting ? "⏳ कृपया प्रतीक्षा करें…" : "🔒 Login"}
-        </button>
+        <input
+          autoFocus
+          list="rajasthan-districts"
+          value={districtName}
+          onChange={handleChange}
+          aria-label="जिला नाम"
+          placeholder="जैसे Udaipur"
+          style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "1rem" }}
+        />
+        <datalist id="rajasthan-districts">
+          {DISTRICT_OPTIONS.map((district) => (
+            <option key={district.code} value={district.name} label={`${district.hindiName} (${district.name})`} />
+          ))}
+          {DISTRICT_OPTIONS.map((district) => (
+            <option key={`${district.code}-hindi`} value={district.hindiName} label={`${district.hindiName} (${district.name})`} />
+          ))}
+        </datalist>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+          <button type="button" onClick={onClose} style={{ padding: "9px 13px", border: "1px solid #CBD5E1", borderRadius: "8px", background: "#fff", color: "#334155", cursor: "pointer" }}>रद्द करें</button>
+          <button type="submit" disabled={!districtName.trim()} style={{ padding: "9px 13px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>जिला खोलें</button>
+        </div>
       </form>
-    </main>
+    </div>
   );
 }

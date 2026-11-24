@@ -1,5 +1,3 @@
-import AuthAndCloudSync from "../core/AuthAndCloudSync";
-
 export default function Sidebar({
   sidebarOpen,
   setSidebarOpen,
@@ -7,100 +5,109 @@ export default function Sidebar({
   setActiveView,
   modules,
   activeProfile,
-  authUser,
-  authProfile,
-  cloudConfigured,
-  syncStatus,
-  syncing,
-  onCloudSync,
-  onOfficeSignIn,
-  onLogout,
-  onDownloadReports
+  onOpenDistrictSwitcher
 }) {
-  const handleNav = (viewKey) => {
-    setActiveView(viewKey);
-    if (window.innerWidth <= 768) setSidebarOpen(false);
-  };
+  const visibleModules = modules.filter((module) => module.enabled !== false);
 
   return (
     <>
-      {sidebarOpen && window.innerWidth <= 768 && (
-        <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.45)", zIndex: 999 }} />
+      {sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 998, display: "none" }}
+          className="sidebar-overlay"
+        />
       )}
       <aside
         style={{
-          width: sidebarOpen ? "235px" : "0px",
-          overflow: "hidden",
-          transition: "width 0.25s ease",
+          width: sidebarOpen ? "280px" : "0px",
+          minWidth: sidebarOpen ? "280px" : "0px",
+          height: "100vh",
           backgroundColor: "#0B1E3D",
-          color: "#CBD5E1",
+          color: "white",
+          transition: "all 0.3s ease",
+          overflowY: "auto",
+          overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
-          flexShrink: 0,
-          whiteSpace: "nowrap"
+          zIndex: 999,
+          flexShrink: 0
         }}
       >
-        <div style={{ padding: "18px 14px", textAlign: "center", borderBottom: "1px solid #1E293B" }}>
-          <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginBottom: "8px", fontSize: "1.6rem" }}>
-            <span>🦁</span><span>🛡️</span>
-          </div>
-          <div style={{ fontSize: "0.7rem", color: "#FACC15", fontWeight: "bold" }}>सत्यमेव जयते • राजस्थान पुलिस</div>
-          <h2 style={{ margin: "6px 0 2px", color: "#fff", fontSize: "1.1rem" }}>{activeProfile} Police</h2>
-          <div style={{ fontSize: "0.62rem", color: "#94A3B8" }}>SERVICE • SECURITY • TRUST</div>
-        </div>
+        {sidebarOpen && (
+          <>
+            <section style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+              <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", textAlign: "center" }}>
+                <strong style={{ display: "block", fontSize: "0.95rem" }}>👮‍♂️ {activeProfile}</strong>
+                <button
+                  type="button"
+                  onClick={onOpenDistrictSwitcher}
+                  style={{ marginTop: "9px", padding: "6px 10px", border: "1px solid rgba(255,255,255,0.35)", borderRadius: "7px", background: "transparent", color: "white", fontSize: "0.78rem", cursor: "pointer" }}
+                >
+                  🔄 Switch User
+                </button>
+              </div>
+            </section>
 
-        <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: "6px", flex: 1, minHeight: 0, overflowY: "auto" }}>
-          <button
-            onClick={() => handleNav("HOME")}
-            aria-current={activeView === "HOME" ? "page" : undefined}
-            style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: activeView === "HOME" ? "#1D63DC" : "transparent", color: "#fff" }}
-          >
-            🏠 Dashboard
-          </button>
-          {modules.filter((module) => module.enabled).map((module) => (
-            <button
-              key={module.id}
-              type="button"
-              title={`${module.hindiTitle} (${module.title})`}
-              onClick={() => handleNav(module.id)}
-              aria-current={activeView === module.id ? "page" : undefined}
-              style={{
-                textAlign: "left",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: activeView === module.id ? "bold" : "500",
-                backgroundColor: activeView === module.id ? "#1D63DC" : "transparent",
-                color: "#fff",
-                overflow: "hidden",
-                textOverflow: "ellipsis"
-              }}
-            >
-              {module.icon} {module.hindiTitle}
-            </button>
-          ))}
-          <button onClick={onDownloadReports} style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: "transparent", color: "#4ADE80" }}>
-            📥 Download All 8 Reports
-          </button>
-        </nav>
+            <nav aria-label="मुख्य नेविगेशन" style={{ flex: 1, padding: "12px 10px" }}>
+              <button
+                type="button"
+                onClick={() => setActiveView("HOME")}
+                style={{
+                  width: "100%",
+                  padding: "11px 12px",
+                  marginBottom: "8px",
+                  border: "none",
+                  borderRadius: "8px",
+                  textAlign: "left",
+                  background: activeView === "HOME" ? "#1D63DC" : "transparent",
+                  color: "white",
+                  fontWeight: activeView === "HOME" ? "bold" : "normal",
+                  cursor: "pointer"
+                }}
+              >
+                🏠 Home (Dashboard)
+              </button>
 
-        <AuthAndCloudSync
-          districtName={authProfile.district_name || activeProfile}
-          email={authUser.email}
-          onLogout={onLogout}
-          onCloudSync={onCloudSync}
-          cloudConfigured={cloudConfigured}
-          syncStatus={syncStatus}
-          syncing={syncing}
-          isOfflineDemo={authProfile.offline_demo}
-          onOfficeSignIn={onOfficeSignIn}
-        />
+              {visibleModules.map((module, index) => (
+                <button
+                  key={module.id}
+                  type="button"
+                  title={module.title}
+                  onClick={() => setActiveView(module.id)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    marginBottom: "4px",
+                    border: "none",
+                    borderRadius: "8px",
+                    textAlign: "left",
+                    background: activeView === module.id ? "rgba(255,255,255,0.18)" : "transparent",
+                    color: "white",
+                    fontWeight: activeView === module.id ? "bold" : "normal",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  <span style={{ display: "inline-block", width: "26px", color: "#93C5FD", fontFamily: "'Times New Roman', Times, serif" }}>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {module.icon} {module.hindiTitle || module.title}
+                </button>
+              ))}
+            </nav>
 
-        <div style={{ padding: "12px", fontSize: "0.72rem", color: "#64748B", textAlign: "center", borderTop: "1px solid #1E293B" }}>
-          © 2026 Made by Harsh<br />{activeProfile} Police
-        </div>
+            <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem", textAlign: "center" }}>
+              District Police Portal
+            </footer>
+          </>
+        )}
       </aside>
+      <style>{`
+        @media (max-width: 768px) {
+          .sidebar-overlay { display: block !important; }
+        }
+      `}</style>
     </>
   );
 }
