@@ -121,7 +121,7 @@ export default function OfficePsStrength({
       });
     });
     return rows;
-  }, [secFilter, search, unitRankSanc, workingMap]);
+  }, [secFilter, search, unitRankSanc, workingMap, getUnitTotalSanc]);
 
   const saveUnitSanc = async () => {
     try {

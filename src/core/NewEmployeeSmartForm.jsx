@@ -131,6 +131,7 @@ function getNextAvailableBelt(usedBelts) {
 export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll, onClose }) {
   const [form, setForm] = useState(() => createInitialEmployee(records));
   const [activeTab, setActiveTab] = useState("PL");
+  const [formTab, setFormTab] = useState("PERSONAL");
   const [plDraft, setPlDraft] = useState({ fromDate: "", toDate: "", orderNo: "", remark: "" });
   const [trainingDraft, setTrainingDraft] = useState({ courseName: "", institute: "", fromDate: "", toDate: "", orderNo: "" });
   const [sajaDraft, setSajaDraft] = useState({ type: PENALTY_TYPES[0], order: "", detail: "" });
@@ -519,6 +520,31 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
         </header>
 
         <div style={{ padding: "16px" }}>
+          <nav aria-label="कर्मचारी विवरण टैब" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+            {[
+              ["PERSONAL", "1. Personal Details"],
+              ["SERVICE", "2. Service Details"],
+              ["POSTING", "3. Posting Details"],
+              ["TRAINING", "4. Training Details"],
+              ["PUNISHMENT", "5. Punishment Details"]
+            ].map(([id, label]) => (
+              <button
+                type="button"
+                key={id}
+                onClick={() => {
+                  setFormTab(id);
+                  if (id === "SERVICE") setActiveTab("PL");
+                  if (id === "TRAINING") setActiveTab("TRAINING");
+                  if (id === "PUNISHMENT") setActiveTab("SAJA");
+                }}
+                aria-pressed={formTab === id}
+                style={{ padding: "8px 11px", border: "1px solid #CBD5E1", borderRadius: "7px", background: formTab === id ? "#1D63DC" : "#F8FAFC", color: formTab === id ? "#fff" : "#334155", fontWeight: "bold", cursor: "pointer" }}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+          {formTab === "SERVICE" && (
           <section style={sectionStyle}>
             <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 1: पद एवं जिले में आगमन विवरण (Post &amp; District Joining Details)</h3>
             <div style={gridStyle}>
@@ -555,7 +581,10 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
               {field("आगमन आदेश दिनांक (DD-MM-YYYY)", "DISTRICT JOINING ORDER DATE")}
             </div>
           </section>
+          )}
 
+          {formTab === "PERSONAL" && (
+          <>
           <section style={sectionStyle}>
             <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 2: व्यक्तिगत विवरण (Personal Details)</h3>
             <div style={gridStyle}>
@@ -569,7 +598,10 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
               {field("जन्म तिथि (DOB - DD-MM-YYYY)", "DATE OF BIRTH")}
             </div>
           </section>
+          </>
+          )}
 
+          {formTab === "PERSONAL" && (
           <section style={sectionStyle}>
             <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 3: स्थायी पता विवरण (पिनकोड → राज्य → जिला → तहसील → ब्लॉक → गाँव → स्वतः थाना)</h3>
             <div style={gridStyle}>
@@ -700,7 +732,9 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
               </small>
             )}
           </section>
+          )}
 
+          {formTab === "POSTING" && (
           <section style={sectionStyle}>
             <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 4: सेवा एवं वर्तमान पदस्थापन विवरण (Service &amp; Posting Details)</h3>
             <div style={gridStyle}>
@@ -716,13 +750,13 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
           <section style={sectionStyle}>
             <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 5: पूर्व सेवा का हर DOB (आदेश) अनुसार अलग-अलग PL, प्रशिक्षण व सज़ा रिकॉर्ड</h3>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
+            {formTab === "SERVICE" && <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
               {FORM_TABS.map((tab) => (
                 <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} style={{ padding: "8px 11px", border: "1px solid #CBD5E1", borderRadius: "7px", background: activeTab === tab.id ? "#0B1E3D" : "#F8FAFC", color: activeTab === tab.id ? "#fff" : "#334155", fontWeight: "bold", cursor: "pointer" }}>
                   {tab.label}
                 </button>
               ))}
-            </div>
+            </div>}
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
               <div>
@@ -783,6 +817,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
               </aside>
             </div>
           </section>
+          )}
         </div>
 
         <footer style={{ position: "sticky", bottom: 0, zIndex: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", padding: "12px 16px", background: "#fff", borderTop: "1px solid #CBD5E1", borderRadius: "0 0 14px 14px" }}>
