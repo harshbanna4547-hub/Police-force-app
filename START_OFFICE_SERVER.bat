@@ -10,7 +10,18 @@ if errorlevel 1 (
 )
 
 if not exist "node_modules\express\package.json" (
-  echo Server dependency is missing. Run npm install in this project folder first.
+  echo Installing project dependencies...
+  call npm.cmd install
+  if errorlevel 1 (
+    echo Dependency installation failed.
+    pause
+    exit /b 1
+  )
+)
+
+call npm.cmd run build
+if errorlevel 1 (
+  echo Frontend build failed.
   pause
   exit /b 1
 )

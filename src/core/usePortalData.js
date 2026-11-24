@@ -320,9 +320,7 @@ export default function usePortalData({ districtId = "", districtName = "", auth
     } catch (error) {
       if (error instanceof OfficeServerError && error.code === "OFFLINE") {
         setLanSyncStatus("offline");
-      } else if (error instanceof OfficeServerError && error.code === "CONFIG_MISSING") {
-        setLanSyncStatus("offline");
-      } else if (error instanceof OfficeServerError && error.code === "AUTH_REQUIRED") {
+      } else if (error instanceof OfficeServerError && ["CONFIG_MISSING", "AUTH_REQUIRED"].includes(error.code)) {
         setLanSyncStatus("key-required");
       } else if (error instanceof OfficeServerError && error.code === "CONFLICT") {
         setLanSyncStatus("conflict");

@@ -19,10 +19,10 @@ If you are developing a production application, we recommend using TypeScript wi
 
 The GR office PC can host the Chittorgarh data API on port `5050`:
 
-1. Install Node.js LTS, then run `npm install` once in this project folder.
-2. Double-click `START_OFFICE_SERVER.bat`. On first startup, copy the generated **Office Access Key** from the server console. The key is saved locally in `server/data/office_access.token`; do not share it outside authorized office devices.
+1. Install Node.js LTS on the GR PC.
+2. Double-click `START_OFFICE_SERVER.bat`. It installs dependencies if missing, builds the frontend, and serves the app and API on port `5050`. On first startup, copy the generated **Office Access Key** from the server console. The key is saved locally in `server/data/office_access.token`; do not share it outside authorized office devices.
 3. Keep the GR PC and authorized devices on the trusted office LAN. If Windows Firewall prompts, allow access only on the Private network.
-4. On each client, choose **Direct Office Login**, enter the GR PC URL (for example `http://192.168.1.10:5050`) and the Office Access Key.
+4. On each client, open `http://<GR-PC-IP>:5050`, choose **Direct Office Login**, and enter the Office Access Key. The server URL defaults to the address used to open the app.
 
 The server binds to `0.0.0.0` for LAN access, but all district-data API requests require the generated bearer key and the API is restricted to Chittorgarh. `/api/health` is public and returns service status only. Keep the server off public/untrusted networks; this HTTP setup is intended for a trusted office LAN.
 

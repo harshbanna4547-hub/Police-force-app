@@ -1,6 +1,6 @@
 import { randomBytes, timingSafeEqual, randomUUID } from "node:crypto";
 import { Buffer } from "node:buffer";
-import { promises as fs } from "node:fs";
+import { existsSync, promises as fs } from "node:fs";
 import { isIP } from "node:net";
 import path from "node:path";
 import process from "node:process";
@@ -12,6 +12,7 @@ const SERVER_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIRECTORY = path.join(SERVER_DIRECTORY, "data");
 const DEFAULT_DATABASE_FILE = path.join(DATA_DIRECTORY, "chittorgarh_db.json");
 const TOKEN_FILE = path.join(DATA_DIRECTORY, "office_access.token");
+const FRONTEND_DIRECTORY = path.resolve(SERVER_DIRECTORY, "..", "dist");
 
 function isPrivateLanAddress(hostname) {
   const normalized = hostname.toLowerCase();
@@ -88,7 +89,12 @@ async function writeDatabase(databaseFile, database) {
   }
 }
 
-export function createApp({ token, databaseFile = DEFAULT_DATABASE_FILE, maxBodySize = "50mb" } = {}) {
+export function createApp({
+  token,
+  databaseFile = DEFAULT_DATABASE_FILE,
+  maxBodySize = "50mb",
+  frontendDirectory = FRONTEND_DIRECTORY
+} = {}) {
   if (typeof token !== "string" || token.length < 32) {
     throw new Error("A 32-character Office Access Key is required to start the LAN API.");
   }
@@ -114,8 +120,6 @@ export function createApp({ token, databaseFile = DEFAULT_DATABASE_FILE, maxBody
     }
     next();
   });
-  app.use(express.json({ limit: maxBodySize, strict: true }));
-
   app.get("/api/health", (_request, response) => {
     response.json({ status: "ok", service: "office-lan", district: OFFICE_DISTRICT, authRequired: true });
   });
@@ -132,6 +136,7 @@ export function createApp({ token, databaseFile = DEFAULT_DATABASE_FILE, maxBody
       next(error);
     }
   });
+  app.use(express.json({ limit: maxBodySize, strict: true }));
 
   app.get("/api/data/:district", async (request, response, next) => {
     try {
@@ -183,6 +188,20 @@ export function createApp({ token, databaseFile = DEFAULT_DATABASE_FILE, maxBody
       next(error);
     }
   });
+
+  const frontendIndex = path.join(frontendDirectory, "index.html");
+  if (existsSync(frontendIndex)) {
+    app.use(express.static(frontendDirectory, { index: false }));
+    app.get(/^(?!\/api(?:\/|$)).*/, (request, response, next) => {
+      if (request.path.startsWith("/api/")) {
+        next();
+        return;
+      }
+      response.sendFile(frontendIndex, (error) => {
+        if (error) next(error);
+      });
+    });
+  }
 
   app.use((error, request, response, next) => {
     if (response.headersSent) {
@@ -241,7 +260,7 @@ async function startServer() {
   const app = createApp({ token });
   app.listen(port, "0.0.0.0", () => {
     console.info(`Office LAN server listening on 0.0.0.0:${port}`);
-    console.info("Health check: http://<GR-PC-IP>:5050/api/health");
+    console.info(`Health check: http://<GR-PC-IP>:${port}/api/health`);
     if (generated) {
       console.info("New Office Access Key (copy it into each authorized device; it is not shown again):");
       console.info(token);

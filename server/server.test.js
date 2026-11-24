@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -11,9 +11,13 @@ import {
 
 test("protects the LAN data API and keeps district writes versioned", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "police-office-server-"));
+  const frontendDirectory = path.join(directory, "dist");
+  await mkdir(frontendDirectory);
+  await writeFile(path.join(frontendDirectory, "index.html"), "<!doctype html><title>Office LAN</title>");
   const server = createApp({
     token: "test-office-key-123456789012345678901234",
-    databaseFile: path.join(directory, "office.json")
+    databaseFile: path.join(directory, "office.json"),
+    frontendDirectory
   }).listen(0, "127.0.0.1");
 
   try {
@@ -27,6 +31,10 @@ test("protects the LAN data API and keeps district writes versioned", async () =
     const health = await fetch(`${baseUrl}/api/health`);
     assert.equal(health.status, 200);
     assert.equal((await health.json()).district, "CHITTORGARH");
+    const appPage = await fetch(`${baseUrl}/`);
+    assert.match(await appPage.text(), /Office LAN/);
+    const clientRoute = await fetch(`${baseUrl}/modules/strength`);
+    assert.match(await clientRoute.text(), /Office LAN/);
 
     const unauthorized = await fetch(`${baseUrl}/api/data/CHITTORGARH`);
     assert.equal(unauthorized.status, 401);
