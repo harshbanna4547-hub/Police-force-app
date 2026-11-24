@@ -25,7 +25,15 @@ export default function PortalModuleContent({
     onSaveUnitRankSanc,
     reports,
     setEditingEmployee,
-    onLoadExcelBlob
+    onLoadExcelBlob,
+    fileName,
+    hasData,
+    hasUnsavedChanges,
+    onDirectExcelConnect,
+    onSaveToExcel,
+    onExportMasterFile,
+    isExportingMaster,
+    onRemoveDistrictData
   } = portalData;
 
   if (activeView === "HOME") {
@@ -70,7 +78,7 @@ export default function PortalModuleContent({
     SENIORITY: { seniorityList: reports.seniorityList, devToHindi },
     ROSTER: { records, reports, plSummary: reports.plSummary, allSheets, setAllSheets, devToHindi },
     REPORTS: { records, devToHindi },
-    STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob }
+    STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob, fileName, hasData: records.length > 0, hasUnsavedChanges, onDirectExcelConnect, onSaveToExcel, onExportMasterFile, isExportingMaster, onRemoveDistrictData }
   };
   const ActiveModule = selectedModule.component;
 

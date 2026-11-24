@@ -15,6 +15,68 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+:root {
+  color-scheme: light;
+  --page: #F4F7FB;
+  --surface: #F4F7FB;
+  --surface-raised: #FFFFFF;
+  --text: #0F172A;
+  --muted: #64748B;
+  --border: #E2E8F0;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0B1220;
+  --surface: #101A2B;
+  --surface-raised: #172338;
+  --text: #E5EDF8;
+  --muted: #A7B4C7;
+  --border: #2B3A50;
+}
+
+.app-shell[data-theme="dark"] {
+  background-color: var(--page) !important;
+  color: var(--text);
+}
+
+.app-shell[data-theme="dark"] > div {
+  background-color: var(--page) !important;
+}
+
+.app-shell[data-theme="dark"] main,
+.app-shell[data-theme="dark"] .portal-top-header {
+  background-color: var(--surface) !important;
+  color: var(--text);
+}
+
+.app-shell[data-theme="dark"] .portal-top-header h1,
+.app-shell[data-theme="dark"] .portal-top-header small {
+  color: var(--text) !important;
+}
+
+.app-shell[data-theme="dark"] main > div,
+.app-shell[data-theme="dark"] main > section,
+.app-shell[data-theme="dark"] main article,
+.app-shell[data-theme="dark"] main fieldset,
+.app-shell[data-theme="dark"] main input,
+.app-shell[data-theme="dark"] main select,
+.app-shell[data-theme="dark"] main textarea {
+  background-color: var(--surface-raised) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.app-shell[data-theme="dark"] main td,
+.app-shell[data-theme="dark"] main th,
+.app-shell[data-theme="dark"] main p,
+.app-shell[data-theme="dark"] main label,
+.app-shell[data-theme="dark"] main h2,
+.app-shell[data-theme="dark"] main h3,
+.app-shell[data-theme="dark"] main h4 {
+  color: var(--text);
+}
+
 /* टेबल्स के लिए स्मूद टच स्क्रॉल (मोबाइल और टैबलेट पर) */
 table {
   width: 100%;

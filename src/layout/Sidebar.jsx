@@ -5,6 +5,8 @@ export default function Sidebar({
   setActiveView,
   modules,
   activeProfile,
+  currentDistrict,
+  lanSyncStatus,
   onOpenDistrictSwitcher
 }) {
   const visibleModules = modules.filter((module) => module.enabled !== false);
@@ -23,6 +25,9 @@ export default function Sidebar({
           width: sidebarOpen ? "280px" : "0px",
           minWidth: sidebarOpen ? "280px" : "0px",
           height: "100vh",
+          position: "sticky",
+          top: 0,
+          alignSelf: "flex-start",
           backgroundColor: "#0B1E3D",
           color: "white",
           transition: "all 0.3s ease",
@@ -39,6 +44,14 @@ export default function Sidebar({
             <section style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
               <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", textAlign: "center" }}>
                 <strong style={{ display: "block", fontSize: "0.95rem" }}>👮‍♂️ {activeProfile}</strong>
+                <span style={{ display: "block", marginTop: "5px", color: "#BFDBFE", fontSize: "0.8rem" }}>
+                  📍 {currentDistrict?.name || activeProfile}
+                </span>
+                {lanSyncStatus !== "disabled" && lanSyncStatus !== "connected" && (
+                  <span role="status" style={{ display: "inline-block", marginTop: "6px", padding: "3px 8px", borderRadius: "12px", background: "rgba(251,191,36,0.18)", color: "#FDE68A", fontSize: "0.72rem" }}>
+                    🟡 Local Mode
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={onOpenDistrictSwitcher}
@@ -69,7 +82,7 @@ export default function Sidebar({
                 🏠 Home (Dashboard)
               </button>
 
-              {visibleModules.map((module, index) => (
+              {visibleModules.map((module) => (
                 <button
                   key={module.id}
                   type="button"
@@ -89,9 +102,6 @@ export default function Sidebar({
                     whiteSpace: "nowrap"
                   }}
                 >
-                  <span style={{ display: "inline-block", width: "26px", color: "#93C5FD", fontFamily: "'Times New Roman', Times, serif" }}>
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
                   {module.icon} {module.hindiTitle || module.title}
                 </button>
               ))}

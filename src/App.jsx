@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EmployeeFooterManager from "./core/EmployeeFooterManager";
 import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
@@ -35,11 +35,44 @@ export default function App() {
   const [currentDistrict, setCurrentDistrict] = useState(readActiveDistrict);
   const [activeView, setActiveView] = useState("HOME");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem("police_portal_theme") === "dark" ? "dark" : "light";
+    } catch (error) {
+      console.error("Saved theme preference could not be read:", error);
+      return "light";
+    }
+  });
+  const [language, setLanguage] = useState(() => {
+    try {
+      return localStorage.getItem("police_portal_language") === "en" ? "en" : "hi";
+    } catch (error) {
+      console.error("Saved language preference could not be read:", error);
+      return "hi";
+    }
+  });
   const portalData = usePortalData({
     districtId: currentDistrict.id,
     districtName: currentDistrict.name
   });
   const modules = MODULES_CONFIG;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("police_portal_theme", theme);
+    } catch (error) {
+      console.error("Theme preference could not be saved:", error);
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("police_portal_language", language);
+    } catch (error) {
+      console.error("Language preference could not be saved:", error);
+    }
+  }, [language]);
 
   const handleDistrictChange = (district) => {
     if (!district?.id || !district?.name) return;
@@ -57,7 +90,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
+    <div className="app-shell" data-theme={theme} style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
       <SidebarNav
         portalData={portalData}
         sidebarOpen={sidebarOpen}
@@ -67,6 +100,7 @@ export default function App() {
         modules={modules}
         currentDistrict={currentDistrict}
         onDistrictChange={handleDistrictChange}
+        lanSyncStatus={portalData.lanSyncStatus}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats
@@ -75,6 +109,10 @@ export default function App() {
           setActiveView={setActiveView}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          theme={theme}
+          onThemeChange={() => setTheme((value) => value === "light" ? "dark" : "light")}
+          language={language}
+          onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
         />
         <main style={{ padding: "12px 24px 24px", flex: 1 }}>
           {activeView === "HOME" ? (
@@ -95,8 +133,6 @@ export default function App() {
           onUpdateEmployee={portalData.updateEmployeeRecord}
           onSaveSmartEmployee={portalData.addNewEmployee}
           onRemoveEmployee={portalData.removeEmployee}
-          onExportMasterFile={portalData.onExportMasterFile}
-          isExportingMaster={portalData.isExportingMaster}
         />
       </div>
     </div>

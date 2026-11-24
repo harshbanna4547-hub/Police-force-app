@@ -9,24 +9,58 @@ const POSTING_OPTIONS = [
 
 const FIELD_GROUPS = [
   {
-    title: "व्यक्तिगत विवरण",
+    id: "personal",
+    title: "1. Personal Details",
     fields: [
       { key: "NAME", label: "Name", type: "legacy-text" },
       { key: "FATHER NAME", label: "Father Name", type: "legacy-text" },
       { key: "CADER", label: "Post / Cader", type: "cader" },
       { key: "BELT NO", label: "Belt No." },
       { key: "CATEGORY", label: "Category", type: "category" },
-      { key: "EDUCATION", label: "Education" }
+      { key: "EDUCATION", label: "Education" },
+      { key: "DATE OF BIRTH", label: "Date of Birth", type: "date" }
     ]
   },
   {
-    title: "सेवा विवरण",
+    id: "service",
+    title: "2. Service Details",
+    fields: [
+      { key: "DATE OF JOINING", label: "Date of Joining", type: "date" },
+      { key: "DOC", label: "Date of Confirmation", type: "date" },
+      { key: "SERVICE NO", label: "Service Number" },
+      { key: "MOBILE NO 1", label: "Mobile No.", type: "mobile" },
+      { key: "EMAIL", label: "E-mail" }
+    ]
+  },
+  {
+    id: "posting",
+    title: "3. Posting Details",
     fields: [
       { key: "POSTING", label: "Posting Place", type: "office" },
       { key: "POSTING DOB NO", label: "Posting DOB", type: "posting-date" },
-      { key: "DATE OF BIRTH", label: "Date of Birth", type: "date" },
-      { key: "DATE OF JOINING", label: "Date of Joining", type: "date" },
-      { key: "MOBILE NO 1", label: "Mobile No.", type: "mobile" }
+      { key: "WITHOUT DOB", label: "Without DOB" },
+      { key: "POSTING ORDER NO", label: "Posting Order No." }
+    ]
+  },
+  {
+    id: "training",
+    title: "4. Training Details",
+    fields: [
+      { key: "TRAINING COURSE", label: "Course Name" },
+      { key: "TRAINING INSTITUTE", label: "Institute" },
+      { key: "TRAINING FROM", label: "From Date" },
+      { key: "TRAINING TO", label: "To Date" },
+      { key: "TRAINING ORDER NO", label: "Order No. / Date" }
+    ]
+  },
+  {
+    id: "punishment",
+    title: "5. Punishment Details",
+    fields: [
+      { key: "PUNISHMENT TYPE", label: "Punishment Type" },
+      { key: "PUNISHMENT DETAILS", label: "Details" },
+      { key: "PUNISHMENT ORDER NO", label: "Order No." },
+      { key: "PUNISHMENT ORDER DATE", label: "Order Date", type: "date" }
     ]
   }
 ];
@@ -129,6 +163,7 @@ const inputStyle = {
 export default function EmployeeEditModal({ employee, isNew = false, onSave, onClose }) {
   const [form, setForm] = useState(() => createForm(employee));
   const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState(FIELD_GROUPS[0].id);
 
   if (!employee) return null;
 
@@ -178,7 +213,14 @@ export default function EmployeeEditModal({ employee, isNew = false, onSave, onC
           <button type="button" onClick={onClose} aria-label="बंद करें" style={{ border: 0, background: "transparent", fontSize: "1.4rem", cursor: "pointer", color: "#475569" }}>✕</button>
         </div>
 
-        {FIELD_GROUPS.map((group) => (
+        <nav aria-label="कर्मचारी विवरण टैब" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+          {FIELD_GROUPS.map((group) => (
+            <button key={group.id} type="button" onClick={() => setActiveTab(group.id)} style={{ padding: "8px 10px", border: "1px solid #CBD5E1", borderRadius: "8px", background: activeTab === group.id ? "#1D63DC" : "#F8FAFC", color: activeTab === group.id ? "#fff" : "#334155", fontWeight: "bold", cursor: "pointer" }}>
+              {group.title}
+            </button>
+          ))}
+        </nav>
+        {FIELD_GROUPS.filter((group) => group.id === activeTab).map((group) => (
           <fieldset key={group.title} style={{ border: "1px solid #E2E8F0", borderRadius: "8px", margin: "0 0 14px", padding: "12px" }}>
             <legend style={{ padding: "0 6px", color: "#1D63DC", fontWeight: "bold" }}>{group.title}</legend>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>

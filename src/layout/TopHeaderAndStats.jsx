@@ -6,7 +6,11 @@ export default function TopHeaderAndStats({
   activeView,
   setActiveView,
   sidebarOpen,
-  setSidebarOpen
+  setSidebarOpen,
+  theme,
+  onThemeChange,
+  language,
+  onLanguageChange
 }) {
   const {
     activeProfile,
@@ -15,14 +19,6 @@ export default function TopHeaderAndStats({
     attRecords,
     depRecords,
     totalSanc,
-    hasUnsavedChanges,
-    persistenceError,
-    lanSyncStatus,
-    isExportingMaster,
-    onDirectExcelConnect,
-    onSaveToExcel,
-    onRemoveDistrictData,
-    onExportMasterFile
   } = portalData;
 
   return (
@@ -34,15 +30,10 @@ export default function TopHeaderAndStats({
         setActiveView={setActiveView}
         activeProfile={activeProfile}
         fileName={fileName}
-        onDirectExcelConnect={onDirectExcelConnect}
-        onSaveToExcel={onSaveToExcel}
-        onRemoveDistrictData={onRemoveDistrictData}
-        hasUnsavedChanges={hasUnsavedChanges}
-        persistenceError={persistenceError}
-        lanSyncStatus={lanSyncStatus}
-        hasData={records.length > 0}
-        onExportMasterFile={onExportMasterFile}
-        isExportingMaster={isExportingMaster}
+        theme={theme}
+        onThemeChange={onThemeChange}
+        language={language}
+        onLanguageChange={onLanguageChange}
       />
       <StatCards
         totalSanc={totalSanc}

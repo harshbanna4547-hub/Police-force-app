@@ -5,6 +5,7 @@ import { resolveUnitAndChowki } from "../../core/postingResolver";
 import ExportBar from "../../core/ExportBar";
 import HindiText from "../../core/HindiText";
 import { getBeltNo, getRankCode } from "../../shared/commonFunctions";
+import EmployeeActionRow from "../../core/EmployeeActionRow";
 
 const RANKS = ["ASP", "DYSP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
 const fmtVac = (s, w) => (s - w < 0 ? `+${Math.abs(s - w)}` : s - w);
@@ -111,7 +112,7 @@ export default function OfficePsStrength({
     const rows = [];
     let sn = 1;
     OFFICE_SECTIONS.forEach((sec) => {
-      if (secFilter !== "ALL" && secFilter !== sec.id) return;
+      if (secFilter !== "ALL" && secFilter !== sec.id && !(secFilter === "CO_CIRCLE" && sec.id === "SEC_CO")) return;
       sec.units.forEach((u) => {
         if (search.trim() && !u.toLowerCase().includes(search.trim().toLowerCase())) return;
         const s = getUnitTotalSanc(u), w = workingMap[u]?.total || 0;
@@ -137,7 +138,7 @@ export default function OfficePsStrength({
     <div className="office-ps-strength">
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "10px" }}>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-          {[["ALL", "All"], ["SEC_SPO", "SP Office"], ["SEC_ASP", "ASP Offices"], ["SEC_CO", "CO Offices"], ["SEC_PS", "Police Stations"], ["SEC_RPL", "Police Line"]].map(([id, lbl]) => (
+          {[["ALL", "All"], ["SEC_SPO", "SP Office"], ["SEC_ASP", "ASP Offices"], ["SEC_CO", "CO Offices"], ["CO_CIRCLE", "CO Circle-Wise"], ["SEC_PS", "Police Stations"], ["SEC_RPL", "Police Line"]].map(([id, lbl]) => (
             <button key={id} onClick={() => setSecFilter(id)} style={{ padding: "5px 12px", borderRadius: "18px", border: "1px solid #CBD5E1", cursor: "pointer", fontWeight: "bold", backgroundColor: secFilter === id ? "#1D63DC" : "#fff", color: secFilter === id ? "#fff" : "#1E293B" }}>
               {lbl}
             </button>
@@ -166,7 +167,7 @@ export default function OfficePsStrength({
           </tr>
         </thead>
         <tbody>
-          {OFFICE_SECTIONS.filter((sec) => secFilter === "ALL" || secFilter === sec.id).map((sec) => {
+          {OFFICE_SECTIONS.filter((sec) => secFilter === "ALL" || secFilter === sec.id || (secFilter === "CO_CIRCLE" && sec.id === "SEC_CO")).map((sec) => {
             const units = sec.units.filter((u) => !search.trim() || u.toLowerCase().includes(search.trim().toLowerCase()));
             if (!units.length) return null;
             const isSecOpen = !!openSec[sec.id] || editing || !!search.trim();
@@ -204,7 +205,7 @@ export default function OfficePsStrength({
                           {u}
                         </td>
                         <td style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0" }}>{totalSanc}</td>
-                        <td onClick={() => wObj.total > 0 && openUnitModal(u, u, "ALL")} style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold", cursor: wObj.total > 0 ? "pointer" : "default", textDecoration: wObj.total > 0 ? "underline" : "none" }}>{wObj.total}</td>
+                        <td onClick={() => wObj.total > 0 && openUnitModal(u, u, "ALL")} style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold", cursor: wObj.total > 0 ? "pointer" : "default", textDecoration: "none" }}>{wObj.total}</td>
                         <td style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0", color: String(totalVac).startsWith("+") || totalVac === 0 ? "#15803D" : "#DC2626", fontWeight: "bold" }}>{totalVac}</td>
                       </tr>
 
@@ -338,7 +339,7 @@ export default function OfficePsStrength({
         </tbody>
       </table>
       {modal && (
-          <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
+          <div className="strength-working-modal" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
             <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "100%", maxWidth: "850px", maxHeight: "82vh", overflowY: "auto", padding: "14px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
                 <b style={{ fontSize: "1rem", color: "#0B1E3D" }}>🏢 {modal.title} ({displayList.length})</b>
@@ -368,27 +369,40 @@ export default function OfficePsStrength({
                 <thead>
                   <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
                     <th style={{ padding: "6px" }}>क्र.</th>
+                    <th style={{ padding: "6px" }}>पिता का नाम</th>
                     <th style={{ padding: "6px" }}>पद</th>
                     <th style={{ padding: "6px" }}>बेल्ट नं.</th>
                     <th style={{ padding: "6px", textAlign: "left" }}>नाम</th>
-                    <th style={{ padding: "6px", textAlign: "left" }}>पिता का नाम</th>
+                    <th style={{ padding: "6px" }}>Posting DOB</th>
+                    <th style={{ padding: "6px" }}>Posting Place</th>
+                    <th style={{ padding: "6px" }}>Without DOB</th>
+                    <th style={{ padding: "6px" }}>Education</th>
+                    <th style={{ padding: "6px" }}>Date of Birth</th>
+                    <th style={{ padding: "6px" }}>DOJ</th>
+                    <th style={{ padding: "6px" }}>DOC</th>
                     <th style={{ padding: "6px" }}>मोबाइल</th>
-                    <th style={{ padding: "6px" }}>Edit</th>
                   </tr>
                 </thead>
                 <tbody>
                   {displayList.map((e, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
+                    <EmployeeActionRow key={e._uid || i} employee={e} onAction={(action, employee) => {
+                      if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
+                      if (action === "SERVICE_SLIP") window.alert(`${employee.NAME || ""}\n${employee.CADER || ""}\n${employee.POSTING || ""}`);
+                    }} style={{ borderBottom: "1px solid #E2E8F0" }}>
                       <td style={{ padding: "5px", textAlign: "center" }}>{i + 1}</td>
+                      <td style={{ padding: "5px" }}><HindiText text={e["FATHER NAME"]} /></td>
                       <td style={{ padding: "5px", textAlign: "center" }}>{e["CADER"]}</td>
                       <td style={{ padding: "5px", textAlign: "center", fontWeight: "bold", color: "#0369A1" }}>{getBeltNo(e)}</td>
-                      <td onClick={() => onEditEmployee?.(e)} style={{ padding: "5px", fontWeight: "bold", cursor: "pointer" }}><HindiText text={e["NAME"]} /></td>
-                      <td style={{ padding: "5px" }}><HindiText text={e["FATHER NAME"]} /></td>
+                      <td style={{ padding: "5px", fontWeight: "bold" }}><HindiText text={e["NAME"]} /></td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{e["POSTING DOB NO"] || "-"}</td>
+                      <td style={{ padding: "5px" }}>{e.POSTING || "-"}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{e["WITHOUT DOB"] || "-"}</td>
+                      <td style={{ padding: "5px" }}>{e.EDUCATION || "-"}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{e["DATE OF BIRTH"] || "-"}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{e["DATE OF JOINING"] || "-"}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{e.DOC || e["DATE OF CONFIRMATION"] || "-"}</td>
                       <td style={{ padding: "5px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{getMobileNo(e)}</td>
-                      <td style={{ padding: "5px", textAlign: "center" }}>
-                        <button type="button" onClick={() => onEditEmployee?.(e)} style={{ border: 0, borderRadius: "5px", padding: "5px 8px", background: "#DBEAFE", color: "#1D4ED8", fontWeight: "bold", cursor: "pointer" }}>✏️ Edit</button>
-                      </td>
-                    </tr>
+                    </EmployeeActionRow>
                   ))}
                 </tbody>
               </table>

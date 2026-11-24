@@ -12,6 +12,7 @@ const MODULE_DEFAULT_FOLDERS = [
   "03. Posting (पदस्थापन सूची)",
   "04. Bharti (नवीन भर्ती रिकॉर्ड)",
   "05. Training (प्रशिक्षण एवं कोर्स)",
+  "09. Training (प्रशिक्षण पत्र एवं बेतार संदेश)",
   "06. Leave (अवकाश खाता)",
   "07. 300 PL Chart (उपार्जित अवकाश)",
   "08. Increment (वार्षिक वेतन वृद्धि)",
@@ -22,7 +23,20 @@ const MODULE_DEFAULT_FOLDERS = [
   "13. Roster (मासिक थाना रोस्टर)"
 ];
 
-export default function StorageVaultModule({ activeProfile, records, allSheets, onLoadExcelBlob }) {
+export default function StorageVaultModule({
+  activeProfile,
+  records,
+  allSheets,
+  onLoadExcelBlob,
+  fileName,
+  hasData,
+  hasUnsavedChanges,
+  onDirectExcelConnect,
+  onSaveToExcel,
+  onExportMasterFile,
+  isExportingMaster,
+  onRemoveDistrictData
+}) {
   const [items, setItems] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState("ROOT");
   const [search, setSearch] = useState("");
@@ -274,6 +288,24 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
       {/* ऊपरी Action Toolbar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px", marginBottom: "12px" }}>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button type="button" onClick={onDirectExcelConnect} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+            📂 {fileName ? "Overwrite Excel" : "Upload Master Excel"}
+          </button>
+          {hasData && (
+            <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} style={{ backgroundColor: "#0284C7", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: isExportingMaster ? "wait" : "pointer", fontSize: "0.84rem" }}>
+              {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}
+            </button>
+          )}
+          {fileName && hasUnsavedChanges && (
+            <button type="button" onClick={onSaveToExcel} style={{ backgroundColor: "#7C3AED", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+              💾 Save / Restore Excel
+            </button>
+          )}
+          {fileName && (
+            <button type="button" onClick={onRemoveDistrictData} style={{ backgroundColor: "#FEE2E2", color: "#B91C1C", border: "1px solid #FCA5A5", padding: "8px 12px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", fontSize: "0.84rem" }}>
+              🗑️ Remove District Data
+            </button>
+          )}
           <button onClick={handleCreateFolder} style={{ backgroundColor: "#0B1E3D", color: "#FFD700", border: "none", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
             📁+ New Folder
           </button>

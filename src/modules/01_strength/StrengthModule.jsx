@@ -6,6 +6,7 @@ import OfficePsStrength from "./OfficePsStrength";
 import HindiText from "../../core/HindiText";
 import { getBeltNo } from "../../shared/commonFunctions";
 import { getStrengthEmployeeIdentity } from "./strengthLogic";
+import EmployeeActionRow from "../../core/EmployeeActionRow";
 import "./strength.css";
 
 const POST_FILTER_TABS = [
@@ -63,19 +64,6 @@ function formatDateClean(val) {
   return `${dd}-${mm}-${dt.getFullYear()}`;
 }
 
-function calcYearMonth(val) {
-  const start = parseDateSafe(val);
-  if (!start) return "-";
-  const now = new Date();
-  let years = now.getFullYear() - start.getFullYear();
-  let months = now.getMonth() - start.getMonth();
-  if (now.getDate() < start.getDate()) months -= 1;
-  if (months < 0) {
-    years -= 1;
-    months += 12;
-  }
-  return years < 0 ? "-" : `${years} Year ${months} Month`;
-}
 export default function StrengthModule({
   records,
   sanctioned,
@@ -91,8 +79,6 @@ export default function StrengthModule({
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
   const [expanded, setExpanded] = useState({});
   const [editing, setEditing] = useState(false);
-
-  const showBeltCol = ["HC", "FC"].includes(selectedPostTab);
 
   const workStats = useMemo(() => {
     const stats = {};
@@ -275,7 +261,14 @@ export default function StrengthModule({
                                 <input type="number" min="0" value={sVal} onChange={(e) => setSanctioned({ ...sanctioned, [rk.code]: Number(e.target.value) })} style={{ width: "65px", textAlign: "center" }} />
                               ) : sVal}
                             </td>
-                            <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold" }}>{wVal}</td>
+                            <td
+                              onClick={() => setSelectedPostTab(POST_FILTER_TABS.find((tab) =>
+                                tab.rankFilter?.includes(rk.code) ||
+                                tab.groupIds?.some((groupId) => CADRE_GROUPS.some((group) => group.id === groupId && group.ranks.some((rank) => rank.code === rk.code)))
+                              )?.id || selectedPostTab)}
+                              title="कार्यरत कर्मचारियों की सूची खोलें"
+                              style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold", cursor: "pointer", textDecoration: "none" }}
+                            >{wVal}</td>
                             <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", color: diff > 0 ? "#DC2626" : "#15803D", fontWeight: "bold" }}>
                               {formatVacancy(sVal, wVal)}
                             </td>
@@ -297,32 +290,34 @@ export default function StrengthModule({
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem", whiteSpace: "nowrap" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>SN</th>
-                      {showBeltCol && <th style={{ padding: "8px", border: "1px solid #475569" }}>Belt No.</th>}
+                      <th style={{ padding: "8px", border: "1px solid #475569" }}>S.N.</th>
                       <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Name</th>
                       <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Father Name</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Post</th>
-                      <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Posting Place</th>
+                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Belt No.</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Posting DOB</th>
+                      <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Posting Place</th>
+                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Without DOB</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Education</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Date of Birth</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Age</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Date of Joining</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Service</th>
+                      <th style={{ padding: "8px", border: "1px solid #475569" }}>DOJ</th>
+                      <th style={{ padding: "8px", border: "1px solid #475569" }}>DOC</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Mobile Number</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Edit</th>
                     </tr>
                   </thead>
                   <tbody>
                     {selectedPostEmployees.map((emp, idx) => (
-                      <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}>
+                      <EmployeeActionRow
+                        key={emp._uid || idx}
+                        employee={emp}
+                        onAction={(action, employee) => {
+                          if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
+                          if (action === "SERVICE_SLIP") window.alert(`${employee.NAME || ""}\n${employee.CADER || ""}\n${employee.POSTING || ""}`);
+                        }}
+                        style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
+                      >
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>{idx + 1}</td>
-                        {showBeltCol && (
-                          <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", fontWeight: "bold", color: "#0369A1" }}>
-                            {getStrengthEmployeeIdentity(emp).beltNo}
-                          </td>
-                        )}
-                        <td onClick={() => onEditEmployee?.(emp)} style={{ padding: "6px 8px", border: "1px solid #E2E8F0", fontWeight: "bold", cursor: "pointer" }}>
+                        <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0", fontWeight: "bold" }}>
                           <HindiText text={emp["NAME"]} />
                         </td>
                         <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0" }}>
@@ -331,11 +326,17 @@ export default function StrengthModule({
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
                           {emp["CADER"]}
                         </td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", fontWeight: "bold", color: "#0369A1" }}>
+                          {getStrengthEmployeeIdentity(emp).beltNo}
+                        </td>
+                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
+                          {formatDateClean(emp["POSTING DOB NO"])}
+                        </td>
                         <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0" }}>
                           <HindiText text={emp["POSTING"]} />
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {formatDateClean(emp["POSTING DOB NO"])}
+                          {emp["WITHOUT DOB"] || "-"}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
                           {emp["EDUCATION"] || "-"}
@@ -343,22 +344,16 @@ export default function StrengthModule({
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
                           {formatDateClean(emp["DATE OF BIRTH"])}
                         </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", color: "#0369A1", fontWeight: "bold" }}>
-                          {calcYearMonth(emp["DATE OF BIRTH"])}
-                        </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
                           {formatDateClean(emp["DATE OF JOINING"])}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold" }}>
-                          {calcYearMonth(emp["DATE OF JOINING"])}
+                          {formatDateClean(emp.DOC || emp["DATE OF CONFIRMATION"])}
                         </td>
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>
                           {getMobileNo(emp)}
                         </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          <button type="button" onClick={() => onEditEmployee?.(emp)} style={{ border: 0, borderRadius: "5px", padding: "5px 8px", background: "#DBEAFE", color: "#1D4ED8", fontWeight: "bold", cursor: "pointer" }}>✏️ Edit</button>
-                        </td>
-                      </tr>
+                      </EmployeeActionRow>
                     ))}
                   </tbody>
                 </table>
