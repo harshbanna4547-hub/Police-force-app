@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
 import { devToHindi } from "../../utils/devlysConverter";
+import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 
 export default function EmployeeManagementModule({ records = [], onEditEmployee, onArchiveEmployee }) {
   const [query, setQuery] = useState("");
@@ -32,7 +33,7 @@ export default function EmployeeManagementModule({ records = [], onEditEmployee,
                   const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
                   if (reason) onArchiveEmployee?.(selected, reason);
                 }
-                if (action === "SERVICE_SLIP") window.alert(`${selected.NAME || ""}\n${selected["FATHER NAME"] || ""}\n${selected.CADER || ""}\n${selected.POSTING || ""}`);
+                if (action === "SERVICE_SLIP") openEmployeeServiceSlip(selected);
               }}
             >
               <td>{index + 1}</td>

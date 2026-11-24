@@ -6,6 +6,7 @@ import ExportBar from "../../core/ExportBar";
 import HindiText from "../../core/HindiText";
 import { formatDateOnly, getBeltNo, getRankCode } from "../../shared/commonFunctions";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
+import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 
 const RANKS = ["ASP", "DYSP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
 const fmtVac = (s, w) => (s - w < 0 ? `+${Math.abs(s - w)}` : s - w);
@@ -392,7 +393,7 @@ export default function OfficePsStrength({
                         const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
                         if (reason) onArchiveEmployee?.(employee, reason);
                       }
-                      if (action === "SERVICE_SLIP") window.alert(`${employee.NAME || ""}\n${employee.CADER || ""}\n${employee.POSTING || ""}`);
+                      if (action === "SERVICE_SLIP") openEmployeeServiceSlip(employee);
                     }} style={{ borderBottom: "1px solid #E2E8F0" }}>
                       <td style={{ padding: "5px", textAlign: "center" }}>{i + 1}</td>
                       <td style={{ padding: "5px" }}><HindiText text={e["FATHER NAME"]} /></td>

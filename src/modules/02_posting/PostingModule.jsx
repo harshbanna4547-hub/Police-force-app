@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import ExportBar from "../../core/ExportBar";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
+import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import { CO_PS_MAP, OFFICE_SECTIONS } from "../../data/officeUnits";
 
 const POST_ORDER = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
@@ -67,7 +68,7 @@ function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveE
                           const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
                           if (reason) onArchiveEmployee?.(selected, reason);
                         }
-                        if (action === "SERVICE_SLIP") window.alert(`${selected.NAME || ""}\n${selected.CADER || ""}\n${selected.POSTING || ""}`);
+                        if (action === "SERVICE_SLIP") openEmployeeServiceSlip(selected);
                       }}
                     >
                       <td>{rank}</td><td>—</td><td>—</td><td>{employee.NAME} ({employee["BELT NO"] || "-"})</td>

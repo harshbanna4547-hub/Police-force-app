@@ -7,6 +7,7 @@ import HindiText from "../../core/HindiText";
 import { getBeltNo } from "../../shared/commonFunctions";
 import { getStrengthEmployeeIdentity } from "./strengthLogic";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
+import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import "./strength.css";
 
 const POST_FILTER_TABS = [
@@ -316,7 +317,7 @@ export default function StrengthModule({
                             const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
                             if (reason) onArchiveEmployee?.(employee, reason);
                           }
-                          if (action === "SERVICE_SLIP") window.alert(`${employee.NAME || ""}\n${employee.CADER || ""}\n${employee.POSTING || ""}`);
+                          if (action === "SERVICE_SLIP") openEmployeeServiceSlip(employee);
                         }}
                         style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
                       >
