@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export default function Sidebar({
   sidebarOpen,
   setSidebarOpen,
@@ -6,10 +8,10 @@ export default function Sidebar({
   modules,
   activeProfile,
   currentDistrict,
-  lanSyncStatus,
   language,
   onOpenDistrictSwitcher
 }) {
+  const [modulesOpen, setModulesOpen] = useState(false);
   const visibleModules = modules.filter((module) => module.enabled !== false);
 
   return (
@@ -48,11 +50,6 @@ export default function Sidebar({
                 <span style={{ display: "block", marginTop: "5px", color: "#BFDBFE", fontSize: "0.8rem" }}>
                   📍 {currentDistrict?.name || activeProfile}
                 </span>
-                {lanSyncStatus !== "disabled" && lanSyncStatus !== "connected" && (
-                  <span role="status" style={{ display: "inline-block", marginTop: "6px", padding: "3px 8px", borderRadius: "12px", background: "rgba(251,191,36,0.18)", color: "#FDE68A", fontSize: "0.72rem" }}>
-                    🟡 Local Mode
-                  </span>
-                )}
                 <button
                   type="button"
                   onClick={onOpenDistrictSwitcher}
@@ -83,29 +80,53 @@ export default function Sidebar({
                 🏠 {language === "en" ? "Home (Dashboard)" : "होम (डैशबोर्ड)"}
               </button>
 
-              {visibleModules.map((module) => (
-                <button
-                  key={module.id}
-                  type="button"
-                  title={module.title}
-                  onClick={() => setActiveView(module.id)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 12px",
-                    marginBottom: "4px",
-                    border: "none",
-                    borderRadius: "8px",
-                    textAlign: "left",
-                    background: activeView === module.id ? "rgba(255,255,255,0.18)" : "transparent",
-                    color: "white",
-                    fontWeight: activeView === module.id ? "bold" : "normal",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap"
-                  }}
-                >
-                  {module.icon} {language === "en" ? module.title : (module.hindiTitle || module.title)}
-                </button>
-              ))}
+              <button
+                type="button"
+                aria-expanded={modulesOpen}
+                aria-controls="sidebar-modules-list"
+                onClick={() => setModulesOpen((open) => !open)}
+                style={{
+                  width: "100%",
+                  padding: "11px 12px",
+                  marginBottom: "8px",
+                  border: "none",
+                  borderRadius: "8px",
+                  textAlign: "left",
+                  background: "transparent",
+                  color: "white",
+                  fontWeight: "bold",
+                  cursor: "pointer"
+                }}
+              >
+                📂 {language === "en" ? "Modules" : "मॉड्यूल"} {modulesOpen ? "▴" : "▾"}
+              </button>
+              {modulesOpen && (
+                <div id="sidebar-modules-list">
+                  {visibleModules.map((module) => (
+                    <button
+                      key={module.id}
+                      type="button"
+                      title={module.title}
+                      onClick={() => setActiveView(module.id)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        marginBottom: "4px",
+                        border: "none",
+                        borderRadius: "8px",
+                        textAlign: "left",
+                        background: activeView === module.id ? "rgba(255,255,255,0.18)" : "transparent",
+                        color: "white",
+                        fontWeight: activeView === module.id ? "bold" : "normal",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap"
+                      }}
+                    >
+                      {module.icon} {language === "en" ? module.title : (module.hindiTitle || module.title)}
+                    </button>
+                  ))}
+                </div>
+              )}
             </nav>
 
             <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem", textAlign: "center" }}>
