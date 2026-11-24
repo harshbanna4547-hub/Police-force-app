@@ -747,7 +747,9 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
               {field("चयन वर्ग (SELECTION CATEGORY)", "SELECTION CATEGORY", "text", SELECTION_OPTIONS)}
             </div>
           </section>
+          )}
 
+          {["SERVICE", "TRAINING", "PUNISHMENT"].includes(formTab) && (
           <section style={sectionStyle}>
             <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 5: पूर्व सेवा का हर DOB (आदेश) अनुसार अलग-अलग PL, प्रशिक्षण व सज़ा रिकॉर्ड</h3>
             {formTab === "SERVICE" && <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>

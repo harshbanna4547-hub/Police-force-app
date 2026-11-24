@@ -103,7 +103,7 @@ export default function App() {
         lanSyncStatus={portalData.lanSyncStatus}
         language={language}
       />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "clip" }}>
         <TopHeaderAndStats
           portalData={portalData}
           activeView={activeView}

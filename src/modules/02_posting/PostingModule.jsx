@@ -94,13 +94,14 @@ export default function PostingModule({ records = [], sanctioned = {}, unitRankS
   }, {}), [records]);
   const allWorkingRows = useMemo(() => {
     const sections = OFFICE_SECTIONS.map((section) => ({
+      id: section.id,
       title: section.title,
       units: section.units.map((unit) => [unit, placeMap[unit] || []])
     }));
     const assigned = new Set(OFFICE_SECTIONS.flatMap((section) => section.units));
     const rpl = Object.entries(placeMap).filter(([unit]) => /rpl|police line|पुलिस लाइन/i.test(unit));
     const other = Object.entries(placeMap).filter(([unit]) => !assigned.has(unit) && !rpl.some(([rplUnit]) => rplUnit === unit));
-    return [...sections, { title: "RPL / पुलिस लाइन", units: rpl }, { title: "अन्य पदस्थापन", units: other }];
+    return [...sections, { id: "RPL", title: "RPL / पुलिस लाइन", units: rpl }, { id: "OTHER", title: "अन्य पदस्थापन", units: other }];
   }, [placeMap]);
   const postRows = POST_ORDER.map((rank) => [
     rank,
@@ -131,7 +132,20 @@ export default function PostingModule({ records = [], sanctioned = {}, unitRankS
       {tab === "ALL" && allWorkingRows.map((group) => (
         <section key={group.title}>
           <h3>{group.title}</h3>
-          <SummaryTable rows={group.units} title={group.title} sanctioned={unitRankSanc} onEditEmployee={onEditEmployee} onArchiveEmployee={onArchiveEmployee} />
+          {group.id === "SEC_CO"
+            ? Object.entries(CO_PS_MAP).map(([circle, stations]) => (
+              <details key={circle} style={{ margin: "8px 0", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
+                <summary style={{ cursor: "pointer", fontWeight: "bold" }}>{circle} — {(placeMap[circle] || []).length} CO कर्मचारी</summary>
+                <SummaryTable
+                  rows={[[circle, placeMap[circle] || []], ...stations.map((station) => [station, placeMap[station] || []])]}
+                  title={`${circle} — CO / PS Summary`}
+                  sanctioned={unitRankSanc}
+                  onEditEmployee={onEditEmployee}
+                  onArchiveEmployee={onArchiveEmployee}
+                />
+              </details>
+            ))
+            : <SummaryTable rows={group.units} title={group.title} sanctioned={unitRankSanc} onEditEmployee={onEditEmployee} onArchiveEmployee={onArchiveEmployee} />}
         </section>
       ))}
       {tab === "POST" && <SummaryTable rows={postRows} title="Post-Wise Working" onEditEmployee={onEditEmployee} onArchiveEmployee={onArchiveEmployee} />}

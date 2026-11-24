@@ -1,5 +1,5 @@
 // src/modules/01_strength/OfficePsStrength.jsx
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { OFFICE_SECTIONS, PS_CHOWKI_MAP, CO_PS_MAP } from "../../data/officeUnits";
 import { resolveUnitAndChowki } from "../../core/postingResolver";
 import ExportBar from "../../core/ExportBar";
@@ -57,16 +57,16 @@ export default function OfficePsStrength({
     });
     return map;
   }, [records, devToHindi]);
-  const getSancForKey = (sancKey) => RANKS.reduce((s, r) => s + Number(unitRankSanc[sancKey]?.[r] || 0), 0);
+  const getSancForKey = useCallback((sancKey) => RANKS.reduce((s, r) => s + Number(unitRankSanc[sancKey]?.[r] || 0), 0), [unitRankSanc]);
 
-  const getUnitTotalSanc = (u) => {
+  const getUnitTotalSanc = useCallback((u) => {
     const chowkis = PS_CHOWKI_MAP[u] || [];
     if (chowkis.length > 0) {
       const subSum = chowkis.reduce((acc, ck) => acc + getSancForKey(`${u}::${ck}`), 0);
       if (subSum > 0) return subSum;
     }
     return getSancForKey(u);
-  };
+  }, [getSancForKey]);
 
   const openUnitModal = (title, unitName, defaultTab = "ALL", rankFilter = null) => {
     setModalTab(defaultTab);
@@ -121,7 +121,7 @@ export default function OfficePsStrength({
       });
     });
     return rows;
-  }, [secFilter, search, unitRankSanc, workingMap, getUnitTotalSanc]);
+  }, [secFilter, search, workingMap, getUnitTotalSanc]);
 
   const saveUnitSanc = async () => {
     try {
