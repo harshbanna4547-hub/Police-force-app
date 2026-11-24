@@ -1,0 +1,49 @@
+.module-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.module-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.module-table th,
+.module-table td {
+  padding: 7px 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.module-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.module-print-button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #334155;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.module-print-document {
+  color: #000;
+  font-family: "DevLys 010", "Kruti Dev 010", "Times New Roman", Times, serif;
+}
+
+.module-print-document .english-cell {
+  font-family: "Times New Roman", Times, serif;
+}
+
+@media print {
+  .module-no-print {
+    display: none !important;
+  }
+}
