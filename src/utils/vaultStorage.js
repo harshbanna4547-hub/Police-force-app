@@ -4,6 +4,21 @@ import * as XLSX from "xlsx";
 const DB_NAME = "RajasthanPoliceVaultDB";
 const STORE_NAME = "district_vaults";
 
+function getDistrictVaultKeys(districtName) {
+  const district = String(districtName || "").trim();
+  const normalized = district
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase();
+  if (!normalized) throw new Error("जिला पहचान खाली नहीं हो सकती।");
+  return {
+    current: `police_data_${normalized}`,
+    legacy: district.toLowerCase()
+  };
+}
+
 function openVaultDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -20,10 +35,14 @@ function openVaultDB() {
 
 // किसी जिले का स्थायी डेटा सेव (Overwrite) करना
 export async function saveDistrictVault(districtName, payload) {
+  const { current } = getDistrictVaultKeys(districtName);
   const db = await openVaultDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).put(payload, districtName.toLowerCase().trim());
+    tx.objectStore(STORE_NAME).put({
+      ...payload,
+      updatedAt: new Date().toISOString()
+    }, current);
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
   });
@@ -31,21 +50,31 @@ export async function saveDistrictVault(districtName, payload) {
 
 // किसी जिले का सेव डेटा पढ़ना
 export async function loadDistrictVault(districtName) {
+  const { current, legacy } = getDistrictVaultKeys(districtName);
   const db = await openVaultDB();
-  return new Promise((resolve, reject) => {
+  const readKey = (key) => new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readonly");
-    const req = tx.objectStore(STORE_NAME).get(districtName.toLowerCase().trim());
+    const req = tx.objectStore(STORE_NAME).get(key);
     req.onsuccess = () => resolve(req.result || null);
     req.onerror = () => reject(req.error);
   });
+  const currentVault = await readKey(current);
+  if (currentVault) return currentVault;
+
+  const legacyVault = await readKey(legacy);
+  if (!legacyVault) return null;
+  await saveDistrictVault(districtName, legacyVault);
+  return legacyVault;
 }
 
 // किसी जिले का डेटा पूरी तरह Remove / Reset करना
 export async function removeDistrictVault(districtName) {
+  const { current, legacy } = getDistrictVaultKeys(districtName);
   const db = await openVaultDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).delete(districtName.toLowerCase().trim());
+    tx.objectStore(STORE_NAME).delete(current);
+    tx.objectStore(STORE_NAME).delete(legacy);
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);
   });
