@@ -306,9 +306,11 @@ export default function TransferModule({
   const [dutyOrderDate, setDutyOrderDate] = useState(() => formatTransferDate(new Date()));
   const [dutyRemark, setDutyRemark] = useState("");
 
-  const displayText = useCallback((value) => (
-    typeof devToHindi === "function" ? devToHindi(value ?? "") : String(value ?? "")
-  ), [devToHindi]);
+  const displayText = useCallback((value) => {
+    const rawValue = String(value ?? "");
+    if (/[\u0900-\u097F]/.test(rawValue)) return rawValue;
+    return typeof devToHindi === "function" ? devToHindi(rawValue) : rawValue;
+  }, [devToHindi]);
   const postingOptions = useMemo(
     () => buildTransferPostingOptions(OFFICE_CO_PS_LIST, PS_CHOWKI_MAP),
     []
@@ -640,7 +642,7 @@ export default function TransferModule({
                       if (normalized) setOrderDate(normalized);
                     }}
                     placeholder="DD-MM-YYYY"
-                    pattern="\\d{1,2}[-/.]\\d{1,2}[-/.]\\d{4}"
+                    pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}"
                     required
                   />
                 </label>
@@ -1058,7 +1060,7 @@ export default function TransferModule({
                       if (normalized) setDutyOrderDate(normalized);
                     }}
                     placeholder="DD-MM-YYYY"
-                    pattern="\\d{1,2}[-/.]\\d{1,2}[-/.]\\d{4}"
+                    pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}"
                     required
                   />
                 </label>

@@ -102,7 +102,9 @@ export function getTransferRank(employee, convertLegacy = (value) => value) {
 }
 
 function normalizeStationName(value, convertLegacy) {
-  return String(convertLegacy(value || "") || "")
+  const rawValue = String(value || "");
+  const readableValue = /[\u0900-\u097F]/.test(rawValue) ? rawValue : convertLegacy(rawValue);
+  return String(readableValue || "")
     .normalize("NFC")
     .trim()
     .toLocaleLowerCase("hi")
