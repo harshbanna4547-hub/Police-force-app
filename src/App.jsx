@@ -6,13 +6,22 @@ import TopHeaderAndStats from "./layout/TopHeaderAndStats";
 import ModuleCardGrid from "./layout/ModuleCardGrid";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
+import { createDistrictSelection } from "./core/districtAuth.js";
 
 const DEFAULT_DISTRICT = { id: "CHITTORGARH", name: "Chittorgarh" };
 const ACTIVE_DISTRICT_STORAGE_KEY = "police_active_district";
 
 function readActiveDistrict() {
   try {
-    const savedDistrict = JSON.parse(localStorage.getItem(ACTIVE_DISTRICT_STORAGE_KEY) || "null");
+    const rawDistrict = localStorage.getItem(ACTIVE_DISTRICT_STORAGE_KEY);
+    if (!rawDistrict) return DEFAULT_DISTRICT;
+    let savedDistrict;
+    try {
+      savedDistrict = JSON.parse(rawDistrict);
+    } catch {
+      return createDistrictSelection(rawDistrict);
+    }
+    if (typeof savedDistrict === "string") return createDistrictSelection(savedDistrict);
     if (savedDistrict?.id && savedDistrict?.name) {
       return { id: String(savedDistrict.id), name: String(savedDistrict.name) };
     }

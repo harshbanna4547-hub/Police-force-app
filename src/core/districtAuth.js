@@ -49,6 +49,29 @@ export const DISTRICT_OPTIONS = [
   { code: "UDAIPUR", name: "Udaipur", hindiName: "उदयपुर" }
 ];
 
+export function createDistrictSelection(value) {
+  const name = String(value || "").trim();
+  const knownDistrict = DISTRICT_OPTIONS.find((district) =>
+    district.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+    || district.hindiName === name
+  );
+  if (knownDistrict) return { id: knownDistrict.code, name: knownDistrict.name };
+
+  const id = name.normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase();
+  const unicodeId = Array.from(name)
+    .map((character) => character.codePointAt(0).toString(16))
+    .join("_")
+    .slice(0, 100);
+  return {
+    id: id.slice(0, 100) || `DISTRICT_${unicodeId}`,
+    name
+  };
+}
+
 let supabaseClient;
 
 function getCloudClient() {

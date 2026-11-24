@@ -369,7 +369,7 @@ export default function usePortalData({ districtId = "", districtName = "", auth
             }
             setCloudSyncStatus("क्लाउड डेटा सिंक हो गया");
           } catch (cloudError) {
-            console.error("District cloud sync during login failed:", cloudError);
+            console.error("District data sync failed:", cloudError);
             setCloudSyncStatus(`क्लाउड सिंक असफल: ${cloudError.message}`);
           }
         }
