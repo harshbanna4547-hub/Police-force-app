@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import ExportBar from "../core/ExportBar";
+import ExportBar from "../../core/ExportBar";
 
-export default function Pl300ChartModule({ plSummary, devToHindi }) {
+export default function Pi300ChartModule({ plSummary = [], devToHindi }) {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {

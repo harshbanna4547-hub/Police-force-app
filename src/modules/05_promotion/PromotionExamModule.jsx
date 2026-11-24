@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import ExportBar from "../core/ExportBar";
-import { formatDateDDMMYYYY, parseAnyDate } from "../utils/reportEngine";
+import ExportBar from "../../core/ExportBar";
+import { calculateServiceYears, formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
 
 const EXAM_PATHS = {
   "PCC Exam (FC to HC)": { source: "FC", target: "HC" },
@@ -26,7 +26,7 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
     const cader = String(record.CADER || "").toUpperCase();
     const joiningDate = parseAnyDate(record["DATE OF JOINING"]);
     if (!cader.includes(sourceRank) || !joiningDate) return [];
-    const serviceYears = (reviewDate.getTime() - joiningDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    const serviceYears = calculateServiceYears(joiningDate, reviewDate);
     const education = String(record.EDUCATION || record.QUALIFICATION || "").trim();
     if (serviceYears < Number(minimumService || 0)) return [];
     if (educationFilter !== "ALL" && education !== educationFilter) return [];

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
-import { parseAnyDate } from "../utils/reportEngine";
+import { parseAnyDate } from "../../shared/commonFunctions";
 
-export default function PostingModule({ records, devToHindi }) {
+export default function ReportsModule({ records, devToHindi }) {
   const [psFilter, setPsFilter] = useState("");
   const [tenureFilter, setTenureFilter] = useState("ALL"); // ALL | 5YR | 8YR | NODOB
 

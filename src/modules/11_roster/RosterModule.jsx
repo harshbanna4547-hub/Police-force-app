@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { downloadAllReportsExcel } from "../utils/reportEngine";
-import ExportBar from "../core/ExportBar";
+import { downloadAllReportsExcel } from "../../utils/reportEngine";
+import ExportBar from "../../core/ExportBar";
 
 export default function RosterModule({ reports, records = [], allSheets = {}, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");

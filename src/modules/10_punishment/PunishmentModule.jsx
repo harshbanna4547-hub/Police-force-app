@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ExportBar from "../core/ExportBar";
+import ExportBar from "../../core/ExportBar";
 
 export default function PunishmentModule({ records = [], allSheets, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");

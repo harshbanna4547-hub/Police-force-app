@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import ExportBar from "../core/ExportBar";
-import { calculateEarnedPL } from "../utils/reportEngine";
+import ExportBar from "../../core/ExportBar";
+import { calculateEarnedPL } from "../../shared/commonFunctions";
 
 const LEAVE_TYPES = ["PL", "CL", "Medical", "Maternity", "Paternity"];
 

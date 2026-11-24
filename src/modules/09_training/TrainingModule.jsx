@@ -1,5 +1,5 @@
 import { useState } from "react";
-import ExportBar from "../core/ExportBar";
+import ExportBar from "../../core/ExportBar";
 
 const REQUIRED_COURSES = [
   { label: "PCC", aliases: ["pcc"] },
