@@ -73,7 +73,8 @@ export default function StrengthModule({
   onSaveSanctioned,
   onSaveUnitRankSanc,
   devToHindi,
-  onEditEmployee
+  onEditEmployee,
+  onArchiveEmployee
 }) {
   const [subTab, setSubTab] = useState("POST_WISE");
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
@@ -312,6 +313,10 @@ export default function StrengthModule({
                         employee={emp}
                         onAction={(action, employee) => {
                           if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
+                          if (action === "RELIEVE") {
+                            const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
+                            if (reason) onArchiveEmployee?.(employee, reason);
+                          }
                           if (action === "SERVICE_SLIP") window.alert(`${employee.NAME || ""}\n${employee.CADER || ""}\n${employee.POSTING || ""}`);
                         }}
                         style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
@@ -367,6 +372,7 @@ export default function StrengthModule({
           records={records}
           devToHindi={devToHindi}
           onEditEmployee={onEditEmployee}
+          onArchiveEmployee={onArchiveEmployee}
           unitRankSanc={unitRankSanc}
           setUnitRankSanc={setUnitRankSanc}
           onSaveUnitRankSanc={onSaveUnitRankSanc}

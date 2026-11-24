@@ -13,7 +13,6 @@ export default function TopHeaderAndStats({
   onLanguageChange
 }) {
   const {
-    activeProfile,
     fileName,
     records,
     attRecords,
@@ -28,7 +27,6 @@ export default function TopHeaderAndStats({
         setSidebarOpen={setSidebarOpen}
         activeView={activeView}
         setActiveView={setActiveView}
-        activeProfile={activeProfile}
         fileName={fileName}
         theme={theme}
         onThemeChange={onThemeChange}

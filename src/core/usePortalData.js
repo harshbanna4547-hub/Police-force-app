@@ -630,7 +630,7 @@ export default function usePortalData({ districtId = "", districtName = "", auth
     return true;
   };
 
-  const removeEmployee = (employeeToRemove) => {
+  const removeEmployee = (employeeToRemove, reason = "Relieve / Other District Transfer", eventDate = new Date().toISOString().slice(0, 10)) => {
     const nextRecords = records.filter((employee) => employeeToRemove._uid
       ? employee._uid !== employeeToRemove._uid
       : employee !== employeeToRemove);
@@ -638,20 +638,22 @@ export default function usePortalData({ districtId = "", districtName = "", auth
       alert("चयनित कर्मचारी मुख्य सूची में नहीं मिला।");
       return false;
     }
-    const nextSheets = Object.fromEntries(
-      Object.entries(allSheets).map(([sheetName, rows]) => [
-        sheetName,
-        Array.isArray(rows)
-          ? rows.filter((row) => employeeToRemove._uid
-            ? row._uid !== employeeToRemove._uid
-            : row !== employeeToRemove)
-          : rows
-      ])
-    );
+    const dateText = String(eventDate || new Date().toISOString().slice(0, 10)).split(/[T ]/)[0];
+    const nextArchive = [
+      ...(Array.isArray(allSheets.Employee_Archive) ? allSheets.Employee_Archive : []),
+      {
+        ...employeeToRemove,
+        EVENT_TYPE: reason,
+        EVENT_DATE: dateText,
+        YEAR: dateText.slice(0, 4)
+      }
+    ];
+    const nextSheets = { ...allSheets, Employee_Archive: nextArchive };
     nextSheets["Master_All_Data"] = nextRecords;
 
     setRecords(nextRecords);
     setAllSheets(nextSheets);
+    setHasUnsavedChanges(true);
     return true;
   };
 

@@ -23,6 +23,7 @@ export default function OfficePsStrength({
   records,
   devToHindi,
   onEditEmployee,
+  onArchiveEmployee,
   unitRankSanc,
   setUnitRankSanc,
   onSaveUnitRankSanc
@@ -387,6 +388,10 @@ export default function OfficePsStrength({
                   {displayList.map((e, i) => (
                     <EmployeeActionRow key={e._uid || i} employee={e} onAction={(action, employee) => {
                       if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
+                      if (action === "RELIEVE") {
+                        const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
+                        if (reason) onArchiveEmployee?.(employee, reason);
+                      }
                       if (action === "SERVICE_SLIP") window.alert(`${employee.NAME || ""}\n${employee.CADER || ""}\n${employee.POSTING || ""}`);
                     }} style={{ borderBottom: "1px solid #E2E8F0" }}>
                       <td style={{ padding: "5px", textAlign: "center" }}>{i + 1}</td>

@@ -172,7 +172,7 @@ export default function EmployeeEditModal({ employee, isNew = false, onSave, onC
     setSaving(true);
     try {
       const savedForm = { ...form };
-      ["DATE OF BIRTH", "DATE OF JOINING"].forEach((key) => {
+      ["DATE OF BIRTH", "DATE OF JOINING", "DOC", "PUNISHMENT ORDER DATE"].forEach((key) => {
         const match = String(savedForm[key] || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
         if (match) savedForm[key] = `${match[3]}-${match[2]}-${match[1]}`;
       });

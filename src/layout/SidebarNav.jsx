@@ -11,7 +11,8 @@ export default function SidebarNav({
   modules,
   currentDistrict,
   onDistrictChange,
-  lanSyncStatus
+  lanSyncStatus,
+  language
 }) {
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -32,6 +33,7 @@ export default function SidebarNav({
         activeProfile={portalData.activeProfile}
         currentDistrict={currentDistrict}
         lanSyncStatus={lanSyncStatus}
+        language={language}
         onOpenDistrictSwitcher={() => setSwitcherOpen(true)}
       />
       {switcherOpen && (

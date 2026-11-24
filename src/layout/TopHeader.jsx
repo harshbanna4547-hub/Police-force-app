@@ -4,7 +4,6 @@ export default function TopHeader({
   setSidebarOpen,
   activeView,
   setActiveView,
-  activeProfile,
   fileName,
   theme,
   onThemeChange,
@@ -30,7 +29,7 @@ export default function TopHeader({
         <div>
           <h1 style={{ margin: 0, fontSize: "1.3rem", color: "var(--text, #0F172A)" }}>{language === "hi" ? "जिला पुलिस बल एवं स्थापना प्रबंधन पोर्टल" : "District Police Force & Establishment Portal"}</h1>
           <small style={{ color: fileName ? "#15803D" : "#DC2626", fontWeight: "bold" }}>
-            {fileName ? `✔ सक्रिय डेटा: ${fileName}` : `⚠️ ${activeProfile} के लिए कृपया Master Excel अपलोड करें`}
+            {fileName ? `✔ ${language === "hi" ? "सक्रिय डेटा" : "Active data"}: ${fileName}` : `⚠️ ${language === "hi" ? "Master Excel अपलोड करें" : "Upload Master Excel"}`}
           </small>
         </div>
       </div>

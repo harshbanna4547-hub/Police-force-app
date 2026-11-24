@@ -101,6 +101,7 @@ export default function App() {
         currentDistrict={currentDistrict}
         onDistrictChange={handleDistrictChange}
         lanSyncStatus={portalData.lanSyncStatus}
+        language={language}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats

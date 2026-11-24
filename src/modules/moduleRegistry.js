@@ -12,6 +12,9 @@ import PunishmentModule from "./10_punishment/PunishmentModule";
 import RosterModule from "./11_roster/RosterModule";
 import ReportsModule from "./12_reports/ReportsModule";
 import StorageVaultModule from "./13_storage/StorageVaultModule";
+import PostingModule from "./02_posting/PostingModule";
+import EmployeeManagementModule from "./03_employee/EmployeeManagementModule";
+import EmployeeArchiveModule from "./04_archive/EmployeeArchiveModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {
@@ -23,6 +26,36 @@ export const MODULES_CONFIG = Object.freeze([
     description: "स्वीकृत एवं कार्यरत नफरी",
     enabled: true,
     component: StrengthModule
+  },
+  {
+    id: "POSTING",
+    title: "Posting",
+    hindiTitle: "पदस्थापन सूची",
+    icon: "📍",
+    color: "#0F766E",
+    description: "Office, CO, PS और Post-Wise कार्यरत नफरी",
+    enabled: true,
+    component: PostingModule
+  },
+  {
+    id: "EMPLOYEES",
+    title: "Employee Management",
+    hindiTitle: "कर्मचारी प्रबंधन",
+    icon: "👮",
+    color: "#2563EB",
+    description: "कर्मचारी विवरण एवं कार्यवाही",
+    enabled: true,
+    component: EmployeeManagementModule
+  },
+  {
+    id: "ARCHIVE",
+    title: "Employee Archive",
+    hindiTitle: "सेवानिवृत्ति / रिलीव अभिलेख",
+    icon: "🗂️",
+    color: "#475569",
+    description: "वर्ष-वार Relieve, Retirement, Death और Deputation",
+    enabled: true,
+    component: EmployeeArchiveModule
   },
   {
     id: "TRANSFER",

@@ -23,6 +23,14 @@ const MODULE_DEFAULT_FOLDERS = [
   "13. Roster (मासिक थाना रोस्टर)"
 ];
 
+function dateOnly(value) {
+  const text = String(value || "");
+  const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}-${iso[2]}-${iso[1]}`;
+  const local = text.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
+  return local ? `${String(local[1]).padStart(2, "0")}-${String(local[2]).padStart(2, "0")}-${local[3]}` : text.split(/[T ]/)[0];
+}
+
 export default function StorageVaultModule({
   activeProfile,
   records,
@@ -413,7 +421,7 @@ export default function StorageVaultModule({
                   <div style={{ fontSize: "2.4rem", marginBottom: "6px" }}>{getFileIcon(item)}</div>
                   <div style={{ fontWeight: "bold", fontSize: "0.9rem", color: "#0F172A", wordBreak: "break-word" }}>{item.name}</div>
                   <div style={{ fontSize: "0.74rem", color: "#64748B", marginTop: "4px" }}>
-                    {item.kind === "FOLDER" ? "Folder • क्लिक करके खोलें" : `${item.sizeKB} KB • ${item.updatedAt}`}
+                    {item.kind === "FOLDER" ? "Folder • क्लिक करके खोलें" : `${item.sizeKB} KB • ${dateOnly(item.updatedAt)}`}
                   </div>
                 </div>
 
@@ -466,7 +474,7 @@ export default function StorageVaultModule({
                     </td>
                     <td style={{ padding: "8px", textAlign: "center" }}>{item.kind}</td>
                     <td style={{ padding: "8px", textAlign: "center" }}>{item.kind === "FOLDER" ? "-" : `${item.sizeKB} KB`}</td>
-                    <td style={{ padding: "8px", textAlign: "center" }}>{item.updatedAt}</td>
+                    <td style={{ padding: "8px", textAlign: "center" }}>{dateOnly(item.updatedAt)}</td>
                     <td style={{ padding: "8px", textAlign: "center", whiteSpace: "nowrap" }}>
                       {isExcel && onLoadExcelBlob && (
                         <button onClick={() => onLoadExcelBlob(item.data, item.name)} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "5px", marginRight: "5px", cursor: "pointer", fontSize: "0.78rem" }}>⚡ Use Data</button>

@@ -7,6 +7,7 @@ export default function Sidebar({
   activeProfile,
   currentDistrict,
   lanSyncStatus,
+  language,
   onOpenDistrictSwitcher
 }) {
   const visibleModules = modules.filter((module) => module.enabled !== false);
@@ -79,7 +80,7 @@ export default function Sidebar({
                   cursor: "pointer"
                 }}
               >
-                🏠 Home (Dashboard)
+                🏠 {language === "en" ? "Home (Dashboard)" : "होम (डैशबोर्ड)"}
               </button>
 
               {visibleModules.map((module) => (
@@ -102,7 +103,7 @@ export default function Sidebar({
                     whiteSpace: "nowrap"
                   }}
                 >
-                  {module.icon} {module.hindiTitle || module.title}
+                  {module.icon} {language === "en" ? module.title : (module.hindiTitle || module.title)}
                 </button>
               ))}
             </nav>

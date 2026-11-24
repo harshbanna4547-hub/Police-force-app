@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 const ACTIONS = [
   { id: "UPDATE", label: "✏️ Update Details" },
@@ -27,10 +28,11 @@ export default function EmployeeActionRow({ employee, onAction, children, style 
       >
         {children}
       </tr>
-      {menu && (
+      {menu && createPortal(
         <div
           role="menu"
           onMouseLeave={() => setMenu(null)}
+          onContextMenu={(event) => event.stopPropagation()}
           style={{ position: "fixed", left: menu.x, top: menu.y, zIndex: 1500, minWidth: "230px", padding: "6px", border: "1px solid #CBD5E1", borderRadius: "10px", background: "#fff", boxShadow: "0 12px 30px rgba(15,23,42,0.22)" }}
         >
           {ACTIONS.map((action) => (
@@ -47,7 +49,8 @@ export default function EmployeeActionRow({ employee, onAction, children, style 
               {action.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
