@@ -76,6 +76,7 @@ export function useDistrictAuth() {
         return;
       }
       setUser(session.user);
+      setProfile(null);
       setLoading(true);
       try {
         const districtProfile = await getDistrictProfile(client, session.user.id);
@@ -96,7 +97,7 @@ export function useDistrictAuth() {
     };
 
     const { data: authListener } = client.auth.onAuthStateChange((_event, session) => {
-      void resolveSession(session);
+      Promise.resolve().then(() => resolveSession(session));
     });
     client.auth.getSession()
       .then(({ data, error: sessionError }) => {

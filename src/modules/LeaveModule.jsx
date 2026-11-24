@@ -1,76 +1,136 @@
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
+import ExportBar from "../core/ExportBar";
+import { calculateEarnedPL } from "../utils/reportEngine";
 
-export default function LeaveModule({ plLeaveRows, setPlLeaveRows, devToHindi }) {
+const LEAVE_TYPES = ["PL", "CL", "Medical", "Maternity", "Paternity"];
+
+export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");
-  const [name, setName] = useState("");
-  const [year, setYear] = useState("2026");
+  const [leaveType, setLeaveType] = useState("PL");
+  const [year, setYear] = useState(String(new Date().getFullYear()));
   const [fromDt, setFromDt] = useState("");
   const [toDt, setToDt] = useState("");
   const [days, setDays] = useState("");
   const [orderNo, setOrderNo] = useState("");
   const [remark, setRemark] = useState("");
 
-  const handleAddLeave = (e) => {
-    e.preventDefault();
-    if (!belt.trim() || !days) return alert("कृपया बेल्ट नं. और अवकाश के दिन भरें!");
+  const employee = records.find((record) => String(record["BELT NO"] || "").trim().toUpperCase() === belt);
+  const ledger = useMemo(() => (Array.isArray(plLeaveRows) ? plLeaveRows : []), [plLeaveRows]);
+  const plAccount = useMemo(() => records.map((record) => {
+    const employeeBelt = String(record["BELT NO"] || "").trim().toUpperCase();
+    const used = ledger.reduce((sum, row) => {
+      if (String(row["BELT NO"] || "").trim().toUpperCase() !== employeeBelt) return sum;
+      const type = String(row["LEAVE_TYPE"] || "").trim().toUpperCase();
+      if (type && type !== "PL") return sum;
+      return sum + (Number(row["DAYS_TAKEN"] ?? row["DAYS"] ?? 0) || 0);
+    }, 0);
+    const earned = calculateEarnedPL(record["DATE OF JOINING"]);
+    return {
+      "BELT NO": record["BELT NO"],
+      "NAME": record.NAME,
+      "CADER": record.CADER,
+      "कुल अर्जित PL": earned,
+      "कुल ली गई PL": used,
+      "शेष PL (Max 300)": Math.max(0, Math.min(300, earned - used))
+    };
+  }), [records, ledger]);
+  const selectedBalance = plAccount.find((row) => String(row["BELT NO"] || "").trim().toUpperCase() === belt);
+
+  const handleAddLeave = (event) => {
+    event.preventDefault();
+    const requestedDays = Number(days);
+    if (!belt || !employee || !Number.isFinite(requestedDays) || requestedDays <= 0) {
+      alert("कर्मचारी और वैध अवकाश दिवस चुनें।");
+      return;
+    }
+    if (leaveType === "PL" && requestedDays > (selectedBalance?.["शेष PL (Max 300)"] || 0)) {
+      alert("दर्ज PL दिवस उपलब्ध PL शेष से अधिक हैं।");
+      return;
+    }
     const newEntry = {
-      "BELT NO": belt.trim().toUpperCase(),
-      NAME: name.trim(),
+      "BELT NO": employee["BELT NO"],
+      NAME: employee.NAME,
+      LEAVE_TYPE: leaveType,
       LEAVE_YEAR: year,
       FROM_DATE: fromDt,
       TO_DATE: toDt,
-      DAYS_TAKEN: Number(days),
+      DAYS_TAKEN: requestedDays,
       ORDER_NO_DATE: orderNo,
       REMARK: remark
     };
-    setPlLeaveRows((prev) => [newEntry, ...prev]);
-    alert("अवकाश (Leave) रिकॉर्ड सफलतापूर्वक जुड़ गया!");
-    setFromDt(""); setToDt(""); setDays(""); setOrderNo(""); setRemark("");
+    setPlLeaveRows((previous) => [newEntry, ...(previous || [])]);
+    setAllSheets((previous) => ({
+      ...previous,
+      PL_Leave_Account: [newEntry, ...ledger]
+    }));
+    setFromDt("");
+    setToDt("");
+    setDays("");
+    setOrderNo("");
+    setRemark("");
   };
+
+  const leaveRows = ledger.map((row) => ({
+    "BELT NO": row["BELT NO"],
+    "NAME": devToHindi(row.NAME || row["NAME"]),
+    "अवकाश प्रकार": row.LEAVE_TYPE || row.REMARK,
+    "वर्ष": row.LEAVE_YEAR,
+    "अवधि": `${row.FROM_DATE || ""} - ${row.TO_DATE || ""}`,
+    "दिन": row.DAYS_TAKEN ?? row.DAYS,
+    "आदेश नं.": row.ORDER_NO_DATE || row.ORDER
+  }));
 
   return (
     <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
-      <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🏖️ 6. अवकाश प्रविष्टि एवं खाता (Leave Account)</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+        <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🏖️ अवकाश एवं उपार्जित अवकाश लेखा</h2>
+        <ExportBar title="अवकाश लेखा" rows={leaveRows} fileName="Leave_Ledger" />
+      </div>
       <form onSubmit={handleAddLeave} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "16px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <input type="text" required placeholder="बेल्ट नं." value={belt} onChange={(e) => setBelt(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" required placeholder="कर्मचारी का नाम" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder="वर्ष (2026)" value={year} onChange={(e) => setYear(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder="कब से (DD-MM-YYYY)" value={fromDt} onChange={(e) => setFromDt(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder="कब तक (DD-MM-YYYY)" value={toDt} onChange={(e) => setToDt(e.target.value)} style={{ padding: "8px" }} />
-        <input type="number" required placeholder="कुल दिन (Days)" value={days} onChange={(e) => setDays(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder="DOB / आदेश नं." value={orderNo} onChange={(e) => setOrderNo(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder="रिमार्क (PL/CL/EL)" value={remark} onChange={(e) => setRemark(e.target.value)} style={{ padding: "8px" }} />
-        <button type="submit" style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
-          ➕ Save Leave
-        </button>
+        <select required value={belt} onChange={(event) => setBelt(event.target.value)} style={{ padding: "8px" }}>
+          <option value="">कर्मचारी / बेल्ट चुनें</option>
+          {records.map((record) => <option key={record._uid || record["BELT NO"]} value={String(record["BELT NO"] || "").trim().toUpperCase()}>{record["BELT NO"]} — {devToHindi(record.NAME)}</option>)}
+        </select>
+        <select value={leaveType} onChange={(event) => setLeaveType(event.target.value)} style={{ padding: "8px" }}>
+          {LEAVE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+        </select>
+        <input type="number" min="2000" max="2200" placeholder="वर्ष" value={year} onChange={(event) => setYear(event.target.value)} style={{ padding: "8px" }} />
+        <input type="text" placeholder="कब से (DD-MM-YYYY)" value={fromDt} onChange={(event) => setFromDt(event.target.value)} style={{ padding: "8px" }} />
+        <input type="text" placeholder="कब तक (DD-MM-YYYY)" value={toDt} onChange={(event) => setToDt(event.target.value)} style={{ padding: "8px" }} />
+        <input type="number" required min="1" placeholder="कुल दिन" value={days} onChange={(event) => setDays(event.target.value)} style={{ padding: "8px" }} />
+        <input type="text" placeholder="स्वीकृति आदेश नं." value={orderNo} onChange={(event) => setOrderNo(event.target.value)} style={{ padding: "8px" }} />
+        <input type="text" placeholder="रिमार्क" value={remark} onChange={(event) => setRemark(event.target.value)} style={{ padding: "8px" }} />
+        <button type="submit" style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>✅ स्वीकृति दर्ज करें</button>
       </form>
 
+      {selectedBalance && (
+        <p style={{ fontWeight: "bold", color: "#0369A1" }}>
+          {devToHindi(employee.NAME)} — अर्जित PL: {selectedBalance["कुल अर्जित PL"]}, ली गई PL: {selectedBalance["कुल ली गई PL"]}, शेष: {selectedBalance["शेष PL (Max 300)"]}
+        </p>
+      )}
+      <h3>PL खाता ({plAccount.length})</h3>
+      <div style={{ overflowX: "auto", marginBottom: "18px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+          <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "पद", "कुल अर्जित PL", "कुल ली गई PL", "शेष PL (अधिकतम 300)"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
+          <tbody>{plAccount.map((row, index) => (
+            <tr key={records[index]?._uid || row["BELT NO"]}>
+              <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
+              <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(row.NAME)}</td>
+              <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.CADER}</td>
+              <td style={{ padding: "6px", textAlign: "center" }}>{row["कुल अर्जित PL"]}</td>
+              <td style={{ padding: "6px", textAlign: "center" }}>{row["कुल ली गई PL"]}</td>
+              <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold" }}>{row["शेष PL (Max 300)"]}</td>
+            </tr>
+          ))}</tbody>
+        </table>
+      </div>
+      <h3>अवकाश स्वीकृति / प्रविष्टि आदेश ({ledger.length})</h3>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-          <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px" }}>BELT NO</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>NAME</th>
-              <th style={{ padding: "8px" }}>वर्ष</th>
-              <th style={{ padding: "8px" }}>कब से - कब तक</th>
-              <th style={{ padding: "8px" }}>दिन</th>
-              <th style={{ padding: "8px" }}>DOB आदेश नं.</th>
-              <th style={{ padding: "8px" }}>रिमार्क</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plLeaveRows.slice(0, 100).map((r, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["LEAVE_YEAR"]}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["FROM_DATE"]} - {r["TO_DATE"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#B91C1C" }}>{r["DAYS_TAKEN"] || r["DAYS"]}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["ORDER_NO_DATE"] || r["ORDER"]}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{devToHindi(r["REMARK"])}</td>
-              </tr>
-            ))}
-          </tbody>
+          <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "प्रकार", "वर्ष", "अवधि", "दिन", "आदेश नं."].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
+          <tbody>{leaveRows.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
+            {Object.values(row).map((value, cellIndex) => <td key={cellIndex} style={{ padding: "6px", textAlign: cellIndex === 1 ? "left" : "center", fontFamily: cellIndex === 0 || cellIndex > 2 ? "'Times New Roman', Times, serif" : undefined }}>{value}</td>)}
+          </tr>)}</tbody>
         </table>
       </div>
     </div>

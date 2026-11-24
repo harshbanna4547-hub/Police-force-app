@@ -1,17 +1,36 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import ExportBar from "../core/ExportBar";
+
+const CADER_ORDER = ["CI", "SI", "ASI", "HC", "FC"];
+const dateValue = (value) => {
+  const match = String(value || "").match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (match) return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1])).getTime();
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? Number.MAX_SAFE_INTEGER : parsed.getTime();
+};
 
 export default function SeniorityModule({ seniorityList, devToHindi }) {
   const [caderFilter, setCaderFilter] = useState("ALL");
 
   const filtered = useMemo(() => {
-    if (caderFilter === "ALL") return seniorityList;
-    return seniorityList.filter((r) => String(r["CADER"] || "").toUpperCase().includes(caderFilter));
+    const rankRows = caderFilter === "ALL"
+      ? seniorityList
+      : seniorityList.filter((r) => String(r["CADER"] || "").toUpperCase().includes(caderFilter));
+    return [...rankRows].sort((a, b) => {
+      const aRank = CADER_ORDER.findIndex((rank) => String(a.CADER || "").toUpperCase().includes(rank));
+      const bRank = CADER_ORDER.findIndex((rank) => String(b.CADER || "").toUpperCase().includes(rank));
+      return (aRank - bRank) ||
+        (dateValue(a["DATE OF JOINING"]) - dateValue(b["DATE OF JOINING"])) ||
+        String(a["BELT NO"] || "").localeCompare(String(b["BELT NO"] || ""), undefined, { numeric: true });
+    });
   }, [seniorityList, caderFilter]);
+  const exportRows = filtered.map((row, index) => ({ ...row, "वरिष्ठता क्र.": index + 1 }));
 
   return (
     <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
         <h2 style={{ margin: 0, color: "#0B1E3D" }}>📋 12. संवर्ग-वार वरिष्ठता सूची (Seniority List)</h2>
+        <ExportBar title="संवर्ग-वार वरिष्ठता सूची" rows={exportRows} fileName={`Seniority_${caderFilter}`} />
         <select value={caderFilter} onChange={(e) => setCaderFilter(e.target.value)} style={{ padding: "8px 12px", borderRadius: "6px", border: "1px solid #94A3B8" }}>
           <option value="ALL">सभी संवर्ग ({seniorityList.length})</option>
           <option value="CI">CI (निरीक्षक)</option>
@@ -41,13 +60,13 @@ export default function SeniorityModule({ seniorityList, devToHindi }) {
             {filtered.slice(0, 150).map((r, i) => (
               <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
                 <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold" }}>{i + 1}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["CADER"]}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["BELT NO"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
                 <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
                 <td style={{ padding: "6px" }}>{devToHindi(r["FATHER NAME"])}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["DATE OF BIRTH"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#1D63DC" }}>{r["DATE OF JOINING"]}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{r["DATE OF CONFIRMATION"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF BIRTH"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#1D63DC", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF JOINING"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF CONFIRMATION"]}</td>
                 <td style={{ padding: "6px" }}>{devToHindi(r["POSTING"])}</td>
               </tr>
             ))}

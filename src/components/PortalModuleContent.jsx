@@ -61,16 +61,16 @@ export default function PortalModuleContent({
       devToHindi
     },
     POSTING: { records, devToHindi },
-    BHARTI: { records, setRecords, devToHindi },
-    TRAINING: { allSheets, setAllSheets, devToHindi },
-    LEAVE: { plLeaveRows, setPlLeaveRows, devToHindi },
+    BHARTI: { records, setRecords, allSheets, setAllSheets, devToHindi },
+    TRAINING: { records, allSheets, setAllSheets, devToHindi },
+    LEAVE: { records, plLeaveRows, setPlLeaveRows, allSheets, setAllSheets, devToHindi },
     PL300: { plSummary: reports.plSummary, devToHindi },
-    INCREMENT: { allSheets, setAllSheets, devToHindi },
-    ACP: { records, devToHindi },
-    PUNISHMENT: { allSheets, setAllSheets, devToHindi },
+    INCREMENT: { records, allSheets, setAllSheets, devToHindi },
+    ACP: { records, allSheets, setAllSheets, devToHindi },
+    PUNISHMENT: { records, allSheets, setAllSheets, devToHindi },
     PROMOTION: { records, setRecords, allSheets, setAllSheets, devToHindi },
     SENIORITY: { seniorityList: reports.seniorityList, devToHindi },
-    ROSTER: { reports, devToHindi },
+    ROSTER: { records, reports, allSheets, setAllSheets, devToHindi },
     STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob }
   };
   const ActiveModule = selectedModule.component;

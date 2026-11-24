@@ -41,6 +41,20 @@ export function formatDateDDMMYYYY(dt) {
   return `${d}-${m}-${y}`;
 }
 
+export function calculateEarnedPL(joiningDate, asOfDate = new Date()) {
+  const joined = parseAnyDate(joiningDate);
+  if (!joined || joined > asOfDate) return 0;
+
+  let earned = 0;
+  for (let year = joined.getFullYear(); year <= asOfDate.getFullYear(); year += 1) {
+    for (const month of [0, 6]) {
+      const accrualDate = new Date(year, month, 1);
+      if (accrualDate >= joined && accrualDate <= asOfDate) earned += 15;
+    }
+  }
+  return Math.min(300, earned);
+}
+
 export function generateAllReportsData(activeRecs, depRecs = [], plLeaveRows = []) {
   const today = new Date();
 
@@ -167,15 +181,17 @@ export function generateAllReportsData(activeRecs, depRecs = [], plLeaveRows = [
   // 8. PL 300 Summary
   const plUsedMap = {};
   plLeaveRows.forEach((row) => {
-    const bKey = String(row["BELT NO"] || Object.values(row) || "").trim().toUpperCase();
-    const days = Number(row["DAYS"] || Object.values(row) || 0);
-    if (bKey) plUsedMap[bKey] = (plUsedMap[bKey] || 0) + (isNaN(days) ? 0 : days);
+    const leaveType = String(row["LEAVE_TYPE"] || "").trim().toUpperCase();
+    if (leaveType && leaveType !== "PL") return;
+    const bKey = String(row["BELT NO"] || "").trim().toUpperCase();
+    const days = Number(row["DAYS_TAKEN"] ?? row["DAYS"] ?? 0);
+    if (bKey) plUsedMap[bKey] = (plUsedMap[bKey] || 0) + (Number.isFinite(days) ? days : 0);
   });
 
   const plSummary = activeRecs.map((rec) => {
     const bKey = String(rec["BELT NO"] || "").trim().toUpperCase();
     const doj = parseAnyDate(rec["DATE OF JOINING"]);
-    const earned = doj && today >= doj ? Math.floor(((today - doj) / (1000 * 60 * 60 * 24 * 365.25)) * 30) : 0;
+    const earned = calculateEarnedPL(doj, today);
     const used = plUsedMap[bKey] || 0;
     const bal = Math.min(300, Math.max(0, earned - used));
     return {

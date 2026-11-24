@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import ExportBar from "../core/ExportBar";
 
 export default function Pl300ChartModule({ plSummary, devToHindi }) {
   const [search, setSearch] = useState("");
@@ -10,11 +11,17 @@ export default function Pl300ChartModule({ plSummary, devToHindi }) {
       (r) => String(r["BELT NO"] || "").toLowerCase().includes(q) || devToHindi(r["NAME"]).toLowerCase().includes(q)
     );
   }, [plSummary, search, devToHindi]);
+  const exportRows = filtered.map((row) => ({
+    ...row,
+    NAME: devToHindi(row.NAME),
+    POSTING: devToHindi(row.POSTING)
+  }));
 
   return (
     <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
         <h2 style={{ margin: 0, color: "#0B1E3D" }}>📊 7. उपार्जित अवकाश 300 PL चार्ट (PL 300 Summary)</h2>
+        <ExportBar title="300 PL खाता" rows={exportRows} fileName="PL_300_Summary" />
         <input
           type="text"
           placeholder="🔍 बेल्ट नं. या नाम से खोजें..."
@@ -41,11 +48,11 @@ export default function Pl300ChartModule({ plSummary, devToHindi }) {
           <tbody>
             {filtered.map((r, i) => (
               <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "7px", textAlign: "center" }}>{r["BELT NO"]}</td>
+                <td style={{ padding: "7px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
                 <td style={{ padding: "7px", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
-                <td style={{ padding: "7px", textAlign: "center" }}>{r["CADER"]}</td>
+                <td style={{ padding: "7px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
                 <td style={{ padding: "7px" }}>{devToHindi(r["POSTING"])}</td>
-                <td style={{ padding: "7px", textAlign: "center" }}>{r["DATE OF JOINING"]}</td>
+                <td style={{ padding: "7px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF JOINING"]}</td>
                 <td style={{ padding: "7px", textAlign: "center" }}>{r["कुल अर्जित PL"]}</td>
                 <td style={{ padding: "7px", textAlign: "center", color: "#DC2626" }}>{r["कुल ली गई PL"]}</td>
                 <td style={{ padding: "7px", textAlign: "center", fontWeight: "bold", color: "#15803D", backgroundColor: "#F0FDF4" }}>

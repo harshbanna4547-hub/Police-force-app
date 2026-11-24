@@ -1,76 +1,144 @@
-import React, { useState } from "react";
+import { useMemo, useState } from "react";
+import ExportBar from "../core/ExportBar";
+import { formatDateDDMMYYYY, parseAnyDate } from "../utils/reportEngine";
+
+const EXAM_PATHS = {
+  "PCC Exam (FC to HC)": { source: "FC", target: "HC" },
+  "PCC Exam (HC to ASI)": { source: "HC", target: "ASI" },
+  "DPC Promotion (ASI to SI)": { source: "ASI", target: "SI" },
+  "DPC Promotion (SI to CI)": { source: "SI", target: "CI" }
+};
 
 export default function PromotionExamModule({ records, setRecords, allSheets, setAllSheets, devToHindi }) {
+  const [examType, setExamType] = useState(Object.keys(EXAM_PATHS)[0]);
+  const [minimumService, setMinimumService] = useState("0");
+  const [educationFilter, setEducationFilter] = useState("ALL");
   const [belt, setBelt] = useState("");
-  const [name, setName] = useState("");
-  const [examType, setExamType] = useState("PCC Exam (FC to HC)");
-  const [newRank, setNewRank] = useState("HC");
   const [orderNo, setOrderNo] = useState("");
-
-  const promoRows = (allSheets["Posting_History"] || []).filter((r) => String(r["POSTING_PLACE"] || "").includes("PCC") || String(r["POSTING_PLACE"] || "").includes("DPC"));
-
-  const handlePromote = (e) => {
-    e.preventDefault();
-    const bUp = belt.trim().toUpperCase();
-    // Master रिकॉर्ड में पद (CADER) अपडेट करें
-    setRecords((prev) =>
-      prev.map((r) => (String(r["BELT NO"] || "").trim().toUpperCase() === bUp ? { ...r, CADER: newRank } : r))
-    );
+  const [orderDate, setOrderDate] = useState("");
+  const [reviewDate] = useState(() => new Date());
+  const educationOptions = useMemo(() => [...new Set(records.map((record) =>
+    String(record.EDUCATION || record.QUALIFICATION || "").trim()
+  ).filter(Boolean))].sort(), [records]);
+  const sourceRank = EXAM_PATHS[examType].source;
+  const targetRank = EXAM_PATHS[examType].target;
+  const candidates = useMemo(() => records.flatMap((record) => {
+    const cader = String(record.CADER || "").toUpperCase();
+    const joiningDate = parseAnyDate(record["DATE OF JOINING"]);
+    if (!cader.includes(sourceRank) || !joiningDate) return [];
+    const serviceYears = (reviewDate.getTime() - joiningDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
+    const education = String(record.EDUCATION || record.QUALIFICATION || "").trim();
+    if (serviceYears < Number(minimumService || 0)) return [];
+    if (educationFilter !== "ALL" && education !== educationFilter) return [];
+    const employeeBelt = String(record["BELT NO"] || "").trim().toUpperCase();
+    const punishmentCount = (allSheets["Saja_Record"] || []).filter(
+      (row) => String(row["BELT NO"] || "").trim().toUpperCase() === employeeBelt
+    ).length;
+    return [{
+      record,
+      belt: record["BELT NO"],
+      name: record.NAME,
+      cader: record.CADER,
+      education: education || "रिकॉर्ड उपलब्ध नहीं",
+      joiningDate: formatDateDDMMYYYY(joiningDate),
+      serviceYears: serviceYears.toFixed(1),
+      punishmentCount
+    }];
+  }), [records, allSheets, sourceRank, minimumService, educationFilter, reviewDate]);
+  const selectedEmployee = records.find((record) => String(record["BELT NO"] || "").trim().toUpperCase() === belt);
+  const history = (allSheets["Posting_History"] || []).filter((row) =>
+    String(row.POSTING_PLACE || "").includes("[Promotion]")
+  );
+  const exportRows = candidates.map((row) => ({
+    "BELT NO": row.belt,
+    CADER: row.cader,
+    NAME: devToHindi(row.name),
+    EDUCATION: row.education,
+    "नियुक्ति तिथि": row.joiningDate,
+    "सेवा वर्ष": row.serviceYears,
+    "सजा रिकॉर्ड समीक्षा": row.punishmentCount
+  }));
+  const handlePromote = (event) => {
+    event.preventDefault();
+    if (!selectedEmployee) {
+      alert("पात्रता समीक्षा सूची से कर्मचारी चुनें।");
+      return;
+    }
+    if (!window.confirm(`${selectedEmployee.NAME} (${belt}) का ${selectedEmployee.CADER} से ${targetRank} पदोन्नति आदेश दर्ज करें? पात्रता एवं सजा रिकॉर्ड की मैनुअल जाँच सुनिश्चित करें।`)) return;
+    const beltKey = belt.trim().toUpperCase();
+    setRecords((previous) => previous.map((record) =>
+      String(record["BELT NO"] || "").trim().toUpperCase() === beltKey
+        ? { ...record, CADER: targetRank, "PROMOTION ORDER NO": orderNo, "PROMOTION ORDER DATE": orderDate }
+        : record
+    ));
     const entry = {
-      "BELT NO": bUp,
-      NAME: name.trim(),
-      POSTING_PLACE: `[${examType}] -> ${newRank}`,
+      "BELT NO": selectedEmployee["BELT NO"],
+      NAME: selectedEmployee.NAME,
+      POSTING_PLACE: `[Promotion] ${examType} -> ${targetRank}`,
       ORDER_NO_DATE: orderNo,
-      REMARK: "Promotion / PCC"
+      ORDER_DATE: orderDate,
+      REMARK: "Manual eligibility, education and punishment review completed"
     };
-    setAllSheets((prev) => ({ ...prev, Posting_History: [entry, ...(prev["Posting_History"] || [])] }));
-    alert(`पदोन्नति रिकॉर्ड सेव हो गया और पद '${newRank}' अपडेट कर दिया गया!`);
+    setAllSheets((previous) => ({
+      ...previous,
+      Posting_History: [entry, ...(previous["Posting_History"] || [])]
+    }));
+    setBelt("");
     setOrderNo("");
+    setOrderDate("");
   };
 
   return (
     <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
-      <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🎓 11. पदोन्नति एवं विभागीय परीक्षा (PCC Exam / DPC)</h2>
-      <form onSubmit={handlePromote} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "16px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <input type="text" required placeholder="बेल्ट नं." value={belt} onChange={(e) => setBelt(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" required placeholder="कर्मचारी का नाम" value={name} onChange={(e) => setName(e.target.value)} style={{ padding: "8px" }} />
-        <select value={examType} onChange={(e) => setExamType(e.target.value)} style={{ padding: "8px" }}>
-          <option>PCC Exam (FC to HC)</option>
-          <option>PCC Exam (HC to ASI)</option>
-          <option>DPC Promotion (ASI to SI)</option>
-          <option>DPC Promotion (SI to CI)</option>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+        <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🎓 पदोन्नति एवं परीक्षा पात्रता समीक्षा</h2>
+        <ExportBar title="पदोन्नति पात्रता समीक्षा" rows={exportRows} fileName="Promotion_Eligibility_Review" />
+      </div>
+      <p style={{ color: "#92400E" }}>सेवा-अवधि और शिक्षा फ़िल्टर सूची को सीमित करते हैं; विभागीय नियमों के अनुसार अंतिम पात्रता मैनुअल रूप से सत्यापित करें। सजा रिकॉर्ड स्वतः अयोग्यता नहीं बनाता।</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "12px" }}>
+        <select value={examType} onChange={(event) => { setExamType(event.target.value); setBelt(""); }} style={{ padding: "8px" }}>
+          {Object.keys(EXAM_PATHS).map((type) => <option key={type}>{type}</option>)}
         </select>
-        <select value={newRank} onChange={(e) => setNewRank(e.target.value)} style={{ padding: "8px" }}>
-          <option value="HC">नया पद: HC</option>
-          <option value="ASI">नया पद: ASI</option>
-          <option value="SI">नया पद: SI</option>
-          <option value="CI">नया पद: CI</option>
+        <label style={{ display: "grid", gap: "4px" }}>न्यूनतम सेवा वर्ष (स्थानीय नियम)
+          <input type="number" min="0" step="0.5" value={minimumService} onChange={(event) => setMinimumService(event.target.value)} style={{ padding: "8px" }} />
+        </label>
+        <select value={educationFilter} onChange={(event) => setEducationFilter(event.target.value)} style={{ padding: "8px" }}>
+          <option value="ALL">शिक्षा — सभी</option>
+          {educationOptions.map((education) => <option key={education} value={education}>{education}</option>)}
         </select>
-        <input type="text" required placeholder="DOB / आदेश नं." value={orderNo} onChange={(e) => setOrderNo(e.target.value)} style={{ padding: "8px" }} />
-        <button type="submit" style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
-          ✅ Save Promotion
-        </button>
+      </div>
+      <div style={{ overflowX: "auto", marginBottom: "16px" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+          <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "पद", "नाम", "शिक्षा", "नियुक्ति तिथि", "सेवा वर्ष", "सजा रिकॉर्ड", "चयन"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
+          <tbody>{candidates.map((row) => <tr key={row.record._uid || row.belt} style={{ borderBottom: "1px solid #E2E8F0" }}>
+            <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.belt}</td>
+            <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.cader}</td>
+            <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(row.name)}</td>
+            <td style={{ padding: "6px", textAlign: "center" }}>{row.education}</td>
+            <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.joiningDate}</td>
+            <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.serviceYears}</td>
+            <td style={{ padding: "6px", textAlign: "center" }}>{row.punishmentCount ? `${row.punishmentCount} रिकॉर्ड — समीक्षा` : "कोई दर्ज रिकॉर्ड नहीं"}</td>
+            <td style={{ padding: "6px", textAlign: "center" }}><button type="button" onClick={() => setBelt(String(row.belt || "").trim().toUpperCase())}>चुनें</button></td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+      <form onSubmit={handlePromote} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "18px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
+        <input readOnly value={selectedEmployee ? `${selectedEmployee["BELT NO"]} — ${devToHindi(selectedEmployee.NAME)}` : ""} placeholder="ऊपर सूची से कर्मचारी चुनें" style={{ padding: "8px" }} />
+        <input required type="text" placeholder="DOB / आदेश नं." value={orderNo} onChange={(event) => setOrderNo(event.target.value)} style={{ padding: "8px" }} />
+        <input required type="text" placeholder="आदेश दिनांक (DD-MM-YYYY)" value={orderDate} onChange={(event) => setOrderDate(event.target.value)} style={{ padding: "8px" }} />
+        <button type="submit" disabled={!selectedEmployee} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>✅ मैनुअल स्वीकृति के बाद पद अपडेट करें ({targetRank})</button>
       </form>
-
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-        <thead>
-          <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-            <th style={{ padding: "8px" }}>BELT NO</th>
-            <th style={{ padding: "8px", textAlign: "left" }}>NAME</th>
-            <th style={{ padding: "8px" }}>परीक्षा / पदोन्नति विवरण</th>
-            <th style={{ padding: "8px" }}>आदेश नं.</th>
-          </tr>
-        </thead>
-        <tbody>
-          {promoRows.map((r, i) => (
-            <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-              <td style={{ padding: "6px", textAlign: "center" }}>{r["BELT NO"]}</td>
-              <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
-              <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#15803D" }}>{r["POSTING_PLACE"]}</td>
-              <td style={{ padding: "6px", textAlign: "center" }}>{r["ORDER_NO_DATE"]}</td>
-            </tr>
-          ))}
-        </tbody>
+      <h3>दर्ज पदोन्नति आदेश ({history.length})</h3>
+      <ExportBar title="दर्ज पदोन्नति आदेश" rows={history} fileName="Promotion_Orders" />
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", marginTop: "10px" }}>
+        <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "परीक्षा / पदोन्नति", "आदेश नं.", "दिनांक"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
+        <tbody>{history.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
+          <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
+          <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(row.NAME)}</td>
+          <td style={{ padding: "6px", textAlign: "center" }}>{row.POSTING_PLACE}</td>
+          <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_NO_DATE}</td>
+          <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_DATE}</td>
+        </tr>)}</tbody>
       </table>
     </div>
   );
