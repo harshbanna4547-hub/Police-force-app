@@ -77,6 +77,22 @@ body {
   color: var(--text);
 }
 
+.app-shell[data-theme="dark"] main .training-employee-data > div,
+.app-shell[data-theme="dark"] main .training-module section,
+.app-shell[data-theme="dark"] main details,
+.app-shell[data-theme="dark"] main .employee-archive section,
+.app-shell[data-theme="dark"] main .employee-management,
+.app-shell[data-theme="dark"] main .posting-module {
+  background-color: var(--surface-raised) !important;
+  border-color: var(--border) !important;
+}
+
+.app-shell[data-theme="dark"] main input,
+.app-shell[data-theme="dark"] main select,
+.app-shell[data-theme="dark"] main textarea {
+  background-color: #0B1220 !important;
+}
+
 /* टेबल्स के लिए स्मूद टच स्क्रॉल (मोबाइल और टैबलेट पर) */
 table {
   width: 100%;

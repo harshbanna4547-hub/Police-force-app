@@ -45,9 +45,7 @@ export default function EmployeeFooterManager({
   setEditingEmployee,
   onUpdateEmployee,
   onSaveSmartEmployee,
-  onRemoveEmployee,
-  onExportMasterFile,
-  isExportingMaster
+  onRemoveEmployee
 }) {
   const [isSmartFormOpen, setIsSmartFormOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState(null);
@@ -107,9 +105,6 @@ export default function EmployeeFooterManager({
               </button>
               <button type="button" onClick={() => openPicker("SEARCH")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#2563EB", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
                 🔍 Quick Search &amp; Edit
-              </button>
-              <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#0284C7", color: "#fff", fontWeight: "bold", cursor: isExportingMaster ? "wait" : "pointer", opacity: isExportingMaster ? 0.75 : 1 }}>
-                📥 Export Master File
               </button>
             </div>
           </div>
@@ -204,7 +199,7 @@ export default function EmployeeFooterManager({
                       </span>
                     </span>
                     <span style={{ color: selected ? "#1D4ED8" : "#15803D", fontWeight: "bold", whiteSpace: "nowrap" }}>
-                      {pickerMode === "SEARCH" ? "✏️ Edit" : selected ? "✓ चुना गया" : "चुनें"}
+                      {pickerMode === "SEARCH" ? "✏️ चुनें" : selected ? "✓ चुना गया" : "चुनें"}
                     </span>
                   </button>
                 );

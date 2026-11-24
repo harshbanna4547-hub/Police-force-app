@@ -280,7 +280,7 @@ export default function OfficePsStrength({
                                       <td
                                         key={rk}
                                         onClick={() => list.length > 0 && openUnitModal(`${activeSub === "TOTAL" ? u : activeSub} (${rk})`, u, activeSub === "TOTAL" ? "ALL" : activeSub, rk)}
-                                        style={{ padding: "5px", textAlign: "center", border: "1px solid #CBD5E1", color: "#15803D", fontWeight: "bold", cursor: list.length > 0 ? "pointer" : "default", textDecoration: list.length > 0 ? "underline" : "none" }}
+                                        style={{ padding: "5px", textAlign: "center", border: "1px solid #CBD5E1", color: "#15803D", fontWeight: "bold", cursor: list.length > 0 ? "pointer" : "default", textDecoration: "none" }}
                                       >
                                         {list.length}
                                       </td>
@@ -288,7 +288,7 @@ export default function OfficePsStrength({
                                   })}
                                   <td
                                     onClick={() => activeData.total > 0 && openUnitModal(u, u, activeSub === "TOTAL" ? "ALL" : activeSub)}
-                                    style={{ padding: "5px", textAlign: "center", fontWeight: "bold", border: "1px solid #CBD5E1", color: "#15803D", cursor: activeData.total > 0 ? "pointer" : "default", textDecoration: activeData.total > 0 ? "underline" : "none" }}
+                                    style={{ padding: "5px", textAlign: "center", fontWeight: "bold", border: "1px solid #CBD5E1", color: "#15803D", cursor: activeData.total > 0 ? "pointer" : "default", textDecoration: "none" }}
                                   >
                                     {activeData.total}
                                   </td>

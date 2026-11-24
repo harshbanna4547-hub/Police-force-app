@@ -1,2 +1,24 @@
 .training-module { min-width: 0; }
 .training-module .module-table { min-width: 780px; }
+.training-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.training-tabs button,
+.training-module button { border: 1px solid #CBD5E1; border-radius: 7px; padding: 7px 10px; background: #F8FAFC; color: #1E293B; cursor: pointer; }
+.training-tabs button[aria-pressed="true"] { border-color: #1D63DC; background: #1D63DC; color: #fff; font-weight: 700; }
+.training-module section { margin: 12px 0; padding: 14px; border: 1px solid #E2E8F0; border-radius: 10px; }
+.training-employee-data { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.training-employee-data > div { padding: 8px; border-radius: 7px; background: #F8FAFC; }
+.training-employee-data dt { color: #64748B; font-size: .8rem; }
+.training-employee-data dd { margin: 3px 0 0; font-weight: 700; }
+.training-generator-form,
+.training-add-form,
+.training-heading,
+.training-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+.training-generator-form input,
+.training-add-form input,
+.training-status-row input { min-width: 150px; padding: 8px; }
+.training-clash { flex-basis: 100%; color: #B91C1C; }
+@media print {
+  .training-tabs,
+  .training-generator-form button,
+  .training-add-form { display: none !important; }
+}

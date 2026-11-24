@@ -70,7 +70,7 @@ export default function PortalModuleContent({
       devToHindi
     },
     BHARTI: { records, setRecords, allSheets, setAllSheets, devToHindi },
-    TRAINING: { records, allSheets, setAllSheets, devToHindi },
+    TRAINING: { records, allSheets, setAllSheets, devToHindi, activeProfile },
     LEAVE: { records, plLeaveRows, setPlLeaveRows, allSheets, setAllSheets, devToHindi },
     INCREMENT: { records, allSheets, setAllSheets, devToHindi },
     ACP: { records, allSheets, setAllSheets, devToHindi },
