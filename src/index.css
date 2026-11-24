@@ -1,0 +1,78 @@
+/* src/index.css - Mobile, Tablet & PC Responsive Styling */
+* {
+  box-sizing: border-box;
+}
+
+body, input, select, button, table, th, td {
+  font-family: 'Times New Roman', Times, serif;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #F4F7FB;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* टेबल्स के लिए स्मूद टच स्क्रॉल (मोबाइल और टैबलेट पर) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+div[style*="overflowX"] {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* टैबलेट स्क्रीन (1024px से कम) */
+@media (max-width: 1024px) {
+  header h1 {
+    font-size: 1.2rem !important;
+  }
+}
+
+/* मोबाइल स्क्रीन (768px से कम) */
+@media (max-width: 768px) {
+  /* मोबाइल पर Sidebar ऊपर फ्लोटिंग ड्रॉअर की तरह खुलेगा */
+  aside {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.35);
+  }
+
+  /* हेडर और पैडिंग को मोबाइल के अनुकूल बनाना */
+  header {
+    padding: 12px 14px 6px !important;
+  }
+
+  header h1 {
+    font-size: 1.05rem !important;
+  }
+
+  section {
+    padding: 6px 14px !important;
+    grid-template-columns: repeat(2, 1fr) !important; /* मोबाइल पर 2x2 स्टैट कार्ड्स */
+    gap: 10px !important;
+  }
+
+  main {
+    padding: 10px 14px 20px !important;
+  }
+
+  /* इनपुट और बटन उंगलियों से आसानी से दबने लायक बनें */
+  input, select, button {
+    font-size: 14px !important;
+    min-height: 38px;
+  }
+}
+
+/* बहुत छोटे मोबाइल फोन (420px से कम) */
+@media (max-width: 420px) {
+  section {
+    grid-template-columns: 1fr !important; /* 1 कॉलम स्टैट कार्ड्स */
+  }
+}
