@@ -152,13 +152,20 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   }, [districtNames, form.DISTRICT, form.STATE]);
   const legacyDistrict = useMemo(() => matchStandardDistrict(form.DISTRICT), [form.DISTRICT]);
   const districtRows = useMemo(
-    () => (records || []).filter((row) => matchStandardDistrict(row.DISTRICT) === legacyDistrict),
+    () => legacyDistrict
+      ? (records || []).filter((row) => matchStandardDistrict(row.DISTRICT) === legacyDistrict)
+      : [],
     [records, legacyDistrict]
   );
   const districtGeo = useMemo(
     () => geoIndex[legacyDistrict] || CHITTOR_BASE_GEO[legacyDistrict] || { TAHSIL: new Set(), BLOCK: new Set(), PS: new Set(), VILLAGES: new Set() },
     [geoIndex, legacyDistrict]
   );
+  const localGeoLocations = useMemo(() => legacyDistrict === "fpÙkkSMx<+"
+    ? Object.values(RAJASTHAN_PINCODE_GEO).flat().filter((location) =>
+      matchStandardDistrict(location.district) === legacyDistrict
+    )
+    : [], [legacyDistrict]);
   const selectedTahsilRows = useMemo(
     () => districtRows.filter((row) => cleanDev(row.TAHSIL || row.CIRCLE) === form.TAHSIL),
     [districtRows, form.TAHSIL]
@@ -169,6 +176,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   );
   const villageOptions = useMemo(() => uniqueGeoNames(
     [
+      ...(!form.TAHSIL ? districtGeo.VILLAGES : []),
       ...selectedAreaRows.map((row) => cleanDev(row.VILLAGE || row["VILLAGE "])),
       ...postalLocations.filter((location) =>
         (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
@@ -177,28 +185,35 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       ...districtLocations.filter((location) =>
         (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
         (!form.BLOCK || !location.block || location.block === form.BLOCK)
+      ).map((location) => location.village),
+      ...localGeoLocations.filter((location) =>
+        (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
+        (!form.BLOCK || !location.block || location.block === form.BLOCK)
       ).map((location) => location.village)
     ].filter(Boolean)
-  ), [selectedAreaRows, postalLocations, districtLocations, form.BLOCK, form.TAHSIL]);
+  ), [districtGeo, selectedAreaRows, postalLocations, districtLocations, localGeoLocations, form.BLOCK, form.TAHSIL]);
   const tahsilOptions = useMemo(() => uniqueGeoNames([
     ...districtGeo.TAHSIL,
     ...districtRows.map((row) => cleanDev(row.TAHSIL || row.CIRCLE)).filter(Boolean),
     ...postalLocations.map((location) => location.block).filter(Boolean),
-    ...districtLocations.map((location) => location.block).filter(Boolean)
-  ]), [districtGeo, districtRows, postalLocations, districtLocations]);
+    ...districtLocations.map((location) => location.block).filter(Boolean),
+    ...localGeoLocations.map((location) => location.block).filter(Boolean)
+  ]), [districtGeo, districtRows, postalLocations, districtLocations, localGeoLocations]);
   const blockOptions = useMemo(() => {
     const selectedTahsilBlocks = selectedTahsilRows.map((row) => cleanDev(row.BLOCK)).filter(Boolean);
     const blocks = selectedTahsilBlocks.length ? selectedTahsilBlocks : [...districtGeo.BLOCK];
     return uniqueGeoNames([
       ...blocks,
       ...postalLocations.map((location) => location.block).filter(Boolean),
-      ...districtLocations.map((location) => location.block).filter(Boolean)
+      ...districtLocations.map((location) => location.block).filter(Boolean),
+      ...localGeoLocations.map((location) => location.block).filter(Boolean)
     ]);
-  }, [selectedTahsilRows, districtGeo, postalLocations, districtLocations]);
+  }, [selectedTahsilRows, districtGeo, postalLocations, districtLocations, localGeoLocations]);
   const homePsOptions = useMemo(() => [...new Set([
     ...selectedAreaRows.map((row) => cleanDev(row["HOME PS"] || row["POLICE STATION"])).filter(Boolean),
+    ...localGeoLocations.map((location) => location.homePS).filter(Boolean),
     ...districtGeo.PS
-  ])], [selectedAreaRows, districtGeo]);
+  ])], [selectedAreaRows, districtGeo, localGeoLocations]);
   const nextPLDays = calculateDays(plDraft.fromDate, plDraft.toDate);
   const beltEnabled = form.CADER === "HC" || form.CADER.startsWith("FC");
   const usedBelts = getUsedBeltNumbers(records);
@@ -526,7 +541,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     >
       <section style={{ width: "100%", maxWidth: "1240px", maxHeight: "96vh", overflowY: "auto", background: "#F1F5F9", borderRadius: "14px", boxShadow: "0 25px 70px rgba(0,0,0,0.32)" }}>
         <header style={{ position: "sticky", top: 0, zIndex: 2, padding: "15px 20px", background: "linear-gradient(100deg,#1456B8,#1D63DC)", color: "#fff", borderRadius: "14px 14px 0 0", fontSize: "1.08rem", fontWeight: 800 }}>
-          ➕ नवीन अधिकारी / कर्मचारी प्रविष्टि फॉर्म (जिला चित्तौड़गढ़)
+          ➕ नवीन अधिकारी / कर्मचारी प्रविष्टि फॉर्म
         </header>
 
         <div style={{ padding: "16px" }}>
@@ -549,7 +564,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                 </select>
               </label>
               <label style={labelStyle}>
-                खाली बेल्ट नं. (HC/FC साझा) {beltEnabled ? `(सुझाव: ${form["BELT NO"] || "उपलब्ध नहीं"})` : "(अधिकारी पद पर वैकल्पिक)"}
+                खाली बेल्ट नं. (HC/FC साझा) {beltEnabled ? `(सुझाव: ${nextAvailableBelt})` : "(अधिकारी पद पर वैकल्पिक)"}
                 <input
                   type="text"
                   list="smart-employee-belts"
@@ -560,7 +575,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                   style={{ ...fieldStyle, ...inputFont, background: beltEnabled ? "#fff" : "#E2E8F0" }}
                 />
                 <datalist id="smart-employee-belts">{availableBelts.map((belt) => <option key={belt} value={belt} />)}</datalist>
-                <small style={{ display: "block", color: "#15803D", marginTop: "4px" }}>उपलब्ध खाली बेल्ट नं.: {form["BELT NO"] || "कोई उपलब्ध नहीं"}</small>
+                <small style={{ display: "block", color: "#15803D", marginTop: "4px" }}>उपलब्ध खाली बेल्ट नं.: {nextAvailableBelt}</small>
               </label>
               {field("जिले में आगमन आदेश नं.", "DISTRICT JOINING ORDER NO")}
               {field("आगमन आदेश दिनांक (DD-MM-YYYY)", "DISTRICT JOINING ORDER DATE")}

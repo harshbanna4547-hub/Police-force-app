@@ -237,7 +237,7 @@ export function getOfflinePincodeGeo(pincode, records = [], knownLocations = {})
   );
   const known = knownLocations[pin];
   const fromRecords = localRecords.map((record) => ({
-    village: readFirst(record, ["VILLAGE", "VILLAGE ", "POST OFFICE", "POST OFFICE NAME"]),
+    village: cleanPostOfficeName(readFirst(record, ["VILLAGE", "VILLAGE ", "POST OFFICE", "POST OFFICE NAME"])),
     district: readFirst(record, ["DISTRICT"]),
     state: readFirst(record, ["STATE", "STATE NAME"]) || (/^3[0-4]/.test(pin) ? "Rajasthan" : ""),
     block: readFirst(record, ["BLOCK", "TAHSIL", "CIRCLE"]),

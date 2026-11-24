@@ -111,8 +111,9 @@ export function matchStandardDistrict(rawDist) {
   if (!s) return "";
   if (RAJ_ALL_DISTRICTS_DEVLYS.includes(s)) return s;
 
+  const englishKey = s.toLowerCase().replace(/[^a-z0-9]/g, "");
   const englishIndex = RAJ_ALL_DISTRICTS_ENGLISH.findIndex(
-    (district) => district.toLowerCase() === s.toLowerCase()
+    (district) => district.toLowerCase().replace(/[^a-z0-9]/g, "") === englishKey
   );
   if (englishIndex >= 0) return RAJ_ALL_DISTRICTS_DEVLYS[englishIndex];
 
