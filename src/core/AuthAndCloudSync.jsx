@@ -1,10 +1,5 @@
 import { useState } from "react";
-import { DISTRICT_OPTIONS, normalizeDistrictId } from "./districtAuth";
-import {
-  OFFLINE_DEMO_EMAIL,
-  OFFLINE_DEMO_PASSWORD
-} from "./offlineDemoAuth.js";
-import { getOfficeServerConfig } from "./lanSyncClient.js";
+import { DISTRICT_OPTIONS } from "./districtAuth";
 
 export default function AuthAndCloudSync({
   districtName,
@@ -13,8 +8,28 @@ export default function AuthAndCloudSync({
   onCloudSync,
   cloudConfigured,
   syncStatus,
-  syncing
+  syncing,
+  isOfflineDemo,
+  onOfficeSignIn
 }) {
+  const [officeKey, setOfficeKey] = useState("");
+  const [officeError, setOfficeError] = useState("");
+  const [connectingOffice, setConnectingOffice] = useState(false);
+
+  const connectOffice = async () => {
+    setConnectingOffice(true);
+    setOfficeError("");
+    try {
+      await onOfficeSignIn(officeKey);
+      setOfficeKey("");
+    } catch (error) {
+      console.error("GR office connection failed:", error);
+      setOfficeError(error.message || "GR Server से कनेक्शन असफल हुआ।");
+    } finally {
+      setConnectingOffice(false);
+    }
+  };
+
   return (
     <section style={{ padding: "12px 10px", borderTop: "1px solid #1E293B", display: "grid", gap: "8px" }}>
       <strong style={{ color: "#fff", whiteSpace: "normal" }}>👮‍♂️ District: {districtName}</strong>
@@ -28,6 +43,18 @@ export default function AuthAndCloudSync({
         {syncing ? "⏳ Cloud sync…" : "☁️ Cloud Sync / Backup"}
       </button>
       <small role="status" style={{ color: "#CBD5E1", whiteSpace: "normal" }}>{syncStatus}</small>
+      {isOfflineDemo && (
+        <>
+          <label style={{ display: "grid", gap: "6px", color: "#CBD5E1", whiteSpace: "normal" }}>
+            GR Server Access Key
+            <input type="password" value={officeKey} onChange={(event) => setOfficeKey(event.target.value)} autoComplete="off" style={{ minWidth: 0, padding: "8px", borderRadius: "6px", border: "1px solid #475569", fontFamily: "'Times New Roman', Times, serif" }} />
+          </label>
+          <button type="button" onClick={connectOffice} disabled={connectingOffice || officeKey.trim().length < 32} style={{ textAlign: "left", padding: "9px 10px", borderRadius: "8px", border: "1px solid #475569", cursor: connectingOffice ? "wait" : "pointer", background: "#1E3A5F", color: "#fff", fontWeight: "bold", opacity: connectingOffice ? 0.7 : 1 }}>
+            {connectingOffice ? "⏳ Connecting…" : "🔑 Connect to GR Server"}
+          </button>
+          {officeError && <small role="alert" style={{ color: "#FCA5A5", whiteSpace: "normal" }}>{officeError}</small>}
+        </>
+      )}
       <button
         type="button"
         onClick={onLogout}
@@ -39,49 +66,21 @@ export default function AuthAndCloudSync({
   );
 }
 
-export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn, onOfficeSignIn }) {
-  const [email, setEmail] = useState(OFFLINE_DEMO_EMAIL);
-  const [password, setPassword] = useState("");
-  const [district, setDistrict] = useState("CHITTORGARH");
-  const [otherDistrict, setOtherDistrict] = useState("");
+export function DistrictPoliceLoginScreen({ loading, error, onSignIn }) {
+  const [userId, setUserId] = useState("admin");
+  const [password, setPassword] = useState("123456");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const [officeServerUrl, setOfficeServerUrl] = useState(() => getOfficeServerConfig().url);
-  const [officeAccessKey, setOfficeAccessKey] = useState("");
-
-  const attemptSignIn = async (loginEmail, loginPassword, districtId) => {
-    setSubmitting(true);
-    setSubmitError("");
-    try {
-      await onSignIn(loginEmail.trim(), loginPassword, districtId);
-    } catch (signInError) {
-      console.error("District login failed:", signInError);
-      setSubmitError(signInError.message || "लॉगिन असफल हुआ।");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const submit = async (event) => {
     event.preventDefault();
-    const districtId = district === "OTHER" ? normalizeDistrictId(otherDistrict) : district;
-    await attemptSignIn(email, password, districtId);
-  };
-
-  const loginDemo = () => attemptSignIn(
-    OFFLINE_DEMO_EMAIL,
-    OFFLINE_DEMO_PASSWORD,
-    "CHITTORGARH"
-  );
-
-  const loginOffice = async () => {
     setSubmitting(true);
     setSubmitError("");
     try {
-      await onOfficeSignIn(officeServerUrl, officeAccessKey);
+      await onSignIn(userId.trim(), password, "CHITTORGARH");
     } catch (signInError) {
-      console.error("Direct Office login failed:", signInError);
-      setSubmitError(signInError.message || "Direct Office Login असफल हुआ।");
+      console.error("District login failed:", signInError);
+      setSubmitError(signInError.message || "लॉगिन असफल हुआ।");
     } finally {
       setSubmitting(false);
     }
@@ -97,56 +96,22 @@ export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn
         </div>
         <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
           जिला
-          <select value={district} onChange={(event) => setDistrict(event.target.value)} disabled={!configured} style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px" }}>
-            {DISTRICT_OPTIONS.map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
-            <option value="OTHER">अन्य जिला (प्रशासक द्वारा जोड़ा गया)</option>
+          <select value="CHITTORGARH" disabled style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px" }}>
+            {DISTRICT_OPTIONS.filter((option) => option.code === "CHITTORGARH").map((option) => <option key={option.code} value={option.code}>{option.name}</option>)}
           </select>
         </label>
-        {district === "OTHER" && (
-          <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-            जिला कोड / नाम
-            <input value={otherDistrict} onChange={(event) => setOtherDistrict(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px" }} />
-          </label>
-        )}
         <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-          ईमेल / यूज़रनेम
-          <input type="text" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
+          यूज़र ID
+          <input type="text" autoComplete="username" value={userId} onChange={(event) => setUserId(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
         </label>
         <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
           पासवर्ड
           <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
         </label>
-        {!configured && (
-          <p role="status" style={{ margin: 0, padding: "10px", borderRadius: "8px", background: "#FEF3C7", color: "#92400E" }}>
-            Supabase credentials नहीं हैं। Offline Demo केवल अलग स्थानीय डेमो डेटा खोलता है; यह cloud या वास्तविक Chittorgarh डेटा नहीं खोलता।
-          </p>
-        )}
         {(submitError || error) && <p role="alert" style={{ margin: 0, color: "#B91C1C" }}>{submitError || error}</p>}
         <button type="submit" disabled={loading || submitting} style={{ padding: "11px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-          {loading || submitting ? "⏳ कृपया प्रतीक्षा करें…" : "🔐 Login"}
+          {loading || submitting ? "⏳ कृपया प्रतीक्षा करें…" : "🔒 Login"}
         </button>
-        <button type="button" onClick={loginDemo} disabled={loading || submitting} style={{ padding: "11px", border: "1px solid #0F766E", borderRadius: "8px", background: "#ECFDF5", color: "#065F46", fontWeight: "bold", cursor: "pointer" }}>
-          ⚡ Quick Demo / Offline Login
-        </button>
-        <div style={{ borderTop: "1px solid #E2E8F0", paddingTop: "14px", display: "grid", gap: "10px" }}>
-          <strong style={{ color: "#0B1E3D" }}>GR कार्यालय LAN सर्वर</strong>
-          <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-            GR PC Server URL
-            <input type="url" value={officeServerUrl} onChange={(event) => setOfficeServerUrl(event.target.value)} placeholder="http://192.168.1.10:5050" style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
-          </label>
-          <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
-            Office Access Key
-            <input type="password" autoComplete="current-password" value={officeAccessKey} onChange={(event) => setOfficeAccessKey(event.target.value)} placeholder="GR PC server console से key लें" style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
-          </label>
-          <button type="button" onClick={loginOffice} disabled={loading || submitting || !officeServerUrl || officeAccessKey.trim().length < 32 || !onOfficeSignIn} style={{ padding: "11px", border: "1px solid #1D4ED8", borderRadius: "8px", background: "#EFF6FF", color: "#1E40AF", fontWeight: "bold", cursor: "pointer" }}>
-            ⚡ Direct Office Login
-          </button>
-          <small style={{ color: "#64748B" }}>Office Access Key server console या `server/data/office_access.token` से लें; डेमो पासवर्ड से असली कार्यालय डेटा नहीं खुलता।</small>
-        </div>
-        <small style={{ color: "#64748B" }}>
-          Offline Demo credentials: {OFFLINE_DEMO_EMAIL} / {OFFLINE_DEMO_PASSWORD} (या admin / 123456); यह अलग डेमो डेटा है।
-        </small>
-        <small style={{ color: "#64748B" }}>नया जिला यूज़र केवल प्रशासक Supabase में provision कर सकता है।</small>
       </form>
     </main>
   );

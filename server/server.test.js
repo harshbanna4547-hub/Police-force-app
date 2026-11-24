@@ -56,6 +56,7 @@ test("protects the LAN data API and keeps district writes versioned", async () =
     assert.deepEqual((await loaded.json()).payload.records, [{ NAME: "Test Employee" }]);
 
     const previousWindow = globalThis.window;
+    const previousFetch = globalThis.fetch;
     const localStorageValues = new Map();
     globalThis.window = {
       localStorage: {
@@ -67,8 +68,12 @@ test("protects the LAN data API and keeps district writes versioned", async () =
       clearTimeout,
       location: { hostname: "127.0.0.1" }
     };
+    globalThis.fetch = (url, options) => previousFetch(
+      String(url).replace("http://127.0.0.1:5050", baseUrl),
+      options
+    );
     try {
-      saveOfficeServerConfig(baseUrl, "test-office-key-123456789012345678901234");
+      saveOfficeServerConfig("test-office-key-123456789012345678901234");
       const pushed = await synchronizeOfficeVault("CHITTORGARH", {
         records: [{ NAME: "Synced from client" }],
         updatedAt: "2026-11-24T11:00:00.000Z"
@@ -76,6 +81,7 @@ test("protects the LAN data API and keeps district writes versioned", async () =
       assert.equal(pushed.direction, "push");
       assert.equal(pushed.updatedAt, "2026-11-24T11:00:00.000Z");
     } finally {
+      globalThis.fetch = previousFetch;
       if (previousWindow === undefined) delete globalThis.window;
       else globalThis.window = previousWindow;
     }

@@ -13,6 +13,7 @@ export default function Sidebar({
   syncStatus,
   syncing,
   onCloudSync,
+  onOfficeSignIn,
   onLogout,
   onDownloadReports
 }) {
@@ -92,6 +93,8 @@ export default function Sidebar({
           cloudConfigured={cloudConfigured}
           syncStatus={syncStatus}
           syncing={syncing}
+          isOfflineDemo={authProfile.offline_demo}
+          onOfficeSignIn={onOfficeSignIn}
         />
 
         <div style={{ padding: "12px", fontSize: "0.72rem", color: "#64748B", textAlign: "center", borderTop: "1px solid #1E293B" }}>

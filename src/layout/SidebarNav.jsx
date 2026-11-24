@@ -10,7 +10,8 @@ export default function SidebarNav({
   authUser,
   authProfile,
   onLogout,
-  cloudConfigured
+  cloudConfigured,
+  onOfficeSignIn
 }) {
   return (
     <Sidebar
@@ -23,6 +24,7 @@ export default function SidebarNav({
       authUser={authUser}
       authProfile={authProfile}
       cloudConfigured={cloudConfigured}
+      onOfficeSignIn={onOfficeSignIn}
       syncStatus={portalData.cloudSyncStatus}
       syncing={portalData.isCloudSyncing}
       onCloudSync={portalData.onCloudSync}

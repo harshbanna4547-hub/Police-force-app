@@ -35,10 +35,8 @@ export default function App() {
     return (
       <DistrictPoliceLoginScreen
         loading={auth.loading}
-        configured={auth.configured}
         error={auth.error}
         onSignIn={auth.signIn}
-        onOfficeSignIn={auth.signInOffice}
       />
     );
   }
@@ -58,6 +56,7 @@ export default function App() {
         authUser={auth.user}
         authProfile={auth.profile}
         cloudConfigured={auth.configured && !auth.profile?.offline_demo && !auth.profile?.office_lan}
+        onOfficeSignIn={auth.signInOffice}
         onLogout={handleLogout}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>

@@ -185,7 +185,7 @@ export function useDistrictAuth() {
         return offlineIdentity.profile;
       }
       if (!client) {
-        throw new Error("Supabase उपलब्ध नहीं है। Offline Demo credentials या Direct Office Login इस्तेमाल करें।");
+        throw new Error("Supabase उपलब्ध नहीं है। Chittorgarh Demo credentials जाँचें।");
       }
 
       localStorage.removeItem(OFFLINE_AUTH_STORAGE_KEY);
@@ -208,11 +208,11 @@ export function useDistrictAuth() {
     }
   }, []);
 
-  const signInOffice = useCallback(async (serverUrl, officeToken) => {
+  const signInOffice = useCallback(async (officeToken) => {
     setLoading(true);
     setError("");
     try {
-      saveOfficeServerConfig(serverUrl, officeToken);
+      saveOfficeServerConfig(officeToken);
       await fetchOfficeDistrictData("CHITTORGARH");
       const officeIdentity = createOfficeLanIdentity();
       localStorage.setItem(OFFICE_AUTH_STORAGE_KEY, "true");
@@ -221,7 +221,7 @@ export function useDistrictAuth() {
       setProfile(officeIdentity.profile);
       return officeIdentity.profile;
     } catch (signInError) {
-      setError(signInError.message || "Direct Office Login असफल हुआ।");
+      setError(signInError.message || "GR Server Login असफल हुआ।");
       throw signInError;
     } finally {
       setLoading(false);

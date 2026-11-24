@@ -1,4 +1,3 @@
-export const OFFICE_SERVER_URL_KEY = "police_gr_server_url";
 export const OFFICE_SERVER_TOKEN_KEY = "police_gr_server_token";
 
 const OFFICE_DISTRICT_ID = "CHITTORGARH";
@@ -13,8 +12,6 @@ export class OfficeServerError extends Error {
 }
 
 function getDefaultServerUrl() {
-  const configuredUrl = String(import.meta.env?.VITE_GR_SERVER_URL || "").trim();
-  if (configuredUrl) return configuredUrl.replace(/\/+$/, "");
   if (typeof window !== "undefined" && window.location.hostname) {
     return `http://${window.location.hostname}:5050`;
   }
@@ -22,37 +19,25 @@ function getDefaultServerUrl() {
 }
 
 export function getOfficeServerConfig() {
-  const storedUrl = window.localStorage.getItem(OFFICE_SERVER_URL_KEY);
   const storedToken = window.localStorage.getItem(OFFICE_SERVER_TOKEN_KEY);
   return {
-    url: String(storedUrl || getDefaultServerUrl()).trim().replace(/\/+$/, ""),
+    url: getDefaultServerUrl(),
     token: String(storedToken || "").trim()
   };
 }
 
-export function saveOfficeServerConfig(urlValue, tokenValue) {
-  let url;
-  try {
-    url = new URL(String(urlValue || "").trim());
-  } catch {
-    throw new OfficeServerError("GR सर्वर का URL सही नहीं है।", "CONFIG_INVALID");
-  }
-  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.pathname !== "/" || url.search || url.hash) {
-    throw new OfficeServerError("GR सर्वर URL में केवल http(s)://IP:5050 दर्ज करें।", "CONFIG_INVALID");
-  }
-
+export function saveOfficeServerConfig(tokenValue) {
   const token = String(tokenValue || "").trim();
   if (token.length < 32) {
     throw new OfficeServerError("Office Access Key कम-से-कम 32 अक्षर की होनी चाहिए।", "CONFIG_INVALID");
   }
 
-  window.localStorage.setItem(OFFICE_SERVER_URL_KEY, url.origin);
   window.localStorage.setItem(OFFICE_SERVER_TOKEN_KEY, token);
-  return { url: url.origin, token };
+  return { url: getDefaultServerUrl(), token };
 }
 
 export function clearOfficeServerConfig() {
-  window.localStorage.removeItem(OFFICE_SERVER_URL_KEY);
+  window.localStorage.removeItem("police_gr_server_url");
   window.localStorage.removeItem(OFFICE_SERVER_TOKEN_KEY);
 }
 
