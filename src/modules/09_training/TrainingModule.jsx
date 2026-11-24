@@ -116,8 +116,6 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const [toDate, setToDate] = useState("");
   const [orderNo, setOrderNo] = useState("");
   const [orderDate, setOrderDate] = useState("");
-  const [belt, setBelt] = useState("");
-  const [name, setName] = useState("");
   const [newCourse, setNewCourse] = useState(REQUIRED_COURSES[0].label);
   const [newFrom, setNewFrom] = useState("");
   const [newTo, setNewTo] = useState("");
@@ -138,11 +136,15 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
     INSTITUTION: "", FROM_DATE: "", TO_DATE: "", MASTER_TRAINER: "",
     AGE_13_18: "", AGE_18_35: "", AGE_35_PLUS: ""
   });
+  const [dtcForm, setDtcForm] = useState({
+    WEEK_FROM: "", WEEK_TO: "", POLICE_STATION: "", COURSE_NAME: "", INSTRUCTOR: "", TRAINEES: ""
+  });
 
   const history = allSheets.Training_History || [];
   const nominations = allSheets.Training_Nominations || [];
   const igotRows = allSheets.Training_iGOT || [];
   const womenRows = allSheets.Training_Women_Programs || [];
+  const dtcRows = allSheets.Training_DTC_Roster || [];
   const filteredNominations = nominations.filter((row) => row.CATEGORY === category);
   const missingRows = getMissingTrainingCourses(records, history);
   const filteredMissingRows = missingRows.filter((row) => {
@@ -164,13 +166,25 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const employeeHistory = employee
     ? history.filter((row) => sameTrainingEmployee(employee, row))
     : [];
+  const normalizeCourseAliases = (value) => {
+    const normalized = String(value || "").trim().toLocaleLowerCase();
+    const required = REQUIRED_COURSES.find((item) =>
+      item.label.toLocaleLowerCase() === normalized ||
+      item.aliases.some((alias) => alias.toLocaleLowerCase() === normalized)
+    );
+    return required ? required.aliases.map((alias) => alias.toLocaleLowerCase()) : [normalized];
+  };
   const recentHistory = employeeHistory.filter((row) => {
     const trainingDate = parseDate(row.TO_DATE || row.FROM_DATE);
     return Number.isFinite(trainingDate) && trainingDate >= TRAINING_LOOKBACK_START;
   });
   const alreadyCompleted = employeeHistory.some((row) =>
-    String(row.COURSE_NAME || "").trim().toLocaleLowerCase() === course.trim().toLocaleLowerCase() && course.trim()
+    normalizeCourseAliases(course).some((alias) =>
+      alias && String(row.COURSE_NAME || "").toLocaleLowerCase().includes(alias)
+    )
   );
+  const invalidTrainingRange = Number.isFinite(parseDate(fromDate)) &&
+    Number.isFinite(parseDate(toDate)) && parseDate(fromDate) > parseDate(toDate);
   const dateClash = employee && nominations.some((row) =>
     row.STATUS === "PENDING" &&
     sameTrainingEmployee(employee, row) &&
@@ -179,8 +193,8 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
 
   const addHistory = async (event) => {
     event.preventDefault();
-    const employeeBelt = detailEmployee ? detailEmployee["BELT NO"] || detailEmployee["BELT NO."] : belt;
-    const employeeName = detailEmployee ? detailEmployee.NAME : name;
+    const employeeBelt = detailEmployee?.["BELT NO"] || detailEmployee?.["BELT NO."] || "";
+    const employeeName = detailEmployee?.NAME || "";
     const row = {
       "BELT NO": String(employeeBelt || "").toUpperCase(),
       NAME: employeeName,
@@ -215,8 +229,6 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
     setNewTo("");
     setNewInstitute("");
     setNewCourse(REQUIRED_COURSES[0].label);
-    setBelt("");
-    setName("");
     setDetailEmployee(null);
   };
 
@@ -244,7 +256,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   };
 
   const generateOtherDocument = async () => {
-    if (!employee || !course.trim() || !fromDate || !toDate || !institute.trim()) return;
+    if (!employee || !course.trim() || !fromDate || !toDate || !institute.trim() || invalidTrainingRange) return;
     setSaving(true);
     const nomination = makeNomination();
     const html = renderTrainingDocument(documentType, nomination, documentInstructions);
@@ -263,7 +275,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
 
   const generateNomination = async (event) => {
     event.preventDefault();
-    if (!employee || !course.trim() || alreadyCompleted || dateClash) return;
+    if (!employee || !course.trim() || alreadyCompleted || dateClash || invalidTrainingRange) return;
     setSaving(true);
     const nomination = makeNomination();
     const html = renderTrainingDocument("WIRELESS", nomination);
@@ -326,6 +338,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const pendingRows = filteredNominations.filter((row) => row.STATUS === "PENDING");
   const completedRows = filteredNominations.filter((row) => row.STATUS === "COMPLETED");
   const notDoneRows = filteredNominations.filter((row) => row.STATUS === "NOT_DONE");
+  const uniqueRecords = [...new Map(records.map((record) => [getTrainingEmployeeKey(record), record])).values()];
   const detailHistory = detailEmployee
     ? history.filter((row) => sameTrainingEmployee(detailEmployee, row))
     : [];
@@ -335,7 +348,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const detailPending = detailEmployee
     ? nominations.filter((row) => row.STATUS === "PENDING" && sameTrainingEmployee(row, detailEmployee))
     : [];
-  const igotData = records.map((record, index) => {
+  const igotData = uniqueRecords.map((record, index) => {
     const beltNo = record["BELT NO"] || record["BELT NO."] || "";
     const tracking = igotRows.find((row) => sameTrainingEmployee(row, record)) || {};
     return {
@@ -346,7 +359,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
       Posting: record.POSTING || "",
       "SSO ID": tracking.SSO_ID || record.SSO_ID || "",
       Mobile: record["MOBILE NO 1"] || record["MOBILE NO"] || "",
-      Registered: tracking.REGISTERED || "No",
+      Registered: String(tracking.REGISTERED || "No").toLowerCase() === "yes" ? "Yes" : "No",
       "AI Courses": Number(tracking.AI_COURSES || 0),
       "Other Courses": Number(tracking.OTHER_COURSES || 0),
       _key: getTrainingEmployeeKey(record),
@@ -356,6 +369,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const registeredCount = igotData.filter((row) => String(row.Registered).toLowerCase() === "yes").length;
   const igotCompletedCount = igotData.filter((row) => row["AI Courses"] + row["Other Courses"] > 0).length;
   const currentWomenRows = womenRows.filter((row) => !womenMonth || String(row.FROM_DATE || "").slice(0, 7) === womenMonth);
+  const currentDtcRows = dtcRows.filter((row) => !womenMonth || String(row.WEEK_FROM || "").slice(0, 7) === womenMonth);
   const womenTotal = ["AGE_13_18", "AGE_18_35", "AGE_35_PLUS"].reduce((total, key) => total + Number(womenForm[key] || 0), 0);
 
   const updateIgot = (record, field, value) => {
@@ -429,6 +443,36 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
     }
     setWomenForm({ INSTITUTION: "", FROM_DATE: "", TO_DATE: "", MASTER_TRAINER: "", AGE_13_18: "", AGE_18_35: "", AGE_35_PLUS: "" });
   };
+  const addDtcRoster = async (event) => {
+    event.preventDefault();
+    const row = { ...dtcForm, CATEGORY: "DTC", CREATED_AT: new Date().toISOString() };
+    const reportHtml = renderTrainingDocument("WIRELESS", {
+      NAME: row.POLICE_STATION,
+      "FATHER NAME": "",
+      CADER: "DTC साप्ताहिक प्रशिक्षण",
+      "BELT NO": "",
+      POSTING: row.INSTRUCTOR,
+      MOBILE: "",
+      EMAIL: "",
+      EDUCATION: "",
+      DOB: "",
+      COURSE_NAME: row.COURSE_NAME,
+      INSTITUTE: "DTC पुलिस लाइन चित्तौड़गढ़",
+      FROM_DATE: row.WEEK_FROM,
+      TO_DATE: row.WEEK_TO
+    });
+    try {
+      await saveLetterToVault(activeProfile, "DTC", `DTC_Weekly_${Date.now()}.html`, reportHtml);
+      setAllSheets((previous) => ({
+        ...previous,
+        Training_DTC_Roster: [...(previous.Training_DTC_Roster || []), row]
+      }));
+      setDtcForm({ WEEK_FROM: "", WEEK_TO: "", POLICE_STATION: "", COURSE_NAME: "", INSTRUCTOR: "", TRAINEES: "" });
+    } catch (error) {
+      console.error("DTC weekly roster could not be saved:", error);
+      window.alert(`DTC रोस्टर Storage Vault में सुरक्षित नहीं हो सका: ${error.message}`);
+    }
+  };
   const reportYears = [...new Set(reportRows.map((row) => row.YEAR).filter(Boolean))].sort().reverse();
   const filteredReportRows = reportRows.filter((row) =>
     (reportYear === "ALL" || row.YEAR === reportYear) &&
@@ -474,8 +518,9 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
                 <label>From <input required type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
                 <label>To <input required type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
                 {documentType !== "WIRELESS" && <input value={documentInstructions} onChange={(event) => setDocumentInstructions(event.target.value)} placeholder="कारण / अतिरिक्त निर्देश" />}
+                {invalidTrainingRange && <strong role="alert" className="training-clash">⚠️ प्रशिक्षण की समाप्ति तिथि, आरंभ तिथि से पहले नहीं हो सकती।</strong>}
                 {(alreadyCompleted || dateClash) && <strong role="alert" className="training-clash">⚠️ Date Clash / Already Completed{dateClash ? " — वर्तमान नामांकन की तारीखें overlap हैं" : " — यह कोर्स पहले पूरा किया जा चुका है"}</strong>}
-                <button type="submit" disabled={saving || (documentType === "WIRELESS" && (alreadyCompleted || dateClash))}>{saving ? "सेव हो रहा है…" : "📨 दस्तावेज़ बनाएं, डाउनलोड और Storage में सेव करें"}</button>
+                <button type="submit" disabled={saving || invalidTrainingRange || (documentType === "WIRELESS" && (alreadyCompleted || dateClash))}>{saving ? "सेव हो रहा है…" : "📨 दस्तावेज़ बनाएं, डाउनलोड और Storage में सेव करें"}</button>
               </form>
             </>
           )}
@@ -509,7 +554,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
           <div className="training-section-heading">
             <h3>खंड A — iGOT कर्मयोगी पोर्टल ट्रैकिंग व MDO Admin मासिक रिपोर्ट</h3>
             <div className="training-summary-cards">
-              <article><span>कुल नफरी</span><strong>{records.length}</strong></article>
+              <article><span>कुल नफरी</span><strong>{uniqueRecords.length}</strong></article>
               <article><span>पंजीकृत कर्मचारी</span><strong>{registeredCount}</strong></article>
               <article><span>कोर्स पूर्ण करने वाले</span><strong>{igotCompletedCount}</strong></article>
             </div>
@@ -597,6 +642,31 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
             <h3>Training History — {CATEGORIES.find((item) => item.id === category)?.label}</h3>
             <ExportBar title="प्रशिक्षण रिकॉर्ड" rows={categoryHistory} fileName="Training_History" />
           </div>
+          {category === "DTC" && (
+            <section>
+              <h3>DTC साप्ताहिक थानावार रोस्टर व मासिक रिपोर्ट</h3>
+              <label>रिपोर्ट माह <input type="month" value={womenMonth} onChange={(event) => setWomenMonth(event.target.value)} /></label>
+              <form onSubmit={addDtcRoster} className="training-women-form">
+                <label>सप्ताह कब से <input required type="date" value={dtcForm.WEEK_FROM} onChange={(event) => setDtcForm({ ...dtcForm, WEEK_FROM: event.target.value })} /></label>
+                <label>कब तक <input required type="date" value={dtcForm.WEEK_TO} onChange={(event) => setDtcForm({ ...dtcForm, WEEK_TO: event.target.value })} /></label>
+                <input required value={dtcForm.POLICE_STATION} onChange={(event) => setDtcForm({ ...dtcForm, POLICE_STATION: event.target.value })} placeholder="थाना" />
+                <input required value={dtcForm.COURSE_NAME} onChange={(event) => setDtcForm({ ...dtcForm, COURSE_NAME: event.target.value })} placeholder="प्रशिक्षण विषय" />
+                <input required value={dtcForm.INSTRUCTOR} onChange={(event) => setDtcForm({ ...dtcForm, INSTRUCTOR: event.target.value })} placeholder="प्रशिक्षक" />
+                <label>प्रशिक्षणार्थी संख्या <input required min="0" type="number" value={dtcForm.TRAINEES} onChange={(event) => setDtcForm({ ...dtcForm, TRAINEES: event.target.value })} /></label>
+                <button type="submit">➕ साप्ताहिक रोस्टर सेव करें</button>
+              </form>
+              <div className="training-heading">
+                <h4>मासिक रिपोर्ट — {womenMonth}</h4>
+                <ExportBar title="DTC मासिक प्रशिक्षण रिपोर्ट" rows={currentDtcRows} fileName={`DTC_Monthly_${womenMonth}`} />
+              </div>
+              <div className="training-table-scroll">
+                <table className="training-data-table">
+                  <thead><tr><th>थाना</th><th>कब से</th><th>कब तक</th><th>विषय</th><th>प्रशिक्षक</th><th>प्रशिक्षणार्थी</th></tr></thead>
+                  <tbody>{currentDtcRows.map((row, index) => <tr key={`${row.POLICE_STATION}-${index}`}><td>{devToHindi(row.POLICE_STATION)}</td><td>{formatDateOnly(row.WEEK_FROM)}</td><td>{formatDateOnly(row.WEEK_TO)}</td><td>{devToHindi(row.COURSE_NAME)}</td><td>{devToHindi(row.INSTRUCTOR)}</td><td>{row.TRAINEES}</td></tr>)}</tbody>
+                </table>
+              </div>
+            </section>
+          )}
           <h3>आवश्यक प्रशिक्षण रिकॉर्ड की जाँच — {filteredMissingRows.length} कर्मचारी</h3>
           <div className="training-filter-row">
             <label>पद

@@ -10,6 +10,17 @@ export const REQUIRED_COURSES = [
 export function getMissingTrainingCourses(records, trainingRows) {
   const rows = Array.isArray(trainingRows) ? trainingRows : [];
   const uniqueEmployees = new Map();
+  const historyByIdentity = new Map();
+  for (const row of rows) {
+    const belt = getBeltNo(row);
+    const identity = belt !== "-"
+      ? `belt:${belt.trim().toUpperCase()}`
+      : `name:${String(row.NAME || "").trim().toLocaleLowerCase()}:${getRankCode(row)}`;
+    const matches = historyByIdentity.get(identity) || [];
+    matches.push(row);
+    historyByIdentity.set(identity, matches);
+  }
+
   for (const record of Array.isArray(records) ? records : []) {
     const belt = getBeltNo(record);
     const key = belt !== "-" ? `belt:${belt.trim().toUpperCase()}` : `uid:${record._uid || `${record.NAME || ""}:${record.CADER || ""}`}`;
@@ -19,7 +30,10 @@ export function getMissingTrainingCourses(records, trainingRows) {
   return Array.from(uniqueEmployees.values(), (record) => {
     const belt = getBeltNo(record);
     const rank = getRankCode(record);
-    const employeeRows = rows.filter((row) => sameTrainingEmployee(record, row));
+    const identity = belt !== "-"
+      ? `belt:${belt.trim().toUpperCase()}`
+      : `name:${String(record.NAME || "").trim().toLocaleLowerCase()}:${rank}`;
+    const employeeRows = historyByIdentity.get(identity) || [];
     const missing = REQUIRED_COURSES
       .filter((course) => !course.ranks || course.ranks.includes(rank))
       .filter((course) => !employeeRows.some((row) => {
