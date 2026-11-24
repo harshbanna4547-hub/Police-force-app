@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
 import { CHITTOR_BASE_GEO, RAJ_ALL_DISTRICTS_DEVLYS, RAJASTHAN_BLOCK_HOME_PS, RAJASTHAN_PINCODE_GEO, buildRajasthanGeoIndex, cleanDev, matchStandardDistrict } from "../data/rajasthanGeo";
+import { RAJASTHAN_MASTER_DISTRICTS, RAJASTHAN_MASTER_GEO, getRajasthanDistrictName, getRajasthanPincodeLocations } from "../data/rajasthanMasterGeo";
 import { devToHindi } from "../utils/devlysConverter";
-import { INDIA_STATE_HINDI, INDIA_STATES, INDIA_STATES_DISTRICTS, RAJASTHAN_DISTRICT_HINDI, fetchDistrictGeo, fetchPincodeGeo, getOfflinePincodeGeo, uniqueGeoNames } from "../utils/indiaGeoService";
+import { uniqueGeoNames } from "../utils/indiaGeoService";
 
 const CADER_OPTIONS = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)", "Sr. Asst", "Jr. Asst", "Class-IV"];
 const EDUCATION_OPTIONS = ["10th", "12th", "BA", "B.Sc", "B.Com", "B.A B.Ed", "B.Sc B.Ed", "MA", "M.Sc", "M.Com", "LLB", "B.Tech", "Other"];
@@ -139,21 +140,28 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   const [uploadingPL, setUploadingPL] = useState(false);
   const [saving, setSaving] = useState(false);
   const [postalLocations, setPostalLocations] = useState([]);
-  const [districtLocations, setDistrictLocations] = useState([]);
   const [geoLookupStatus, setGeoLookupStatus] = useState("");
 
   const geoIndex = useMemo(() => buildRajasthanGeoIndex(records || []), [records]);
-  const districtNames = useMemo(() => INDIA_STATES_DISTRICTS[form.STATE] || [], [form.STATE]);
-  const selectedDistrictName = useMemo(() => {
-    return districtNames.find((district) =>
-      normalizeGeoName(district) === normalizeGeoName(form.DISTRICT) ||
-      (form.STATE === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(form.DISTRICT)))
-    ) || form.DISTRICT;
-  }, [districtNames, form.DISTRICT, form.STATE]);
-  const legacyDistrict = useMemo(() => matchStandardDistrict(form.DISTRICT), [form.DISTRICT]);
+  const districtNames = useMemo(() => RAJASTHAN_MASTER_DISTRICTS.map((district) => district.value), []);
+  const districtMaster = form.STATE === "Rajasthan" ? RAJASTHAN_MASTER_GEO[form.DISTRICT] : null;
+  const districtLocations = useMemo(
+    () => districtMaster?.villages.map((location) => ({ ...location, village: location.value })) || [],
+    [districtMaster]
+  );
+  const legacyDistrict = useMemo(
+    () => form.STATE === "Rajasthan"
+      ? matchStandardDistrict(getRajasthanDistrictName(form.DISTRICT) || form.DISTRICT)
+      : "",
+    [form.DISTRICT, form.STATE]
+  );
   const districtRows = useMemo(
     () => legacyDistrict
-      ? (records || []).filter((row) => matchStandardDistrict(row.DISTRICT) === legacyDistrict)
+      ? (records || []).filter((row) => {
+        const rowState = String(row.STATE || row["STATE NAME"] || "").trim();
+        return matchStandardDistrict(row.DISTRICT) === legacyDistrict &&
+          (!rowState || ["rajasthan", "राजस्थान"].includes(rowState.toLocaleLowerCase("en-IN")));
+      })
       : [],
     [records, legacyDistrict]
   );
@@ -161,11 +169,11 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     () => geoIndex[legacyDistrict] || CHITTOR_BASE_GEO[legacyDistrict] || { TAHSIL: new Set(), BLOCK: new Set(), PS: new Set(), VILLAGES: new Set() },
     [geoIndex, legacyDistrict]
   );
-  const localGeoLocations = useMemo(() => legacyDistrict === "fpÙkkSMx<+"
+  const localGeoLocations = useMemo(() => form.STATE === "Rajasthan" && legacyDistrict === "fpÙkkSMx<+"
     ? Object.values(RAJASTHAN_PINCODE_GEO).flat().filter((location) =>
       matchStandardDistrict(location.district) === legacyDistrict
     )
-    : [], [legacyDistrict]);
+    : [], [legacyDistrict, form.STATE]);
   const selectedTahsilRows = useMemo(
     () => districtRows.filter((row) => cleanDev(row.TAHSIL || row.CIRCLE) === form.TAHSIL),
     [districtRows, form.TAHSIL]
@@ -193,27 +201,31 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     ].filter(Boolean)
   ), [districtGeo, selectedAreaRows, postalLocations, districtLocations, localGeoLocations, form.BLOCK, form.TAHSIL]);
   const tahsilOptions = useMemo(() => uniqueGeoNames([
+    ...(districtMaster?.tehsils.map((option) => option.value) || []),
     ...districtGeo.TAHSIL,
     ...districtRows.map((row) => cleanDev(row.TAHSIL || row.CIRCLE)).filter(Boolean),
     ...postalLocations.map((location) => location.taluk || location.block).filter(Boolean),
     ...districtLocations.map((location) => location.taluk || location.block).filter(Boolean),
     ...localGeoLocations.map((location) => location.taluk || location.block).filter(Boolean)
-  ]), [districtGeo, districtRows, postalLocations, districtLocations, localGeoLocations]);
+  ]), [districtGeo, districtMaster, districtRows, postalLocations, districtLocations, localGeoLocations]);
   const blockOptions = useMemo(() => {
     const selectedTahsilBlocks = selectedTahsilRows.map((row) => cleanDev(row.BLOCK)).filter(Boolean);
-    const blocks = selectedTahsilBlocks.length ? selectedTahsilBlocks : [...districtGeo.BLOCK];
+    const blocks = selectedTahsilBlocks.length
+      ? selectedTahsilBlocks
+      : [...(districtMaster?.blocks.map((option) => option.value) || []), ...districtGeo.BLOCK];
     return uniqueGeoNames([
       ...blocks,
       ...postalLocations.map((location) => location.block || location.taluk).filter(Boolean),
       ...districtLocations.map((location) => location.block || location.taluk).filter(Boolean),
       ...localGeoLocations.map((location) => location.block || location.taluk).filter(Boolean)
     ]);
-  }, [selectedTahsilRows, districtGeo, postalLocations, districtLocations, localGeoLocations]);
+  }, [selectedTahsilRows, districtGeo, districtMaster, postalLocations, districtLocations, localGeoLocations]);
   const homePsOptions = useMemo(() => [...new Set([
     ...selectedAreaRows.map((row) => cleanDev(row["HOME PS"] || row["POLICE STATION"])).filter(Boolean),
     ...localGeoLocations.map((location) => location.homePS).filter(Boolean),
+    ...(districtMaster?.policeStations.map((station) => station.value) || []),
     ...districtGeo.PS
-  ])], [selectedAreaRows, districtGeo, localGeoLocations]);
+  ])], [selectedAreaRows, districtGeo, localGeoLocations, districtMaster]);
   const nextPLDays = calculateDays(plDraft.fromDate, plDraft.toDate);
   const beltEnabled = form.CADER === "HC" || form.CADER.startsWith("FC");
   const usedBelts = getUsedBeltNumbers(records);
@@ -230,88 +242,42 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     ...districtGeo.PS,
     ...districtRows.flatMap((row) => [row.TAHSIL, row.CIRCLE, row.BLOCK, row.VILLAGE, row["VILLAGE "], row["HOME PS"], row["POLICE STATION"]])
   ].filter(Boolean));
-  const geoLabel = (value) => legacyGeoValues.has(value) ? devToHindi(value) : value;
+  const geoLabel = (value) => districtMaster?.villages.find((location) => location.value === value)?.label ||
+    (legacyGeoValues.has(value) ? devToHindi(value) : value);
 
   useEffect(() => {
     const pincode = String(form.PINCODE || "");
     if (!/^\d{6}$/.test(pincode)) return undefined;
-    const controller = new AbortController();
-    const timer = window.setTimeout(async () => {
-      setGeoLookupStatus("पिनकोड की जानकारी खोजी जा रही है...");
-      try {
-        const locations = await fetchPincodeGeo(pincode, controller.signal);
-        const first = locations[0];
-        const matchingState = INDIA_STATES.find((state) => normalizeGeoName(state) === normalizeGeoName(first.state)) || first.state || "";
-        const districts = INDIA_STATES_DISTRICTS[matchingState] || [];
-        const districtName = districts.find((district) =>
-          normalizeGeoName(district) === normalizeGeoName(first.district) ||
-          (matchingState === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(first.district)))
-        ) || first.district;
-        const uniqueTahsils = uniqueGeoNames(locations.map((location) => location.taluk || location.block).filter(Boolean));
-        const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block || location.taluk).filter(Boolean));
-        const defaultTahsil = uniqueTahsils.length === 1 ? uniqueTahsils[0] : "";
-        const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
-        setPostalLocations(locations);
-        setForm((prev) => ({
-          ...prev,
-          STATE: matchingState,
-          DISTRICT: districtName,
-          TAHSIL: defaultTahsil,
-          BLOCK: defaultBlock,
-          VILLAGE: "",
-          "HOME PS": ""
-        }));
-        setGeoLookupStatus(`${locations.length} डाकघर मिले`);
-      } catch (error) {
-        if (controller.signal.aborted) return;
-        const locations = getOfflinePincodeGeo(pincode, records || [], RAJASTHAN_PINCODE_GEO);
-        setPostalLocations(locations);
-        if (locations.length) {
-          const first = locations[0];
-          const uniqueTahsils = uniqueGeoNames(locations.map((location) => location.taluk || location.block).filter(Boolean));
-          const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block || location.taluk).filter(Boolean));
-          const defaultTahsil = uniqueTahsils.length === 1 ? uniqueTahsils[0] : "";
-          const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
-          const stateName = INDIA_STATES.find((state) => normalizeGeoName(state) === normalizeGeoName(first.state)) || first.state;
-          const districtName = (INDIA_STATES_DISTRICTS[stateName] || []).find((district) =>
-            normalizeGeoName(district) === normalizeGeoName(first.district) ||
-            (stateName === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(first.district)))
-          ) || first.district;
-          setForm((prev) => ({
-            ...prev,
-            STATE: stateName || prev.STATE,
-            DISTRICT: districtName || prev.DISTRICT,
-            TAHSIL: defaultTahsil,
-            BLOCK: defaultBlock,
-            VILLAGE: "",
-            "HOME PS": ""
-          }));
-          setGeoLookupStatus("ऑफ़लाइन राजस्थान डेटा से जानकारी भरी गई");
-        } else {
-          setGeoLookupStatus("पिनकोड ऑनलाइन नहीं मिला और स्थानीय ऑफ़लाइन डेटा उपलब्ध नहीं है");
-          console.warn("Pincode geo lookup failed:", error);
-        }
+    const timer = window.setTimeout(() => {
+      const locations = getRajasthanPincodeLocations(pincode, records || []);
+      setPostalLocations(locations);
+      if (!locations.length) {
+        setGeoLookupStatus("यह पिनकोड स्थानीय राजस्थान डेटाबेस में नहीं मिला; पता हाथ से भरें।");
+        return;
       }
-    }, 250);
+
+      const districts = uniqueGeoNames(locations.map((location) => getRajasthanDistrictName(location.district)).filter(Boolean));
+      const tahsils = uniqueGeoNames(locations.map((location) => location.taluk || location.block).filter(Boolean));
+      const blocks = uniqueGeoNames(locations.map((location) => location.block || location.taluk).filter(Boolean));
+      const villages = uniqueGeoNames(locations.map((location) => location.village).filter(Boolean));
+      const policeStations = uniqueGeoNames(locations.map((location) => location.homePS).filter(Boolean));
+      setForm((prev) => ({
+        ...prev,
+        STATE: "Rajasthan",
+        DISTRICT: districts.length === 1 ? districts[0] : "",
+        TAHSIL: tahsils.length === 1 ? tahsils[0] : "",
+        BLOCK: blocks.length === 1 ? blocks[0] : "",
+        VILLAGE: villages.length === 1 ? villages[0] : "",
+        "HOME PS": policeStations.length === 1 ? policeStations[0] : ""
+      }));
+      setGeoLookupStatus(villages.length === 1
+        ? "स्थानीय राजस्थान डेटाबेस से पता भरा गया।"
+        : `${locations.length} स्थानीय स्थान मिले; सही गाँव चुनें।`);
+    }, 0);
     return () => {
       window.clearTimeout(timer);
-      controller.abort();
     };
   }, [form.PINCODE, records]);
-
-  useEffect(() => {
-    if (!selectedDistrictName) return undefined;
-    const controller = new AbortController();
-    fetchDistrictGeo(selectedDistrictName, form.STATE, controller.signal)
-      .then(setDistrictLocations)
-      .catch((error) => {
-        if (!controller.signal.aborted) {
-          setDistrictLocations([]);
-          console.warn("District geo lookup failed:", error);
-        }
-      });
-    return () => controller.abort();
-  }, [selectedDistrictName, form.STATE]);
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const setCader = (cader) => {
@@ -339,11 +305,11 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   );
 
   const selectState = (state) => {
+    const selectedState = state === "OTHER" ? "" : state;
     setPostalLocations([]);
-    setDistrictLocations([]);
     setForm((prev) => ({
       ...prev,
-      STATE: state,
+      STATE: selectedState,
       PINCODE: "",
       DISTRICT: "",
       TAHSIL: "",
@@ -355,7 +321,6 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
   const selectDistrict = (district) => {
     setPostalLocations([]);
-    setDistrictLocations([]);
     setForm((prev) => ({
       ...prev,
       DISTRICT: district,
@@ -369,21 +334,20 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
   const selectVillage = (village) => {
     const villageKey = normalizeGeoName(village);
-    const match = selectedAreaRows.find((row) =>
-      normalizeGeoName(cleanDev(row.VILLAGE || row["VILLAGE "])) === villageKey
-    );
+    const matchesVillage = (row) => normalizeGeoName(cleanDev(row.VILLAGE || row["VILLAGE "])) === villageKey;
+    const match = selectedAreaRows.find(matchesVillage) || districtRows.find(matchesVillage);
     const postalMatch = [...postalLocations, ...districtLocations].find((location) =>
       normalizeGeoName(location.village) === villageKey
     );
-    const chittorgarh = legacyDistrict === "fpÙkkSMx<+";
     const blockHomePs = RAJASTHAN_BLOCK_HOME_PS[postalMatch?.block] || "";
+    const homePs = String(match?.["HOME PS"] || match?.["POLICE STATION"] || postalMatch?.homePS || blockHomePs || "").trim();
     setForm((prev) => ({
       ...prev,
       VILLAGE: village,
       TAHSIL: postalMatch?.taluk || postalMatch?.block || prev.TAHSIL,
       BLOCK: postalMatch?.block || postalMatch?.taluk || prev.BLOCK,
-      "HOME PS": cleanDev(match?.["HOME PS"] || match?.["POLICE STATION"] || postalMatch?.homePS || blockHomePs) ||
-        (chittorgarh ? [...districtGeo.PS][0] || "" : "")
+      PINCODE: postalMatch?.pincode || match?.PINCODE || match?.["PIN CODE"] || "",
+      "HOME PS": homePs
     }));
   };
 
@@ -628,71 +592,113 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
               </label>
               <label style={labelStyle}>
                 राज्य / केंद्र शासित प्रदेश (STATE)
-                <select value={form.STATE} onChange={(event) => selectState(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
-                  <option value="">राज्य चुनें</option>
-                  {INDIA_STATES.map((state) => <option key={state} value={state}>{INDIA_STATE_HINDI[state]} ({state})</option>)}
+                <select value={form.STATE === "Rajasthan" ? "Rajasthan" : "OTHER"} onChange={(event) => selectState(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                  <option value="Rajasthan">राजस्थान</option>
+                  <option value="OTHER">अन्य राज्य लिखें</option>
                 </select>
+                {form.STATE !== "Rajasthan" && (
+                  <input type="text" value={form.STATE} onChange={(event) => setField("STATE", event.target.value)} placeholder="राज्य का नाम लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                )}
               </label>
               <label style={labelStyle}>
                 जिला (DISTRICT)
-                <select value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
-                  <option value="">जिला चुनें</option>
-                  {form.DISTRICT && !districtNames.some((district) => normalizeGeoName(district) === normalizeGeoName(form.DISTRICT)) &&
-                    <option value={form.DISTRICT}>{geoLabel(form.DISTRICT)}</option>}
-                  {districtNames.map((district) => {
-                    const label = form.STATE === "Rajasthan" && RAJASTHAN_DISTRICT_HINDI[district]
-                      ? `${RAJASTHAN_DISTRICT_HINDI[district]} (${district})`
-                      : district;
-                    return <option key={district} value={district}>{label}</option>;
-                  })}
-                </select>
+                {form.STATE === "Rajasthan" ? (
+                  <>
+                    <select value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                      <option value="">जिला चुनें</option>
+                      {form.DISTRICT && !districtNames.includes(form.DISTRICT) &&
+                        <option value={form.DISTRICT}>{form.DISTRICT}</option>}
+                      {RAJASTHAN_MASTER_DISTRICTS.map((district) => (
+                        <option key={district.value} value={district.value}>{district.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      list="rajasthan-districts"
+                      value={districtNames.includes(form.DISTRICT) ? "" : form.DISTRICT}
+                      onChange={(event) => selectDistrict(getRajasthanDistrictName(event.target.value) || event.target.value)}
+                      placeholder="सूची में न हो तो जिला लिखें"
+                      style={{ ...fieldStyle, ...inputFont }}
+                    />
+                    <datalist id="rajasthan-districts">
+                      {RAJASTHAN_MASTER_DISTRICTS.map((district) => <option key={district.value} value={district.value} label={district.label} />)}
+                    </datalist>
+                  </>
+                ) : (
+                  <input type="text" value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} placeholder="जिला लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                )}
               </label>
               <label style={labelStyle}>
                 तहसील (TAHSIL)
                 {tahsilOptions.length ? (
-                  <select value={form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
-                    <option value="">तहसील चुनें</option>
-                    {tahsilOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
-                  </select>
+                  <>
+                    <select value={form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
+                      <option value="">तहसील चुनें</option>
+                      {form.TAHSIL && !tahsilOptions.includes(form.TAHSIL) && <option value={form.TAHSIL}>{geoLabel(form.TAHSIL)}</option>}
+                      {tahsilOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
+                    </select>
+                    <input type="text" list="rajasthan-tahsil-options" value={tahsilOptions.includes(form.TAHSIL) ? "" : form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} placeholder="सूची में न हो तो तहसील लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <datalist id="rajasthan-tahsil-options">{tahsilOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
+                  </>
                 ) : (
-                  <input type="text" value={form.TAHSIL} onChange={(event) => setField("TAHSIL", event.target.value)} list="smart-tahsil-options" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.TAHSIL} onChange={(event) => setField("TAHSIL", event.target.value)} placeholder="तहसील लिखें" style={{ ...fieldStyle, ...inputFont }} />
                 )}
               </label>
               <label style={labelStyle}>
                 ब्लॉक (BLOCK)
                 {blockOptions.length ? (
-                  <select value={form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
-                    <option value="">ब्लॉक चुनें</option>
-                    {blockOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
-                  </select>
+                  <>
+                    <select value={form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
+                      <option value="">ब्लॉक चुनें</option>
+                      {form.BLOCK && !blockOptions.includes(form.BLOCK) && <option value={form.BLOCK}>{geoLabel(form.BLOCK)}</option>}
+                      {blockOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
+                    </select>
+                    <input type="text" list="rajasthan-block-options" value={blockOptions.includes(form.BLOCK) ? "" : form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} placeholder="सूची में न हो तो ब्लॉक लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <datalist id="rajasthan-block-options">{blockOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
+                  </>
                 ) : (
-                  <input type="text" value={form.BLOCK} onChange={(event) => setField("BLOCK", event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.BLOCK} onChange={(event) => setField("BLOCK", event.target.value)} placeholder="ब्लॉक लिखें" style={{ ...fieldStyle, ...inputFont }} />
                 )}
               </label>
               <label style={labelStyle}>
                 गाँव / क्षेत्र / डाकघर (VILLAGE / POST OFFICE)
                 {villageOptions.length ? (
-                  <select value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
-                    <option value="">गाँव / डाकघर चुनें</option>
-                    {villageOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
-                  </select>
+                  <>
+                    <select value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                      <option value="">गाँव / डाकघर चुनें</option>
+                      {form.VILLAGE && !villageOptions.includes(form.VILLAGE) && <option value={form.VILLAGE}>{geoLabel(form.VILLAGE)}</option>}
+                      {villageOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
+                    </select>
+                    <input type="text" list="rajasthan-village-options" value={villageOptions.includes(form.VILLAGE) ? "" : form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} placeholder="सूची में न हो तो गाँव लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <datalist id="rajasthan-village-options">{villageOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
+                  </>
                 ) : (
-                  <input type="text" value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} placeholder="गाँव लिखें" style={{ ...fieldStyle, ...inputFont }} />
                 )}
               </label>
               <label style={labelStyle}>
                 गृह थाना (HOME PS - स्वतः चयन)
                 {homePsOptions.length ? (
-                  <select value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
-                    <option value="">थाना चुनें</option>
-                    {homePsOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
-                  </select>
+                  <>
+                    <select value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                      <option value="">थाना चुनें</option>
+                      {form["HOME PS"] && !homePsOptions.includes(form["HOME PS"]) && <option value={form["HOME PS"]}>{geoLabel(form["HOME PS"])}</option>}
+                      {homePsOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
+                    </select>
+                    <input type="text" list="rajasthan-ps-options" value={homePsOptions.includes(form["HOME PS"]) ? "" : form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} placeholder="सूची में न हो तो थाना लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <datalist id="rajasthan-ps-options">{homePsOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
+                  </>
                 ) : (
-                  <input type="text" value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} placeholder="थाना लिखें" style={{ ...fieldStyle, ...inputFont }} />
                 )}
               </label>
             </div>
             {geoLookupStatus && <small role="status" style={{ display: "block", marginTop: "8px", color: geoLookupStatus.includes("नहीं") ? "#B45309" : "#166534" }}>{geoLookupStatus}</small>}
+            {form.STATE === "Rajasthan" && form.DISTRICT && (
+              <small style={{ display: "block", marginTop: "8px", color: "#92400E" }}>
+                ऑफ़लाइन सूची उपलब्ध डेटा तक सीमित है और पूरी/सत्यापित गाँव-थाना मैपिंग का दावा नहीं करती। सूची में न मिले स्थान हाथ से दर्ज करें।
+              </small>
+            )}
           </section>
 
           <section style={sectionStyle}>
