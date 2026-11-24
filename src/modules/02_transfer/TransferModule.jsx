@@ -277,10 +277,12 @@ export default function TransferModule({
     });
   }, [recordsWithKeys, rankFilter, stationFilter, searchText, displayText]);
   const selectedEmployees = recordsWithKeys.filter(({ key }) => selectedIds.has(key));
-  const historyRows = Array.isArray(allSheets["Posting_History"])
-    ? allSheets["Posting_History"]
-    : [];
-  const issuedOrders = useMemo(() => groupTransferOrders(historyRows), [historyRows]);
+  const issuedOrders = useMemo(
+    () => groupTransferOrders(
+      Array.isArray(allSheets["Posting_History"]) ? allSheets["Posting_History"] : []
+    ),
+    [allSheets["Posting_History"]]
+  );
   const currentOrder = issuedOrders.find((order) => order.id === selectedOrderId) || issuedOrders[0] || null;
 
   const tenureEmployees = useMemo(() => recordsWithKeys

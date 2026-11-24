@@ -1,4 +1,4 @@
-import { mapRankToCode } from "../../data/cadreConfig";
+import { mapRankToCode } from "../../data/cadreConfig.js";
 
 export const TRANSFER_RANKS = ["ALL", "CI", "SI", "ASI", "HC", "FC"];
 
