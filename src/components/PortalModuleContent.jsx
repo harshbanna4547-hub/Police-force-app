@@ -48,7 +48,7 @@ export default function PortalModuleContent({
 
   const propsByModule = {
     STRENGTH: { records, sanctioned, setSanctioned, devToHindi, onEditEmployee: setEditingEmployee },
-    TRANSFER: { records, setRecords, setAttRecords, setDepRecords, devToHindi },
+    TRANSFER: { records, setRecords, allSheets, setAllSheets, setAttRecords, setDepRecords, devToHindi },
     POSTING: { records, devToHindi },
     BHARTI: { records, setRecords, devToHindi },
     TRAINING: { allSheets, setAllSheets, devToHindi },

@@ -1,0 +1,333 @@
+.transfer-module {
+  --transfer-navy: #0b1e3d;
+  --transfer-blue: #1d63dc;
+  --transfer-green: #15803d;
+  color: #0f172a;
+  min-width: 0;
+}
+
+.transfer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(120deg, #0b1e3d, #174b86);
+}
+
+.transfer-header h2,
+.transfer-section-heading h3 {
+  margin: 0;
+}
+
+.transfer-header p {
+  margin: 6px 0 0;
+  color: #dbeafe;
+}
+
+.transfer-header .transfer-eyebrow {
+  margin: 0 0 5px;
+  color: #bfdbfe;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.transfer-header-count {
+  display: grid;
+  min-width: 112px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 12px;
+  text-align: center;
+  background: rgba(255,255,255,0.1);
+}
+
+.transfer-header-count strong {
+  font-size: 1.6rem;
+}
+
+.transfer-header-count span {
+  font-size: 0.78rem;
+  color: #dbeafe;
+}
+
+.transfer-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 0 10px;
+  border-bottom: 1px solid #dbe3ee;
+}
+
+.transfer-tab {
+  flex: 0 0 auto;
+  padding: 10px 14px;
+  border: 1px solid #dbe3ee;
+  border-radius: 9px 9px 0 0;
+  color: #334155;
+  font-weight: 700;
+  background: #f8fafc;
+  cursor: pointer;
+}
+
+.transfer-tab.is-active {
+  color: #fff;
+  border-color: var(--transfer-navy);
+  background: var(--transfer-navy);
+}
+
+.transfer-panel {
+  display: grid;
+  gap: 14px;
+  padding-top: 14px;
+}
+
+.transfer-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+}
+
+.transfer-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.transfer-section-heading h3 {
+  font-size: 1rem;
+  color: var(--transfer-navy);
+}
+
+.transfer-section-heading p {
+  margin: 5px 0 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.transfer-selection-badge {
+  flex: 0 0 auto;
+  padding: 6px 10px;
+  border-radius: 999px;
+  color: #1e40af;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: #dbeafe;
+}
+
+.transfer-form-grid,
+.transfer-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.transfer-field {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  color: #334155;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.transfer-field input,
+.transfer-field select,
+.transfer-table select {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  color: #0f172a;
+  background: #fff;
+  font: inherit;
+}
+
+.transfer-search-field {
+  grid-column: span 2;
+}
+
+.transfer-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.transfer-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.transfer-table th,
+.transfer-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.transfer-table th {
+  color: #fff;
+  white-space: nowrap;
+  background: var(--transfer-navy);
+}
+
+.transfer-table tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.transfer-table tbody tr:hover {
+  background: #eff6ff;
+}
+
+.transfer-table input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--transfer-blue);
+}
+
+.assignment-table {
+  min-width: 1040px;
+}
+
+.assignment-table td:first-child {
+  min-width: 180px;
+}
+
+.assignment-table td:first-child small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+}
+
+.transfer-primary-button,
+.transfer-secondary-button,
+.transfer-remove-button {
+  border: 0;
+  border-radius: 7px;
+  padding: 10px 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.transfer-primary-button {
+  margin-top: 14px;
+  color: #fff;
+  background: var(--transfer-green);
+}
+
+.transfer-primary-button:hover:not(:disabled) {
+  background: #166534;
+}
+
+.transfer-primary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.transfer-secondary-button {
+  color: #fff;
+  background: var(--transfer-blue);
+}
+
+.transfer-remove-button {
+  padding: 7px 10px;
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.transfer-empty,
+.transfer-empty-message {
+  padding: 18px !important;
+  color: #64748b;
+  text-align: center !important;
+}
+
+.tenure-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.transfer-legacy-actions {
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #334155;
+  background: #f8fafc;
+}
+
+.transfer-legacy-actions summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.transfer-legacy-actions .transfer-filter-grid {
+  margin-top: 14px;
+  align-items: end;
+}
+
+.transfer-order-picker {
+  max-width: 540px;
+  margin-bottom: 14px;
+}
+
+.transfer-order-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin: 12px 0;
+  color: #334155;
+}
+
+.transfer-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.transfer-action-row .transfer-primary-button,
+.transfer-action-row .transfer-secondary-button {
+  margin-top: 14px;
+}
+
+@media (max-width: 700px) {
+  .transfer-header {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .transfer-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .transfer-header-count {
+    min-width: 82px;
+  }
+
+  .transfer-card {
+    padding: 13px;
+  }
+
+  .transfer-form-grid,
+  .transfer-filter-grid,
+  .tenure-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .transfer-search-field {
+    grid-column: auto;
+  }
+}

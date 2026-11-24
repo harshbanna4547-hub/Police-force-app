@@ -77,10 +77,18 @@ export function getCompletedTenureYears(startValue, asOfDate = new Date()) {
 }
 
 export function getTransferRank(employee, convertLegacy = (value) => value) {
-  const code = mapRankToCode(
-    convertLegacy(employee?.CADER || ""),
-    convertLegacy(employee?.["BELT NO"] || "")
-  );
+  const cader = convertLegacy(employee?.CADER || "");
+  const belt = convertLegacy(employee?.["BELT NO"] || "");
+  const rankText = `${cader} ${belt}`.toUpperCase();
+  if (rankText.includes("सहायक उप निरीक्षक") || /\bASI\b/.test(rankText)) return "ASI";
+  if (rankText.includes("उप निरीक्षक") || /SUB.?INSPECTOR|\bSI\b/.test(rankText)) return "SI";
+  if (rankText.includes("निरीक्षक") || /INSPECTOR|\bCI\b|\bMTO\b/.test(rankText)) return "CI";
+  if (rankText.includes("हैड") || /HEAD CONSTABLE|\bHC\b/.test(rankText)) return "HC";
+  if (rankText.includes("कानिस्टेबल") || rankText.includes("कांस्टेबल") || /CONSTABLE|\bFC\b|\bCT\b/.test(rankText)) {
+    return "FC";
+  }
+
+  const code = mapRankToCode(cader, belt);
   if (code === "CI" || code === "MTO") return "CI";
   if (code === "SI" || code.startsWith("SI_")) return "SI";
   if (code === "ASI" || code.startsWith("ASI_")) return "ASI";
