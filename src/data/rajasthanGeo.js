@@ -58,6 +58,35 @@ export const CHITTOR_BASE_GEO = {
   }
 };
 
+export const RAJASTHAN_BLOCK_HOME_PS = {
+  Chittorgarh: "dksrokyh fpÙkkSMx<+",
+  Bassi: "cLlh",
+  Begun: "csxw¡",
+  Bhadesar: "Hknlsj"
+};
+
+export const RAJASTHAN_PINCODE_GEO = {
+  "312001": [
+    ["Akiya", "Chittorgarh"], ["Bansen", "Bhadesar"], ["Chittorgarh", "Chittorgarh"],
+    ["Chittorgarh Fort", "Chittorgarh"], ["Collectorate Chittorgarh", "Chittorgarh"],
+    ["Deori", "Chittorgarh"], ["Netawal Garh Pachhali", "Chittorgarh"], ["Ochhari", "Chittorgarh"],
+    ["Pipalwas", "Chittorgarh"], ["Ranasanga Bazar Chittorgarh", "Chittorgarh"],
+    ["Sehnwa", "Chittorgarh"], ["Semalpura", "Chittorgarh"], ["Semlia", "Chittorgarh"]
+  ].map(([village, block]) => ({
+    state: "Rajasthan", district: "fpÙkkSMx<+", village, block, homePS: RAJASTHAN_BLOCK_HOME_PS[block] || ""
+  })),
+  "312022": [
+    ["Amarpura", "Chittorgarh"], ["Anwalhera", "Bassi"], ["Bassi (Chittorgarh)", "Chittorgarh"],
+    ["Bichhor", "Begun"], ["Bijaipur", "Chittorgarh"], ["Dugar", "Begun"],
+    ["Gopalpura", "Bassi"], ["Kheri", "Chittorgarh"], ["Kherpura", "Begun"],
+    ["Motipura", "Begun"], ["Nagri", "Chittorgarh"], ["Pal", "Chittorgarh"],
+    ["Palka", "Chittorgarh"], ["Parsoli", "Begun"], ["Rajgarh", "Begun"],
+    ["Sadi", "Chittorgarh"], ["Sonagar", "Chittorgarh"]
+  ].map(([village, block]) => ({
+    state: "Rajasthan", district: "fpÙkkSMx<+", village, block, homePS: RAJASTHAN_BLOCK_HOME_PS[block] || ""
+  }))
+};
+
 export function cleanDev(val) {
   let s = String(val || "").trim();
   s = s.replace(/\s+/g, " ").replace(/^[ .,\-_/]+|[ .,\-_/]+$/g, "");

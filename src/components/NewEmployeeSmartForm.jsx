@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
-import { CHITTOR_BASE_GEO, RAJ_ALL_DISTRICTS_DEVLYS, buildRajasthanGeoIndex, cleanDev, matchStandardDistrict } from "../data/rajasthanGeo";
+import { CHITTOR_BASE_GEO, RAJ_ALL_DISTRICTS_DEVLYS, RAJASTHAN_BLOCK_HOME_PS, RAJASTHAN_PINCODE_GEO, buildRajasthanGeoIndex, cleanDev, matchStandardDistrict } from "../data/rajasthanGeo";
 import { devToHindi } from "../utils/devlysConverter";
+import { INDIA_STATES, INDIA_STATES_DISTRICTS, fetchDistrictGeo, fetchPincodeGeo, getOfflinePincodeGeo } from "../utils/indiaGeoService";
 
 const CADER_OPTIONS = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)", "Sr. Asst", "Jr. Asst", "Class-IV"];
 const EDUCATION_OPTIONS = ["10th", "12th", "BA", "B.Sc", "B.Com", "B.A B.Ed", "B.Sc B.Ed", "MA", "M.Sc", "M.Com", "LLB", "B.Tech", "Other"];
@@ -77,6 +78,8 @@ function createInitialEmployee(records) {
     EDUCATION: "",
     "MOBILE NO 1": "",
     "DATE OF BIRTH": "",
+    STATE: "Rajasthan",
+    PINCODE: "",
     DISTRICT: "fpÙkkSMx<+",
     TAHSIL: "",
     BLOCK: "",
@@ -114,6 +117,10 @@ const sectionStyle = { marginBottom: "14px", padding: "14px", border: "1px solid
 const inputFont = { fontFamily: "'Times New Roman', Times, serif" };
 const hindiInputFont = { fontFamily: "'DevLys 010', 'Kruti Dev 010', sans-serif", fontSize: "1.1rem" };
 
+function normalizeGeoName(value) {
+  return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll, onClose }) {
   const [form, setForm] = useState(() => createInitialEmployee(records));
   const [activeTab, setActiveTab] = useState("PL");
@@ -125,8 +132,19 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   const [sajaEntries, setSajaEntries] = useState([]);
   const [uploadingPL, setUploadingPL] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [postalLocations, setPostalLocations] = useState([]);
+  const [districtLocations, setDistrictLocations] = useState([]);
+  const [geoLookupStatus, setGeoLookupStatus] = useState("");
 
   const geoIndex = useMemo(() => buildRajasthanGeoIndex(records || []), [records]);
+  const districtNames = useMemo(() => INDIA_STATES_DISTRICTS[form.STATE] || [], [form.STATE]);
+  const selectedDistrictName = useMemo(() => {
+    const catalogMatch = districtNames.find((district) => {
+      const value = form.STATE === "Rajasthan" && district === "Chittorgarh" ? "fpÙkkSMx<+" : district;
+      return value === form.DISTRICT;
+    });
+    return catalogMatch || form.DISTRICT;
+  }, [districtNames, form.DISTRICT, form.STATE]);
   const districtRows = useMemo(
     () => (records || []).filter((row) => matchStandardDistrict(row.DISTRICT) === form.DISTRICT),
     [records, form.DISTRICT]
@@ -135,25 +153,42 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     () => geoIndex[form.DISTRICT] || CHITTOR_BASE_GEO[form.DISTRICT] || { TAHSIL: new Set(), BLOCK: new Set(), PS: new Set(), VILLAGES: new Set() },
     [geoIndex, form.DISTRICT]
   );
-  const tahsilOptions = useMemo(() => [...new Set([
-    ...districtGeo.TAHSIL,
-    ...districtRows.map((row) => cleanDev(row.TAHSIL || row.CIRCLE)).filter(Boolean)
-  ])], [districtGeo, districtRows]);
   const selectedTahsilRows = useMemo(
     () => districtRows.filter((row) => cleanDev(row.TAHSIL || row.CIRCLE) === form.TAHSIL),
     [districtRows, form.TAHSIL]
   );
-  const blockOptions = useMemo(() => {
-    const fromSelectedTahsil = [...new Set(selectedTahsilRows.map((row) => cleanDev(row.BLOCK)).filter(Boolean))];
-    return fromSelectedTahsil.length ? fromSelectedTahsil : [...districtGeo.BLOCK];
-  }, [selectedTahsilRows, districtGeo]);
   const selectedAreaRows = useMemo(
     () => selectedTahsilRows.filter((row) => !form.BLOCK || cleanDev(row.BLOCK) === form.BLOCK),
     [selectedTahsilRows, form.BLOCK]
   );
   const villageOptions = useMemo(() => [...new Set(
-    selectedAreaRows.map((row) => cleanDev(row.VILLAGE || row["VILLAGE "])).filter(Boolean)
-  )], [selectedAreaRows]);
+    [
+      ...selectedAreaRows.map((row) => cleanDev(row.VILLAGE || row["VILLAGE "])),
+      ...postalLocations.filter((location) =>
+        (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
+        (!form.BLOCK || !location.block || location.block === form.BLOCK)
+      ).map((location) => location.village),
+      ...districtLocations.filter((location) =>
+        (!form.TAHSIL || !location.block || location.block === form.TAHSIL) &&
+        (!form.BLOCK || !location.block || location.block === form.BLOCK)
+      ).map((location) => location.village)
+    ].filter(Boolean)
+  )], [selectedAreaRows, postalLocations, districtLocations, form.BLOCK, form.TAHSIL]);
+  const tahsilOptions = useMemo(() => [...new Set([
+    ...districtGeo.TAHSIL,
+    ...districtRows.map((row) => cleanDev(row.TAHSIL || row.CIRCLE)).filter(Boolean),
+    ...postalLocations.map((location) => location.block).filter(Boolean),
+    ...districtLocations.map((location) => location.block).filter(Boolean)
+  ])], [districtGeo, districtRows, postalLocations, districtLocations]);
+  const blockOptions = useMemo(() => {
+    const selectedTahsilBlocks = selectedTahsilRows.map((row) => cleanDev(row.BLOCK)).filter(Boolean);
+    const blocks = selectedTahsilBlocks.length ? selectedTahsilBlocks : [...districtGeo.BLOCK];
+    return [...new Set([
+      ...blocks,
+      ...postalLocations.map((location) => location.block).filter(Boolean),
+      ...districtLocations.map((location) => location.block).filter(Boolean)
+    ])];
+  }, [selectedTahsilRows, districtGeo, postalLocations, districtLocations]);
   const homePsOptions = useMemo(() => [...new Set([
     ...selectedAreaRows.map((row) => cleanDev(row["HOME PS"] || row["POLICE STATION"])).filter(Boolean),
     ...districtGeo.PS
@@ -164,6 +199,84 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     employee["BELT NO"] || employee["BELT NO."] || employee.BELT_NO || employee["Belt No"] || employee.BELT || ""
   ).match(/\d+/)?.[0]).filter(Boolean));
   const availableBelts = Array.from({ length: 1750 }, (_, index) => String(index + 1)).filter((belt) => !usedBelts.has(belt));
+  const legacyGeoValues = new Set([
+    ...RAJ_ALL_DISTRICTS_DEVLYS,
+    ...districtGeo.TAHSIL,
+    ...districtGeo.BLOCK,
+    ...districtGeo.PS,
+    ...districtRows.flatMap((row) => [row.TAHSIL, row.CIRCLE, row.BLOCK, row.VILLAGE, row["VILLAGE "], row["HOME PS"], row["POLICE STATION"]])
+  ].filter(Boolean));
+  const geoLabel = (value) => legacyGeoValues.has(value) ? devToHindi(value) : value;
+
+  useEffect(() => {
+    const pincode = String(form.PINCODE || "");
+    if (!/^\d{6}$/.test(pincode)) return undefined;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setGeoLookupStatus("पिनकोड की जानकारी खोजी जा रही है...");
+      try {
+        const locations = await fetchPincodeGeo(pincode, controller.signal);
+        const first = locations[0];
+        const matchingState = INDIA_STATES.find((state) => normalizeGeoName(state) === normalizeGeoName(first.state)) || first.state || "";
+        const districts = INDIA_STATES_DISTRICTS[matchingState] || [];
+        const districtName = districts.find((district) => normalizeGeoName(district) === normalizeGeoName(first.district)) || first.district;
+        const districtValue = matchingState === "Rajasthan" && districtName === "Chittorgarh" ? "fpÙkkSMx<+" : districtName;
+        const uniqueBlocks = [...new Set(locations.map((location) => location.block).filter(Boolean))];
+        const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
+        setPostalLocations(locations);
+        setForm((prev) => ({
+          ...prev,
+          STATE: matchingState,
+          DISTRICT: districtValue,
+          TAHSIL: defaultBlock,
+          BLOCK: defaultBlock,
+          VILLAGE: "",
+          "HOME PS": ""
+        }));
+        setGeoLookupStatus(`${locations.length} डाकघर मिले`);
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        const locations = getOfflinePincodeGeo(pincode, records || [], RAJASTHAN_PINCODE_GEO);
+        setPostalLocations(locations);
+        if (locations.length) {
+          const first = locations[0];
+          const uniqueBlocks = [...new Set(locations.map((location) => location.block).filter(Boolean))];
+          const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
+          setForm((prev) => ({
+            ...prev,
+            STATE: first.state || prev.STATE,
+            DISTRICT: first.district || prev.DISTRICT,
+            TAHSIL: defaultBlock,
+            BLOCK: defaultBlock,
+            VILLAGE: "",
+            "HOME PS": ""
+          }));
+          setGeoLookupStatus("ऑफ़लाइन राजस्थान डेटा से जानकारी भरी गई");
+        } else {
+          setGeoLookupStatus("पिनकोड ऑनलाइन नहीं मिला और स्थानीय ऑफ़लाइन डेटा उपलब्ध नहीं है");
+          console.warn("Pincode geo lookup failed:", error);
+        }
+      }
+    }, 250);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.PINCODE, records]);
+
+  useEffect(() => {
+    if (!selectedDistrictName) return undefined;
+    const controller = new AbortController();
+    fetchDistrictGeo(selectedDistrictName, form.STATE, controller.signal)
+      .then(setDistrictLocations)
+      .catch((error) => {
+        if (!controller.signal.aborted) {
+          setDistrictLocations([]);
+          console.warn("District geo lookup failed:", error);
+        }
+      });
+    return () => controller.abort();
+  }, [selectedDistrictName, form.STATE]);
 
   const setField = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const setCader = (cader) => {
@@ -190,21 +303,46 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     </label>
   );
 
-  const selectDistrict = (district) => setForm((prev) => ({
-    ...prev,
-    DISTRICT: district,
-    TAHSIL: "",
-    BLOCK: "",
-    VILLAGE: "",
-    "HOME PS": ""
-  }));
+  const selectState = (state) => {
+    setPostalLocations([]);
+    setDistrictLocations([]);
+    setForm((prev) => ({
+      ...prev,
+      STATE: state,
+      PINCODE: "",
+      DISTRICT: "",
+      TAHSIL: "",
+      BLOCK: "",
+      VILLAGE: "",
+      "HOME PS": ""
+    }));
+  };
+
+  const selectDistrict = (district) => {
+    setPostalLocations([]);
+    setForm((prev) => ({
+      ...prev,
+      DISTRICT: district,
+      PINCODE: "",
+      TAHSIL: "",
+      BLOCK: "",
+      VILLAGE: "",
+      "HOME PS": ""
+    }));
+  };
 
   const selectVillage = (village) => {
     const match = selectedAreaRows.find((row) => cleanDev(row.VILLAGE || row["VILLAGE "]) === village);
+    const postalMatch = [...postalLocations, ...districtLocations].find((location) => location.village === village);
+    const chittorgarh = matchStandardDistrict(form.DISTRICT) === "fpÙkkSMx<+";
+    const blockHomePs = RAJASTHAN_BLOCK_HOME_PS[postalMatch?.block] || "";
     setForm((prev) => ({
       ...prev,
       VILLAGE: village,
-      "HOME PS": cleanDev(match?.["HOME PS"] || match?.["POLICE STATION"])
+      TAHSIL: postalMatch?.block || prev.TAHSIL,
+      BLOCK: postalMatch?.block || prev.BLOCK,
+      "HOME PS": cleanDev(match?.["HOME PS"] || match?.["POLICE STATION"] || postalMatch?.homePS || blockHomePs) ||
+        (chittorgarh ? [...districtGeo.PS][0] || "" : "")
     }));
   };
 
@@ -288,7 +426,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     const headers = {
       "S.N.": "", CADER: "", "BELT NO": "", NAME: "", "FATHER NAME": "", EDUCATION: "",
       "MOBILE NO 1": "", "DATE OF BIRTH": "", "DATE OF JOINING": "", POSTING: "",
-      "POSTING DOB NO": "", DISTRICT: "", TAHSIL: "", CIRCLE: "", BLOCK: "",
+      "POSTING DOB NO": "", STATE: "", PINCODE: "", DISTRICT: "", TAHSIL: "", CIRCLE: "", BLOCK: "",
       VILLAGE: "", "HOME PS": "", SSOID: "", "CAST CATEGORY": "", "SELECTION CATEGORY": ""
     };
     XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet([headers]), "Master_All_Data");
@@ -306,7 +444,8 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       ["शैक्षणिक योग्यता", form.EDUCATION],
       ["मोबाइल", form["MOBILE NO 1"]],
       ["जन्म तिथि", form["DATE OF BIRTH"]],
-      ["जिला / तहसील / ब्लॉक", `${devToHindi(form.DISTRICT)} / ${devToHindi(form.TAHSIL)} / ${devToHindi(form.BLOCK)}`],
+      ["राज्य / जिला / तहसील / ब्लॉक", `${form.STATE} / ${geoLabel(form.DISTRICT)} / ${geoLabel(form.TAHSIL)} / ${geoLabel(form.BLOCK)}`],
+      ["पिनकोड", form.PINCODE],
       ["गाँव / गृह थाना", `${devToHindi(form.VILLAGE)} / ${devToHindi(form["HOME PS"])}`],
       ["वर्तमान पदस्थापन", devToHindi(form.POSTING)],
       ["पदस्थापन DOB नं.", form["POSTING DOB NO"]],
@@ -427,12 +566,43 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
           </section>
 
           <section style={sectionStyle}>
-            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 3: स्थायी पता विवरण (जिला → तहसील → ब्लॉक → गाँव → स्वतः थाना)</h3>
+            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 3: स्थायी पता विवरण (पिनकोड → राज्य → जिला → तहसील → ब्लॉक → गाँव → स्वतः थाना)</h3>
             <div style={gridStyle}>
+              <label style={labelStyle}>
+                पिनकोड (PINCODE - 6 अंक)
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength="6"
+                  value={form.PINCODE}
+                  onChange={(event) => {
+                    const pincode = event.target.value.replace(/\D/g, "").slice(0, 6);
+                    setField("PINCODE", pincode);
+                    setPostalLocations([]);
+                    if (pincode.length < 6) setGeoLookupStatus("");
+                  }}
+                  placeholder="जैसे 312001"
+                  style={{ ...fieldStyle, ...inputFont }}
+                />
+              </label>
+              <label style={labelStyle}>
+                राज्य / केंद्र शासित प्रदेश (STATE)
+                <select value={form.STATE} onChange={(event) => selectState(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                  <option value="">राज्य चुनें</option>
+                  {INDIA_STATES.map((state) => <option key={state} value={state}>{state}</option>)}
+                </select>
+              </label>
               <label style={labelStyle}>
                 जिला (DISTRICT)
                 <select value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
-                  {RAJ_ALL_DISTRICTS_DEVLYS.map((district) => <option key={district} value={district}>{devToHindi(district)}</option>)}
+                  <option value="">जिला चुनें</option>
+                  {form.DISTRICT && !districtNames.some((district) =>
+                    (form.STATE === "Rajasthan" && district === "Chittorgarh" ? "fpÙkkSMx<+" : district) === form.DISTRICT
+                  ) && <option value={form.DISTRICT}>{geoLabel(form.DISTRICT)}</option>}
+                  {districtNames.map((district) => {
+                    const value = form.STATE === "Rajasthan" && district === "Chittorgarh" ? "fpÙkkSMx<+" : district;
+                    return <option key={district} value={value}>{district}</option>;
+                  })}
                 </select>
               </label>
               <label style={labelStyle}>
@@ -440,35 +610,47 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                 {tahsilOptions.length ? (
                   <select value={form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
                     <option value="">तहसील चुनें</option>
-                    {tahsilOptions.map((option) => <option key={option} value={option}>{devToHindi(option)}</option>)}
+                    {tahsilOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
                   </select>
                 ) : (
                   <input type="text" value={form.TAHSIL} onChange={(event) => setField("TAHSIL", event.target.value)} list="smart-tahsil-options" style={{ ...fieldStyle, ...inputFont }} />
                 )}
-                {!tahsilOptions.length && <datalist id="smart-tahsil-options" />}
               </label>
               <label style={labelStyle}>
                 ब्लॉक (BLOCK)
                 {blockOptions.length ? (
                   <select value={form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
                     <option value="">ब्लॉक चुनें</option>
-                    {blockOptions.map((option) => <option key={option} value={option}>{devToHindi(option)}</option>)}
+                    {blockOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
                   </select>
                 ) : (
                   <input type="text" value={form.BLOCK} onChange={(event) => setField("BLOCK", event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
                 )}
               </label>
               <label style={labelStyle}>
-                गाँव / शहर (VILLAGE)
-                <input type="text" list="smart-village-options" value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
-                <datalist id="smart-village-options">{villageOptions.map((option) => <option key={option} value={option} label={devToHindi(option)} />)}</datalist>
+                गाँव / क्षेत्र / डाकघर (VILLAGE / POST OFFICE)
+                {villageOptions.length ? (
+                  <select value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                    <option value="">गाँव / डाकघर चुनें</option>
+                    {villageOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
+                )}
               </label>
               <label style={labelStyle}>
                 गृह थाना (HOME PS - स्वतः चयन)
-                <input type="text" list="smart-home-ps-options" value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
-                <datalist id="smart-home-ps-options">{homePsOptions.map((option) => <option key={option} value={option} label={devToHindi(option)} />)}</datalist>
+                {homePsOptions.length ? (
+                  <select value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                    <option value="">थाना चुनें</option>
+                    {homePsOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }} />
+                )}
               </label>
             </div>
+            {geoLookupStatus && <small role="status" style={{ display: "block", marginTop: "8px", color: geoLookupStatus.includes("नहीं") ? "#B45309" : "#166534" }}>{geoLookupStatus}</small>}
           </section>
 
           <section style={sectionStyle}>
