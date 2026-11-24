@@ -1,0 +1,130 @@
+import { mapRankToCode } from "../../data/cadreConfig";
+
+export const TRANSFER_RANKS = ["ALL", "CI", "SI", "ASI", "HC", "FC"];
+
+export const TRANSFER_REMARKS = ["प्रशासनिक", "स्वयं के व्यय पर"];
+
+export function normalizeTransferDateInput(value) {
+  const match = String(value || "").trim().match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (!match) return "";
+  const [, dayText, monthText, yearText] = match;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return "";
+  }
+  return `${String(day).padStart(2, "0")}-${String(month).padStart(2, "0")}-${year}`;
+}
+
+export function parsePostingDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? null
+      : new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  }
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value < 20000 || value > 100000) return null;
+    const utcDate = new Date(Math.round((value - 25569) * 86400000));
+    return new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate());
+  }
+
+  const text = String(value).trim();
+  const dmyMatch = text.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+  if (dmyMatch) {
+    const normalized = normalizeTransferDateInput(`${dmyMatch[1]}-${dmyMatch[2]}-${dmyMatch[3]}`);
+    if (!normalized) return null;
+    const [day, month, year] = normalized.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime())
+    ? null
+    : new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+}
+
+export function formatTransferDate(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+  return `${String(date.getDate()).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${date.getFullYear()}`;
+}
+
+export function getCompletedTenureYears(startValue, asOfDate = new Date()) {
+  const startDate = parsePostingDate(startValue);
+  if (!startDate || !(asOfDate instanceof Date) || Number.isNaN(asOfDate.getTime())) return null;
+
+  const today = new Date(asOfDate.getFullYear(), asOfDate.getMonth(), asOfDate.getDate());
+  if (startDate > today) return 0;
+
+  let years = today.getFullYear() - startDate.getFullYear();
+  const anniversaryMonth = startDate.getMonth();
+  const anniversaryYear = startDate.getFullYear() + years;
+  const daysInAnniversaryMonth = new Date(anniversaryYear, anniversaryMonth + 1, 0).getDate();
+  const anniversary = new Date(
+    anniversaryYear,
+    anniversaryMonth,
+    Math.min(startDate.getDate(), daysInAnniversaryMonth)
+  );
+  if (today < anniversary) years -= 1;
+  return Math.max(0, years);
+}
+
+export function getTransferRank(employee, convertLegacy = (value) => value) {
+  const code = mapRankToCode(
+    convertLegacy(employee?.CADER || ""),
+    convertLegacy(employee?.["BELT NO"] || "")
+  );
+  if (code === "CI" || code === "MTO") return "CI";
+  if (code === "SI" || code.startsWith("SI_")) return "SI";
+  if (code === "ASI" || code.startsWith("ASI_")) return "ASI";
+  if (code === "HC" || code.endsWith("_HC")) return "HC";
+  if (code === "CT" || code.endsWith("_CT")) return "FC";
+  return "OTHER";
+}
+
+export function buildTransferPostingOptions(officeList, chowkiMap) {
+  const seen = new Set();
+  return [...officeList, ...Object.values(chowkiMap).flat()]
+    .map((value) => String(value || "").trim())
+    .filter((value) => {
+      const key = value.toLocaleLowerCase();
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((left, right) => left.localeCompare(right, "hi"));
+}
+
+export function groupTransferOrders(historyRows) {
+  const orders = new Map();
+  (Array.isArray(historyRows) ? historyRows : []).forEach((row) => {
+    const orderId = String(row?.ORDER_ID || "").trim();
+    if (!orderId) return;
+    if (!orders.has(orderId)) {
+      orders.set(orderId, {
+        id: orderId,
+        orderNo: String(row.ORDER_NO || ""),
+        orderDate: String(row.ORDER_DATE || ""),
+        issuedAt: String(row.ISSUED_AT || ""),
+        rows: []
+      });
+    }
+    orders.get(orderId).rows.push(row);
+  });
+  return [...orders.values()].sort((left, right) =>
+    right.issuedAt.localeCompare(left.issuedAt)
+  );
+}
+
+export function createTransferOrderId() {
+  const randomPart = globalThis.crypto?.randomUUID?.()
+    || Math.random().toString(36).slice(2, 10);
+  return `TRANSFER-${Date.now()}-${randomPart}`;
+}

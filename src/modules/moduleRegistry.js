@@ -11,7 +11,7 @@ import SeniorityModule from "./SeniorityModule";
 import StrengthModule from "./01_strength/StrengthModule";
 import StorageVaultModule from "./13_storage/StorageVaultModule";
 import TrainingModule from "./TrainingModule";
-import TransferModule from "./TransferModule";
+import TransferModule from "./02_transfer/TransferModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {
@@ -27,10 +27,10 @@ export const MODULES_CONFIG = Object.freeze([
   {
     id: "TRANSFER",
     title: "Transfer",
-    hindiTitle: "स्थानांतरण",
+    hindiTitle: "स्थानांतरण आदेश",
     icon: "⇄",
     color: "#DC2626",
-    description: "स्थानांतरण, अटैचमेंट और कार्यमुक्ति",
+    description: "स्थानांतरण आदेश, अवधि जाँच और प्रिंट",
     enabled: true,
     component: TransferModule
   },
