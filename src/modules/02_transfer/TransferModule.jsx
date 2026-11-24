@@ -4,10 +4,12 @@ import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../../data/officeUnits";
 import { unicodeToDevlys } from "../../utils/devlysConverter";
 import {
   buildTransferPostingOptions,
+  createTransferOrderUpdates,
   createTransferOrderId,
   formatTransferDate,
   getCompletedTenureYears,
   getTransferRank,
+  getTransferEmployeeKey,
   groupTransferOrders,
   normalizeTransferDateInput,
   TRANSFER_RANKS,
@@ -30,10 +32,6 @@ const TAB_ITEMS = [
   { id: "TENURE", label: "कार्यकाल / Overstay जाँच" },
   { id: "ISSUED", label: "जारी आदेश / प्रिंट / Excel" }
 ];
-
-function getEmployeeKey(employee, index) {
-  return String(employee?._uid || `${employee?.["BELT NO"] || "employee"}-${index}`);
-}
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -239,7 +237,7 @@ export default function TransferModule({
     () => records.map((employee, index) => ({
       employee,
       index,
-      key: getEmployeeKey(employee, index),
+      key: getTransferEmployeeKey(employee, index),
       rank: getTransferRank(employee, displayText)
     })),
     [records, displayText]
@@ -277,11 +275,10 @@ export default function TransferModule({
     });
   }, [recordsWithKeys, rankFilter, stationFilter, searchText, displayText]);
   const selectedEmployees = recordsWithKeys.filter(({ key }) => selectedIds.has(key));
+  const postingHistory = allSheets["Posting_History"];
   const issuedOrders = useMemo(
-    () => groupTransferOrders(
-      Array.isArray(allSheets["Posting_History"]) ? allSheets["Posting_History"] : []
-    ),
-    [allSheets["Posting_History"]]
+    () => groupTransferOrders(Array.isArray(postingHistory) ? postingHistory : []),
+    [postingHistory]
   );
   const currentOrder = issuedOrders.find((order) => order.id === selectedOrderId) || issuedOrders[0] || null;
 
@@ -348,29 +345,17 @@ export default function TransferModule({
     const cleanOrderNo = orderNo.trim();
     const orderId = createTransferOrderId();
     const issuedAt = new Date().toISOString();
-    const orderNoDate = `${cleanOrderNo} / ${normalizedDate}`;
-    const updatedRecords = recordsWithKeys.map(({ employee, key }) => {
-      if (!selectedIds.has(key)) return employee;
-      return {
-        ...employee,
-        POSTING: assignments[key].destination,
-        "POSTING DOB NO": orderNoDate
-      };
-    });
-    const historyEntries = selectedEmployees.map(({ employee, key }) => ({
-      ORDER_ID: orderId,
-      ACTION: "TRANSFER",
-      "BELT NO": employee["BELT NO"] || "",
-      NAME: employee.NAME || "",
-      CADER: employee.CADER || "",
-      OLD_POSTING: employee.POSTING || "",
-      POSTING_PLACE: assignments[key].destination,
-      ORDER_NO: cleanOrderNo,
-      ORDER_DATE: normalizedDate,
-      ORDER_NO_DATE: orderNoDate,
-      REMARK: assignments[key].remark,
-      ISSUED_AT: issuedAt
-    }));
+    const { updatedRecords, historyEntries } = createTransferOrderUpdates(
+      records,
+      assignments,
+      selectedIds,
+      {
+        orderId,
+        orderNo: cleanOrderNo,
+        orderDate: normalizedDate,
+        issuedAt
+      }
+    );
 
     setRecords(updatedRecords);
     setAllSheets((previous) => ({

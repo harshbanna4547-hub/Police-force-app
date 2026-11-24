@@ -4,6 +4,10 @@ export const TRANSFER_RANKS = ["ALL", "CI", "SI", "ASI", "HC", "FC"];
 
 export const TRANSFER_REMARKS = ["प्रशासनिक", "स्वयं के व्यय पर"];
 
+export function getTransferEmployeeKey(employee, index) {
+  return String(employee?._uid || `${employee?.["BELT NO"] || "employee"}-${index}`);
+}
+
 export function normalizeTransferDateInput(value) {
   const match = String(value || "").trim().match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
   if (!match) return "";
@@ -129,6 +133,40 @@ export function groupTransferOrders(historyRows) {
   return [...orders.values()].sort((left, right) =>
     right.issuedAt.localeCompare(left.issuedAt)
   );
+}
+
+export function createTransferOrderUpdates(records, assignments, selectedKeys, orderDetails) {
+  const selectedIds = new Set(selectedKeys);
+  const orderNoDate = `${orderDetails.orderNo} / ${orderDetails.orderDate}`;
+  const updatedRecords = records.map((employee, index) => {
+    const key = getTransferEmployeeKey(employee, index);
+    if (!selectedIds.has(key)) return employee;
+    return {
+      ...employee,
+      POSTING: assignments[key].destination,
+      "POSTING DOB NO": orderNoDate
+    };
+  });
+  const historyEntries = records.flatMap((employee, index) => {
+    const key = getTransferEmployeeKey(employee, index);
+    if (!selectedIds.has(key)) return [];
+    const assignment = assignments[key];
+    return [{
+      ORDER_ID: orderDetails.orderId,
+      ACTION: "TRANSFER",
+      "BELT NO": employee["BELT NO"] || "",
+      NAME: employee.NAME || "",
+      CADER: employee.CADER || "",
+      OLD_POSTING: employee.POSTING || "",
+      POSTING_PLACE: assignment.destination,
+      ORDER_NO: orderDetails.orderNo,
+      ORDER_DATE: orderDetails.orderDate,
+      ORDER_NO_DATE: orderNoDate,
+      REMARK: assignment.remark,
+      ISSUED_AT: orderDetails.issuedAt
+    }];
+  });
+  return { updatedRecords, historyEntries };
 }
 
 export function createTransferOrderId() {
