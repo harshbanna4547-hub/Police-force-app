@@ -16,9 +16,10 @@ function createDistrictSelection(value) {
     .toUpperCase();
   const unicodeId = Array.from(name)
     .map((character) => character.codePointAt(0).toString(16))
-    .join("_");
+    .join("_")
+    .slice(0, 100);
   return {
-    id: id || `DISTRICT_${unicodeId}`,
+    id: id.slice(0, 100) || `DISTRICT_${unicodeId}`,
     name
   };
 }
@@ -68,6 +69,7 @@ export function DistrictSwitcherModal({ currentDistrict, onClose, onSelect }) {
           onChange={handleChange}
           aria-label="जिला नाम"
           placeholder="जैसे Udaipur"
+          maxLength={100}
           style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "1rem" }}
         />
         <datalist id="rajasthan-districts">
