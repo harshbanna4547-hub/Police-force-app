@@ -10,17 +10,7 @@ export default function App() {
   const portalData = usePortalData();
   const [activeView, setActiveView] = useState("HOME");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
-  const [enabledModuleIds, setEnabledModuleIds] = useState(() =>
-    Object.fromEntries(MODULES_CONFIG.map((module) => [module.id, module.enabled]))
-  );
-  const modules = MODULES_CONFIG.map((module) => ({
-    ...module,
-    enabled: Boolean(enabledModuleIds[module.id])
-  }));
-  const onToggleModule = (moduleId, enabled) => {
-    setEnabledModuleIds((current) => ({ ...current, [moduleId]: enabled }));
-    if (!enabled && activeView === moduleId) setActiveView("HOME");
-  };
+  const modules = MODULES_CONFIG;
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
@@ -30,6 +20,7 @@ export default function App() {
         setSidebarOpen={setSidebarOpen}
         activeView={activeView}
         setActiveView={setActiveView}
+        modules={modules}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats
@@ -42,10 +33,8 @@ export default function App() {
         <main style={{ padding: "12px 24px 24px", flex: 1 }}>
           <PortalModuleContent
             activeView={activeView}
-            setActiveView={setActiveView}
             portalData={portalData}
             modules={modules}
-            onToggleModule={onToggleModule}
           />
         </main>
         <EmployeeFooterManager

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import XLSX from "xlsx-js-style";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../../data/officeUnits";
 import { unicodeToDevlys } from "../../utils/devlysConverter";
+import HindiText from "../../core/HindiText";
 import {
   buildTransferPostingOptions,
   createTransferOrderUpdates,
@@ -9,6 +10,8 @@ import {
   createTransferOrderId,
   formatTransferDate,
   getCompletedTenureYears,
+  getTransferDisplayBeltNumber,
+  getTransferDisplayCader,
   getTransferRank,
   getTransferEmployeeKey,
   groupTransferOrders,
@@ -18,6 +21,8 @@ import {
   TRANSFER_REMARKS
 } from "./transferUtils";
 import "./transfer.css";
+
+const ENGLISH_CELL_STYLE = { fontFamily: "'Times New Roman', Times, serif" };
 
 const ORDER_COLUMNS = [
   "क्र.सं.",
@@ -49,8 +54,8 @@ function escapeHtml(value) {
 function getTransferRows(order, displayText) {
   return order.rows.map((record, index) => [
     index + 1,
-    displayText(record.CADER || ""),
-    displayText(record["BELT NO"] || ""),
+    getTransferDisplayCader(record, displayText),
+    getTransferDisplayBeltNumber(record, displayText),
     displayText(record.NAME || ""),
     displayText(record.OLD_POSTING || ""),
     displayText(record.POSTING_PLACE || ""),
@@ -72,7 +77,9 @@ function printTransferOrder(order, displayText) {
     return `<span class="${hindiText ? "hindi" : "english"}">${escapeHtml(printableText)}</span>`;
   };
   const headers = ORDER_COLUMNS.map((column) => `<th class="hindi">${escapeHtml(unicodeToDevlys(column))}</th>`).join("");
-  const body = rows.map((row) => `<tr>${row.map((value) => `<td>${printValue(value)}</td>`).join("")}</tr>`).join("");
+  const body = rows.map((row) => `<tr>${row.map((value, index) => (
+    `<td${index === 1 || index === 2 ? ' class="english-cell"' : ""}>${printValue(value)}</td>`
+  )).join("")}</tr>`).join("");
   const orderNo = escapeHtml(order.orderNo);
   const orderDate = escapeHtml(order.orderDate);
   const html = `<!doctype html>
@@ -90,6 +97,7 @@ function printTransferOrder(order, displayText) {
           .order-meta { display: flex; justify-content: space-between; margin: 16px 0 10px; font-size: 12pt; }
           table { width: 100%; border-collapse: collapse; }
           th, td { border: 1px solid #000; padding: 7px; text-align: center; }
+          td.english-cell { font-family: "Times New Roman", Times, serif !important; }
           th { background: #e2e8f0; font-size: 12pt; }
           td { font-size: 11pt; }
           .signatures { display: flex; justify-content: space-between; margin-top: 52px; }
@@ -704,10 +712,10 @@ export default function TransferModule({
                             onChange={(event) => toggleSelected(key, event.target.checked)}
                           />
                         </td>
-                        <td>{displayText(employee.CADER || rank)}</td>
-                        <td>{displayText(employee["BELT NO"] || "")}</td>
-                        <td>{displayText(employee.NAME || "")}</td>
-                        <td>{displayText(employee.POSTING || "—")}</td>
+                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, displayText) || rank}</td>
+                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, displayText)}</td>
+                        <td><HindiText text={employee.NAME || ""} /></td>
+                        <td><HindiText text={employee.POSTING || "—"} /></td>
                       </tr>
                     ))}
                     {!visibleEmployees.length && (
@@ -741,10 +749,12 @@ export default function TransferModule({
                       {selectedEmployees.map(({ employee, key }) => (
                         <tr key={key}>
                           <td>
-                            <strong>{displayText(employee.NAME || "")}</strong>
-                            <small>{displayText(employee["BELT NO"] || "")} · {displayText(employee.CADER || "")}</small>
+                            <strong><HindiText text={employee.NAME || ""} /></strong>
+                            <small style={ENGLISH_CELL_STYLE}>
+                              {getTransferDisplayBeltNumber(employee, displayText)} · {getTransferDisplayCader(employee, displayText)}
+                            </small>
                           </td>
-                          <td>{displayText(employee.POSTING || "—")}</td>
+                          <td><HindiText text={employee.POSTING || "—"} /></td>
                           <td>
                             <select
                               value={assignments[key]?.destination || ""}
@@ -864,10 +874,10 @@ export default function TransferModule({
                           })}
                         />
                       </td>
-                      <td>{displayText(employee.CADER || rank)}</td>
-                      <td>{displayText(employee["BELT NO"] || "")}</td>
-                      <td>{displayText(employee.NAME || "")}</td>
-                      <td>{displayText(employee.POSTING || "")}</td>
+                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, displayText) || rank}</td>
+                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, displayText)}</td>
+                      <td><HindiText text={employee.NAME || ""} /></td>
+                      <td><HindiText text={employee.POSTING || ""} /></td>
                       <td>{displayText(employee["POSTING DOB NO"] || "")}</td>
                       <td><strong>{years} वर्ष</strong></td>
                     </tr>
@@ -932,9 +942,15 @@ export default function TransferModule({
                           <tr>{ORDER_COLUMNS.map((column) => <th key={column}>{column}</th>)}</tr>
                         </thead>
                         <tbody>
-                          {getTransferRows(currentOrder, displayText).map((row, index) => (
-                            <tr key={`${currentOrder.id}-${row[2]}-${index}`}>
-                              {row.map((value, cellIndex) => <td key={`${index}-${cellIndex}`}>{value}</td>)}
+                          {currentOrder.rows.map((employee, index) => (
+                            <tr key={`${currentOrder.id}-${employee["BELT NO"] || employee.NAME}-${index}`}>
+                              <td>{index + 1}</td>
+                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, displayText)}</td>
+                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, displayText)}</td>
+                              <td><HindiText text={employee.NAME || ""} /></td>
+                              <td><HindiText text={employee.OLD_POSTING || "—"} /></td>
+                              <td>{displayText(employee.POSTING_PLACE || "")}</td>
+                              <td>{`${currentOrder.orderNo} / ${currentOrder.orderDate}`}</td>
                               <td>
                                 <button
                                   type="button"

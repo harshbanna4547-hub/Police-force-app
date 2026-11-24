@@ -1,12 +1,9 @@
 import { devToHindi } from "../utils/devlysConverter";
-import ModuleCardGrid from "../layout/ModuleCardGrid";
 
 export default function PortalModuleContent({
   activeView,
-  setActiveView,
   portalData,
-  modules,
-  onToggleModule
+  modules
 }) {
   const {
     activeProfile,
@@ -28,24 +25,12 @@ export default function PortalModuleContent({
   } = portalData;
 
   if (activeView === "HOME") {
-    return (
-      <ModuleCardGrid
-        modules={modules}
-        setActiveView={setActiveView}
-        onToggleModule={onToggleModule}
-      />
-    );
+    return <p style={{ margin: "8px 0", color: "#64748B" }}>मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
   }
 
   const selectedModule = modules.find((module) => module.id === activeView && module.enabled);
   if (!selectedModule) {
-    return (
-      <ModuleCardGrid
-        modules={modules}
-        setActiveView={setActiveView}
-        onToggleModule={onToggleModule}
-      />
-    );
+    return <p style={{ margin: "8px 0", color: "#64748B" }}>मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
   }
 
   const propsByModule = {

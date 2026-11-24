@@ -101,6 +101,37 @@ export function getTransferRank(employee, convertLegacy = (value) => value) {
   return "OTHER";
 }
 
+export function getTransferDisplayCader(employee, convertLegacy = (value) => value) {
+  const cader = String(convertLegacy(employee?.CADER || "") || "").trim();
+  const compactCader = cader.toLocaleUpperCase("en").replace(/[^A-Z]/g, "");
+
+  if (
+    compactCader.includes("DYSP") ||
+    compactCader === "DSP" ||
+    compactCader.includes("DEPUTYSUPERINTENDENT") ||
+    /(?:उप\s*पुलिस|पुलिस\s*उप)\s*अधीक्षक/.test(cader)
+  ) return "DySP";
+  if (
+    compactCader.includes("ASP") ||
+    compactCader.includes("ADDITIONALSUPERINTENDENT") ||
+    /अतिरिक्त.*पुलिस\s*अधीक्षक/.test(cader)
+  ) return "ASP";
+  if (
+    compactCader === "SP" ||
+    compactCader.includes("POLICESUPERINTENDENT") ||
+    /पुलिस\s*अधीक्षक/.test(cader)
+  ) return "SP";
+
+  const rank = getTransferRank(employee, convertLegacy);
+  return ["CI", "SI", "ASI", "HC", "FC"].includes(rank) ? rank : cader || "—";
+}
+
+export function getTransferDisplayBeltNumber(employee, convertLegacy = (value) => value) {
+  const rank = getTransferRank(employee, convertLegacy);
+  if (rank !== "HC" && rank !== "FC") return "—";
+  return String(convertLegacy(employee?.["BELT NO"] || "") || "").trim() || "—";
+}
+
 function normalizeStationName(value, convertLegacy) {
   const rawValue = String(value || "");
   const readableValue = /[\u0900-\u097F]/.test(rawValue) ? rawValue : convertLegacy(rawValue);

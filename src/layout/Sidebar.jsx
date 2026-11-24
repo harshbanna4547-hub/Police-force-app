@@ -1,4 +1,12 @@
-export default function Sidebar({ sidebarOpen, setSidebarOpen, activeView, setActiveView, activeProfile, onDownloadReports }) {
+export default function Sidebar({
+  sidebarOpen,
+  setSidebarOpen,
+  activeView,
+  setActiveView,
+  modules,
+  activeProfile,
+  onDownloadReports
+}) {
   const handleNav = (viewKey) => {
     setActiveView(viewKey);
     if (window.innerWidth <= 768) setSidebarOpen(false);
@@ -31,10 +39,37 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, activeView, setAc
           <div style={{ fontSize: "0.62rem", color: "#94A3B8" }}>SERVICE • SECURITY • TRUST</div>
         </div>
 
-        <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-          <button onClick={() => handleNav("HOME")} style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: activeView === "HOME" ? "#1D63DC" : "transparent", color: "#fff" }}>
-            🏠 Dashboard (All Modules)
+        <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: "6px", flex: 1, minHeight: 0, overflowY: "auto" }}>
+          <button
+            onClick={() => handleNav("HOME")}
+            aria-current={activeView === "HOME" ? "page" : undefined}
+            style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: activeView === "HOME" ? "#1D63DC" : "transparent", color: "#fff" }}
+          >
+            🏠 Dashboard
           </button>
+          {modules.filter((module) => module.enabled).map((module) => (
+            <button
+              key={module.id}
+              type="button"
+              title={`${module.hindiTitle} (${module.title})`}
+              onClick={() => handleNav(module.id)}
+              aria-current={activeView === module.id ? "page" : undefined}
+              style={{
+                textAlign: "left",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: activeView === module.id ? "bold" : "500",
+                backgroundColor: activeView === module.id ? "#1D63DC" : "transparent",
+                color: "#fff",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}
+            >
+              {module.icon} {module.hindiTitle}
+            </button>
+          ))}
           <button onClick={onDownloadReports} style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: "transparent", color: "#4ADE80" }}>
             📥 Download All 8 Reports
           </button>

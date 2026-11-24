@@ -5,7 +5,8 @@ export default function SidebarNav({
   sidebarOpen,
   setSidebarOpen,
   activeView,
-  setActiveView
+  setActiveView,
+  modules
 }) {
   return (
     <Sidebar
@@ -13,6 +14,7 @@ export default function SidebarNav({
       setSidebarOpen={setSidebarOpen}
       activeView={activeView}
       setActiveView={setActiveView}
+      modules={modules}
       activeProfile={portalData.activeProfile}
       onDownloadReports={portalData.downloadReports}
     />

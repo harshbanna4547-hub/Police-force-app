@@ -5,6 +5,8 @@ import {
   createTemporaryDutyEntry,
   createTransferOrderUpdates,
   getCompletedTenureYears,
+  getTransferDisplayBeltNumber,
+  getTransferDisplayCader,
   getTransferRank,
   groupTransferOrders,
   isHomePoliceStation,
@@ -32,6 +34,24 @@ test("maps supported employee ranks, including Hindi cadre names", () => {
   );
   assert.equal(getTransferRank({ CADER: "HC" }), "HC");
   assert.equal(getTransferRank({ CADER: "CT" }), "FC");
+});
+
+test("keeps officer cadres in English and only displays belt numbers for HC and FC", () => {
+  for (const [cader, expected] of [
+    ["SP", "SP"],
+    ["ASP", "ASP"],
+    ["DySP", "DySP"],
+    ["CI", "CI"],
+    ["SI", "SI"],
+    ["ASI", "ASI"]
+  ]) {
+    const employee = { CADER: cader, "BELT NO": "123" };
+    assert.equal(getTransferDisplayCader(employee), expected);
+    assert.equal(getTransferDisplayBeltNumber(employee), "—");
+  }
+
+  assert.equal(getTransferDisplayBeltNumber({ CADER: "HC", "BELT NO": "HC-12" }), "HC-12");
+  assert.equal(getTransferDisplayBeltNumber({ CADER: "FC", "BELT NO": "FC-34" }), "FC-34");
 });
 
 test("deduplicates station and chowki choices case-insensitively", () => {
