@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import ExportBar from "../../core/ExportBar";
 import { appendRowToSheet, getRankCode } from "../../shared/commonFunctions";
-import { getMissingTrainingCourses, getTrainingEmployeeKey, isBeltRank, REQUIRED_COURSES } from "./trainingLogic";
+import { getMissingTrainingCourses, getTrainingEmployeeKey, isBeltRank, REQUIRED_COURSES, sameTrainingEmployee } from "./trainingLogic";
 import { renderTrainingDocument, TRAINING_DOCUMENTS } from "./trainingTemplates";
 import { openDriveVaultDB } from "../../utils/vaultStorage";
 import { formatDateOnly } from "../../shared/commonFunctions";
@@ -12,8 +12,8 @@ const CATEGORIES = [
   { id: "STATE", label: "1. राज्य संस्थान (CDTI / RPA / Intelligence / SCRB / ASTI)" },
   { id: "RPTC", label: "2. समस्त RPTC व PTS (जोधपुर, किशनगढ़, खेरवाड़ा, झालावाड़, कमांडो स्कूल)" },
   { id: "HCM_RIPA", label: "3. HCM RIPA जयपुर" },
-  { id: "NATIONAL", label: "4. अन्य राज्य व राष्ट्रीय संस्थान" },
-  { id: "DTC", label: "5. जिला प्रशिक्षण केन्द्र (DTC)" },
+  { id: "NATIONAL", label: "4. अन्य राज्य व राष्ट्रीय संस्थान (CDTI Hyderabad / Chandigarh / Ghaziabad / Kolkata, CAPT Bhopal, NEPA, NCRB, IIM, NFSU)" },
+  { id: "DTC", label: "5. जिला प्रशिक्षण केन्द्र (DTC पुलिस लाइन चित्तौड़गढ़ — साप्ताहिक थानावार रोस्टर व मासिक रिपोर्ट)" },
   { id: "IGOT", label: "6. iGOT कर्मयोगी एवं महिला शक्ति आत्मरक्षा" }
 ];
 
@@ -38,15 +38,14 @@ function parseDate(value) {
   return new Date(year, Number(local[2]) - 1, Number(local[1])).getTime();
 }
 
+function getTrainingYear(value) {
+  const timestamp = parseDate(value);
+  return Number.isFinite(timestamp) ? String(new Date(timestamp).getFullYear()) : "";
+}
+
 function datesOverlap(from, to, otherFrom, otherTo) {
   const values = [parseDate(from), parseDate(to), parseDate(otherFrom), parseDate(otherTo)];
   return values.every(Number.isFinite) && values[0] <= values[3] && values[2] <= values[1];
-}
-
-function escapeHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-  })[char]);
 }
 
 async function saveLetterToVault(district, category, fileName, html) {
@@ -131,6 +130,9 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const [missingCourse, setMissingCourse] = useState("ALL");
   const [missingSearch, setMissingSearch] = useState("");
   const [missingPage, setMissingPage] = useState(0);
+  const [reportYear, setReportYear] = useState("ALL");
+  const [reportRank, setReportRank] = useState("ALL");
+  const [reportCourse, setReportCourse] = useState("ALL");
   const [womenMonth, setWomenMonth] = useState(new Date().toISOString().slice(0, 7));
   const [womenForm, setWomenForm] = useState({
     INSTITUTION: "", FROM_DATE: "", TO_DATE: "", MASTER_TRAINER: "",
@@ -160,7 +162,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
       .some((value) => String(value || "").toLocaleLowerCase().includes(query))).slice(0, 10);
   }, [records, employeeQuery, devToHindi]);
   const employeeHistory = employee
-    ? history.filter((row) => String(row["BELT NO"] || "").trim().toUpperCase() === String(employee["BELT NO"] || employee["BELT NO."] || "").trim().toUpperCase())
+    ? history.filter((row) => sameTrainingEmployee(employee, row))
     : [];
   const recentHistory = employeeHistory.filter((row) => {
     const trainingDate = parseDate(row.TO_DATE || row.FROM_DATE);
@@ -169,9 +171,9 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const alreadyCompleted = employeeHistory.some((row) =>
     String(row.COURSE_NAME || "").trim().toLocaleLowerCase() === course.trim().toLocaleLowerCase() && course.trim()
   );
-  const dateClash = employee && filteredNominations.some((row) =>
+  const dateClash = employee && nominations.some((row) =>
     row.STATUS === "PENDING" &&
-    String(row["BELT NO"] || "").trim().toUpperCase() === String(employee["BELT NO"] || employee["BELT NO."] || "").trim().toUpperCase() &&
+    sameTrainingEmployee(employee, row) &&
     datesOverlap(fromDate, toDate, row.FROM_DATE, row.TO_DATE)
   );
 
@@ -187,7 +189,9 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
       TO_DATE: newTo,
       INSTITUTE: newInstitute,
       CATEGORY: category,
-      STATUS: "COMPLETED"
+      STATUS: "COMPLETED",
+      CADER: detailEmployee?.CADER || "",
+      _uid: detailEmployee?._uid
     };
     const recordHtml = renderTrainingDocument("WIRELESS", {
       ...row,
@@ -234,7 +238,8 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
       TO_DATE: toDate,
       CATEGORY: category,
       STATUS: "PENDING",
-      NOMINATED_AT: new Date().toISOString().slice(0, 10)
+      NOMINATED_AT: new Date().toISOString().slice(0, 10),
+      _uid: employee._uid
     };
   };
 
@@ -314,29 +319,25 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
 
   const categoryHistory = history.filter((row) => !row.CATEGORY || row.CATEGORY === category);
   const reportRows = history.map((row) => ({
-    पद: records.find((item) => String(item["BELT NO"] || "") === String(row["BELT NO"] || ""))?.CADER || "",
+    पद: records.find((item) => sameTrainingEmployee(item, row))?.CADER || "",
     ...row,
-    YEAR: String(row.TO_DATE || row.FROM_DATE || "").slice(-4)
+    YEAR: getTrainingYear(row.TO_DATE || row.FROM_DATE)
   }));
   const pendingRows = filteredNominations.filter((row) => row.STATUS === "PENDING");
   const completedRows = filteredNominations.filter((row) => row.STATUS === "COMPLETED");
   const notDoneRows = filteredNominations.filter((row) => row.STATUS === "NOT_DONE");
-  const historyEmployeeRows = getMissingTrainingCourses(records, history).map((summary) => ({
-    ...summary,
-    history: history.filter((row) => getTrainingEmployeeKey(row) === getTrainingEmployeeKey(summary.employee))
-  }));
   const detailHistory = detailEmployee
-    ? history.filter((row) => getTrainingEmployeeKey(row) === getTrainingEmployeeKey(detailEmployee))
+    ? history.filter((row) => sameTrainingEmployee(detailEmployee, row))
     : [];
   const detailMissing = detailEmployee
-    ? missingRows.find((row) => getTrainingEmployeeKey(row.employee) === getTrainingEmployeeKey(detailEmployee))?.["अपूर्ण कोर्स"] || []
+    ? missingRows.find((row) => sameTrainingEmployee(row.employee, detailEmployee))?.["अपूर्ण कोर्स"] || []
     : [];
   const detailPending = detailEmployee
-    ? nominations.filter((row) => row.STATUS === "PENDING" && getTrainingEmployeeKey(row) === getTrainingEmployeeKey(detailEmployee))
+    ? nominations.filter((row) => row.STATUS === "PENDING" && sameTrainingEmployee(row, detailEmployee))
     : [];
   const igotData = records.map((record, index) => {
     const beltNo = record["BELT NO"] || record["BELT NO."] || "";
-    const tracking = igotRows.find((row) => getTrainingEmployeeKey(row) === getTrainingEmployeeKey(record)) || {};
+    const tracking = igotRows.find((row) => sameTrainingEmployee(row, record)) || {};
     return {
       "S.N.": index + 1,
       Post: record.CADER || "",
@@ -358,49 +359,88 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const womenTotal = ["AGE_13_18", "AGE_18_35", "AGE_35_PLUS"].reduce((total, key) => total + Number(womenForm[key] || 0), 0);
 
   const updateIgot = (record, field, value) => {
-    const key = getTrainingEmployeeKey(record);
     setAllSheets((previous) => {
       const current = previous.Training_iGOT || [];
-      const existing = current.find((row) => getTrainingEmployeeKey(row) === key);
+      const existing = current.find((row) => sameTrainingEmployee(row, record));
       const base = existing || {
         "BELT NO": record["BELT NO"] || record["BELT NO."] || "",
         NAME: record.NAME,
         CADER: record.CADER,
-        POSTING: record.POSTING
+        POSTING: record.POSTING,
+        _uid: record._uid
       };
       const next = { ...base, [field]: value };
       return {
         ...previous,
         Training_iGOT: existing
-          ? current.map((row) => getTrainingEmployeeKey(row) === key ? next : row)
+          ? current.map((row) => sameTrainingEmployee(row, record) ? next : row)
           : [...current, next]
       };
     });
   };
 
   const exportIgotExcel = () => {
-    const rows = igotData.map(({ _key, _record, ...row }) => row);
+    const rows = igotData.map((row) => ({
+      "S.N.": row["S.N."],
+      Post: row.Post,
+      "Belt No.": row["Belt No."],
+      Name: row.Name,
+      Posting: row.Posting,
+      "SSO ID": row["SSO ID"],
+      Mobile: row.Mobile,
+      Registered: row.Registered,
+      "AI Courses": row["AI Courses"],
+      "Other Courses": row["Other Courses"]
+    }));
     const sheet = XLSX.utils.json_to_sheet(rows);
     const book = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(book, sheet, "MDO Admin");
     XLSX.writeFile(book, `MDO_Admin_iGOT_${womenMonth || "Report"}.xlsx`);
   };
 
-  const addWomenProgram = (event) => {
+  const addWomenProgram = async (event) => {
     event.preventDefault();
     const row = { ...womenForm, TOTAL: womenTotal, CATEGORY: "IGOT", CREATED_AT: new Date().toISOString() };
-    setAllSheets((previous) => ({
-      ...previous,
-      Training_Women_Programs: [...(previous.Training_Women_Programs || []), row]
-    }));
+    const reportHtml = renderTrainingDocument("WIRELESS", {
+      NAME: row.INSTITUTION,
+      "FATHER NAME": "",
+      CADER: "महिला शक्ति आत्मरक्षा",
+      "BELT NO": "",
+      POSTING: row.MASTER_TRAINER,
+      MOBILE: "",
+      EMAIL: "",
+      EDUCATION: "",
+      DOB: "",
+      COURSE_NAME: "महिला शक्ति आत्मरक्षा प्रशिक्षण",
+      INSTITUTE: row.INSTITUTION,
+      FROM_DATE: row.FROM_DATE,
+      TO_DATE: row.TO_DATE
+    });
+    try {
+      await saveLetterToVault(activeProfile, "IGOT", `Women_Shakti_${Date.now()}.html`, reportHtml);
+      setAllSheets((previous) => ({
+        ...previous,
+        Training_Women_Programs: [...(previous.Training_Women_Programs || []), row]
+      }));
+    } catch (error) {
+      console.error("Women's self-defence report could not be saved:", error);
+      window.alert(`महिला शक्ति रिपोर्ट Storage Vault में सुरक्षित नहीं हो सकी: ${error.message}`);
+      return;
+    }
     setWomenForm({ INSTITUTION: "", FROM_DATE: "", TO_DATE: "", MASTER_TRAINER: "", AGE_13_18: "", AGE_18_35: "", AGE_35_PLUS: "" });
   };
+  const reportYears = [...new Set(reportRows.map((row) => row.YEAR).filter(Boolean))].sort().reverse();
+  const filteredReportRows = reportRows.filter((row) =>
+    (reportYear === "ALL" || row.YEAR === reportYear) &&
+    (reportRank === "ALL" || getRankCode(row["पद"]) === reportRank) &&
+    (reportCourse === "ALL" || String(row.COURSE_NAME || "").toLocaleLowerCase().includes(reportCourse.toLocaleLowerCase()))
+  );
 
   return (
     <div className="training-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <h2>🎓 प्रशिक्षण एवं नामांकन प्रबंधन</h2>
       <nav className="training-tabs" aria-label="प्रशिक्षण श्रेणियाँ">
-        {CATEGORIES.map((item) => <button type="button" key={item.id} aria-pressed={category === item.id} onClick={() => setCategory(item.id)}>{item.label}</button>)}
+        {CATEGORIES.map((item) => <button type="button" key={item.id} aria-pressed={category === item.id} onClick={() => { setCategory(item.id); if (item.id === "IGOT") setTab("HISTORY"); }}>{item.label}</button>)}
       </nav>
       <nav className="training-tabs" aria-label="प्रशिक्षण कार्यवाही">
         {WORKFLOW_TABS.map(([id, label]) => <button type="button" key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}
@@ -520,44 +560,133 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
       {tab === "REPORT" && (
         <section>
           <h3>📊 Subject-Wise &amp; Year-Wise Report</h3>
-          <ExportBar title="विषय एवं वर्ष वार प्रशिक्षण रिपोर्ट" rows={reportRows} fileName="Training_Subject_Year_Report" />
-          <ExportBar title="प्रशिक्षण नहीं लेने वाले कर्मचारी" rows={missingRows} fileName="Training_Not_Taken" />
-          <p>अपूर्ण आवश्यक कर्मचारी-कोर्स: {missingRows.length}</p>
+          <div className="training-filter-row">
+            <label>वर्ष
+              <select value={reportYear} onChange={(event) => setReportYear(event.target.value)}>
+                <option value="ALL">सभी वर्ष</option>{reportYears.map((year) => <option key={year}>{year}</option>)}
+              </select>
+            </label>
+            <label>पद
+              <select value={reportRank} onChange={(event) => setReportRank(event.target.value)}>
+                {["ALL", "CI", "SI", "ASI", "HC", "FC"].map((rank) => <option key={rank} value={rank}>{rank === "ALL" ? "सभी पद" : rank}</option>)}
+              </select>
+            </label>
+            <label>विषय
+              <select value={reportCourse} onChange={(event) => setReportCourse(event.target.value)}>
+                <option value="ALL">सभी विषय</option>
+                {[...new Set(reportRows.map((row) => row.COURSE_NAME).filter(Boolean))].map((subject) => <option key={subject} value={subject}>{subject}</option>)}
+              </select>
+            </label>
+            <ExportBar title="विषय एवं वर्ष वार प्रशिक्षण रिपोर्ट" rows={filteredReportRows} fileName="Training_Subject_Year_Report" />
+          </div>
+          <ExportBar title="प्रशिक्षण नहीं लेने वाले कर्मचारी" rows={missingRows.map((row, index) => ({
+            "क्र.सं.": index + 1,
+            "पद": row.CADER,
+            "बेल्ट नं.": isBeltRank(row.employee) ? row["BELT NO"] : "-",
+            "नाम": devToHindi(row.NAME),
+            "वर्तमान पदस्थापन": devToHindi(row.POSTING),
+            "पूर्ण प्रशिक्षण संख्या": row["पूर्ण प्रशिक्षण संख्या"],
+            "लंबित आवश्यक प्रशिक्षण": row["अपूर्ण कोर्स"].join(", ")
+          }))} fileName="Training_Not_Taken" />
+          <p>अपूर्ण आवश्यक प्रशिक्षण वाले कर्मचारी: {missingRows.filter((row) => row["अपूर्ण कोर्स"].length).length}</p>
         </section>
       )}
-      {tab === "HISTORY" && (
+      {tab === "HISTORY" && category !== "IGOT" && (
         <>
           <div className="training-heading">
             <h3>Training History — {CATEGORIES.find((item) => item.id === category)?.label}</h3>
             <ExportBar title="प्रशिक्षण रिकॉर्ड" rows={categoryHistory} fileName="Training_History" />
           </div>
-          <form onSubmit={addHistory} className="training-add-form">
-            <input required value={belt} onChange={(event) => setBelt(event.target.value)} placeholder="बेल्ट नं." />
-            <input required value={name} onChange={(event) => setName(event.target.value)} placeholder="नाम" />
-            <input list="training-course-list" required value={newCourse} onChange={(event) => setNewCourse(event.target.value)} placeholder="कोर्स का नाम" />
-            <datalist id="training-course-list">{REQUIRED_COURSES.map((item) => <option key={item.label} value={item.label} />)}</datalist>
-            <input type="text" value={newFrom} onChange={(event) => setNewFrom(event.target.value)} placeholder="From (DD-MM-YYYY)" />
-            <input type="text" value={newTo} onChange={(event) => setNewTo(event.target.value)} placeholder="To (DD-MM-YYYY)" />
-            <input value={newInstitute} onChange={(event) => setNewInstitute(event.target.value)} placeholder="संस्थान" />
-            <button type="submit">➕ Add Training</button>
-          </form>
-          <div style={{ overflowX: "auto" }}>
-            <table>
-              <thead><tr>{["BELT NO", "NAME", "COURSE_NAME", "FROM", "TO", "INSTITUTE"].map((item) => <th key={item}>{item}</th>)}</tr></thead>
-              <tbody>{categoryHistory.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`}>
-                <td>{row["BELT NO"]}</td><td>{devToHindi(row.NAME)}</td><td>{devToHindi(row.COURSE_NAME)}</td>
-                <td>{String(row.FROM_DATE || "").split(/[T ]/)[0]}</td><td>{String(row.TO_DATE || "").split(/[T ]/)[0]}</td><td>{devToHindi(row.INSTITUTE)}</td>
-              </tr>)}</tbody>
+          <h3>आवश्यक प्रशिक्षण रिकॉर्ड की जाँच — {filteredMissingRows.length} कर्मचारी</h3>
+          <div className="training-filter-row">
+            <label>पद
+              <select value={missingRank} onChange={(event) => { setMissingRank(event.target.value); setMissingPage(0); }}>
+                {["ALL", "CI", "SI", "ASI", "HC", "FC"].map((rank) => <option key={rank} value={rank}>{rank === "ALL" ? "सभी पद" : rank}</option>)}
+              </select>
+            </label>
+            <label>कोर्स
+              <select value={missingCourse} onChange={(event) => { setMissingCourse(event.target.value); setMissingPage(0); }}>
+                <option value="ALL">सभी कोर्स</option>
+                {REQUIRED_COURSES.map((item) => <option key={item.label} value={item.label}>{item.label}</option>)}
+              </select>
+            </label>
+            <label>खोजें
+              <input type="search" value={missingSearch} onChange={(event) => { setMissingSearch(event.target.value); setMissingPage(0); }} placeholder="नाम / बेल्ट / पदस्थापन" />
+            </label>
+            <ExportBar title="लंबित प्रशिक्षण सूची" rows={filteredMissingRows.map((row, index) => ({
+              "क्र.सं.": index + 1,
+              "पद (Post)": row.CADER,
+              "बेल्ट नं.": isBeltRank(row.employee) ? row["BELT NO"] : "-",
+              "नाम": devToHindi(row.NAME),
+              "वर्तमान पदस्थापन": devToHindi(row.POSTING),
+              "पूर्ण प्रशिक्षण संख्या": row["पूर्ण प्रशिक्षण संख्या"],
+              "लंबित आवश्यक प्रशिक्षण": row["अपूर्ण कोर्स"].join(", ")
+            }))} fileName="Training_Missing_Courses" />
+          </div>
+          <div className="training-table-scroll">
+            <table className="training-data-table training-summary-table">
+              <thead><tr><th>क्र.सं.</th><th>पद (Post)</th><th>बेल्ट नं.</th><th>नाम</th><th>वर्तमान पदस्थापन</th><th>पूर्ण प्रशिक्षण संख्या</th><th>लंबित आवश्यक प्रशिक्षण</th></tr></thead>
+              <tbody>{pagedMissingRows.map((row, index) => (
+                <tr key={getTrainingEmployeeKey(row.employee)}>
+                  <td>{missingPage * pageSize + index + 1}</td>
+                  <td>{row.CADER || "-"}</td>
+                  <td>{isBeltRank(row.employee) ? row["BELT NO"] : "-"}</td>
+                  <td><button type="button" className="training-name-button" onClick={() => {
+                    setDetailEmployee(row.employee);
+                    setNewCourse(REQUIRED_COURSES[0].label);
+                    setNewFrom("");
+                    setNewTo("");
+                    setNewInstitute("");
+                  }}>{devToHindi(row.NAME)}</button></td>
+                  <td>{devToHindi(row.POSTING) || "-"}</td>
+                  <td>{row["पूर्ण प्रशिक्षण संख्या"]}</td>
+                  <td>{row["अपूर्ण कोर्स"].join(", ") || "सभी आवश्यक प्रशिक्षण पूर्ण"}</td>
+                </tr>
+              ))}</tbody>
             </table>
           </div>
-          <h3>आवश्यक प्रशिक्षण रिकॉर्ड की जाँच ({missingRows.length} लंबित कर्मचारी-कोर्स)</h3>
-          <ExportBar title="लंबित प्रशिक्षण सूची" rows={missingRows} fileName="Training_Missing_Courses" />
-          <div style={{ overflowX: "auto" }}>
-            <table><thead><tr>{["बेल्ट नं.", "पद", "नाम", "कोर्स"].map((item) => <th key={item}>{item}</th>)}</tr></thead>
-              <tbody>{missingRows.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`}><td>{row["BELT NO"]}</td><td>{row.CADER}</td><td>{row.NAME}</td><td>{row["अपूर्ण कोर्स"]}</td></tr>)}</tbody>
-            </table>
+          <div className="training-pagination">
+            <button type="button" disabled={missingPage === 0} onClick={() => setMissingPage((page) => page - 1)}>← पिछला</button>
+            <span>पृष्ठ {missingPage + 1} / {pageCount} · {Math.min(filteredMissingRows.length, missingPage * pageSize + 1)}–{Math.min(filteredMissingRows.length, (missingPage + 1) * pageSize)} / {filteredMissingRows.length}</span>
+            <button type="button" disabled={missingPage + 1 >= pageCount} onClick={() => setMissingPage((page) => page + 1)}>अगला →</button>
           </div>
         </>
+      )}
+      {detailEmployee && (
+        <div className="training-modal-backdrop" role="presentation" onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setDetailEmployee(null);
+        }}>
+          <section className="training-detail-modal" role="dialog" aria-modal="true" aria-labelledby="training-detail-title">
+            <div className="training-heading">
+              <h3 id="training-detail-title">{devToHindi(detailEmployee.NAME)} — प्रशिक्षण विवरण</h3>
+              <button type="button" onClick={() => setDetailEmployee(null)} aria-label="Close training details">✕</button>
+            </div>
+            <h4>पूर्ण प्रशिक्षण ({detailHistory.length})</h4>
+            <div className="training-table-scroll">
+              <table className="training-data-table">
+                <thead><tr><th>क्र.सं.</th><th>पद</th><th>बेल्ट नं.</th><th>नाम</th><th>कोर्स का नाम</th><th>कब से</th><th>कब तक</th><th>संस्थान</th><th>आदेश नं.</th></tr></thead>
+                <tbody>{detailHistory.map((row, index) => <tr key={`${row.COURSE_NAME}-${index}`}>
+                  <td>{index + 1}</td><td>{detailEmployee.CADER || "-"}</td><td>{isBeltRank(detailEmployee) ? row["BELT NO"] : "-"}</td><td>{devToHindi(detailEmployee.NAME)}</td>
+                  <td>{devToHindi(row.COURSE_NAME)}</td><td>{formatDateOnly(row.FROM_DATE)}</td><td>{formatDateOnly(row.TO_DATE)}</td>
+                  <td>{devToHindi(row.INSTITUTE)}</td><td>{row.DOB_ORDER_NO || row.ORDER_NO || "-"}</td>
+                </tr>)}</tbody>
+              </table>
+            </div>
+            <h4>लंबित आवश्यक प्रशिक्षण</h4>
+            {detailMissing.length ? <ul>{detailMissing.map((item) => <li key={item}>{item}</li>)}</ul> : <p>सभी आवश्यक प्रशिक्षण पूर्ण हैं।</p>}
+            <h4>वर्तमान नामांकन</h4>
+            {detailPending.length ? <ul>{detailPending.map((row, index) => <li key={`${row.COURSE_NAME}-${index}`}>{row.COURSE_NAME} · {formatDateOnly(row.FROM_DATE)}–{formatDateOnly(row.TO_DATE)}</li>)}</ul> : <p>कोई लंबित नामांकन नहीं।</p>}
+            <h4>➕ नया प्रशिक्षण जोड़ें</h4>
+            <form onSubmit={addHistory} className="training-add-form">
+              <input list="training-course-list" required value={newCourse} onChange={(event) => setNewCourse(event.target.value)} placeholder="कोर्स का नाम" />
+              <datalist id="training-course-list">{REQUIRED_COURSES.map((item) => <option key={item.label} value={item.label} />)}</datalist>
+              <label>कब से <input required type="date" value={newFrom} onChange={(event) => setNewFrom(event.target.value)} /></label>
+              <label>कब तक <input required type="date" value={newTo} onChange={(event) => setNewTo(event.target.value)} /></label>
+              <input required value={newInstitute} onChange={(event) => setNewInstitute(event.target.value)} placeholder="संस्थान" />
+              <button type="submit">➕ Add Training</button>
+            </form>
+          </section>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,4 @@
-import { getRankCode, getBeltNo } from "../../shared/commonFunctions";
+import { getRankCode, getBeltNo } from "../../shared/commonFunctions.js";
 
 export const REQUIRED_COURSES = [
   { label: "PCC", aliases: ["pcc"], ranks: ["FC", "HC"] },
@@ -19,11 +19,7 @@ export function getMissingTrainingCourses(records, trainingRows) {
   return Array.from(uniqueEmployees.values(), (record) => {
     const belt = getBeltNo(record);
     const rank = getRankCode(record);
-    const employeeRows = rows.filter((row) => {
-      const rowBelt = getBeltNo(row);
-      return belt !== "-" && rowBelt !== "-" &&
-        rowBelt.trim().toUpperCase() === belt.trim().toUpperCase();
-    });
+    const employeeRows = rows.filter((row) => sameTrainingEmployee(record, row));
     const missing = REQUIRED_COURSES
       .filter((course) => !course.ranks || course.ranks.includes(rank))
       .filter((course) => !employeeRows.some((row) => {
@@ -47,6 +43,20 @@ export function getTrainingEmployeeKey(employee) {
   const belt = getBeltNo(employee);
   if (belt !== "-") return `belt:${belt.trim().toUpperCase()}`;
   return `uid:${employee?._uid || `${employee?.NAME || ""}:${employee?.CADER || ""}`}`;
+}
+
+export function sameTrainingEmployee(left, right) {
+  const leftBelt = getBeltNo(left);
+  const rightBelt = getBeltNo(right);
+  if (leftBelt !== "-" && rightBelt !== "-") {
+    return leftBelt.trim().toUpperCase() === rightBelt.trim().toUpperCase();
+  }
+  if (left?._uid && right?._uid) return String(left._uid) === String(right._uid);
+  const leftName = String(left?.NAME || "").trim().toLocaleLowerCase();
+  const rightName = String(right?.NAME || "").trim().toLocaleLowerCase();
+  const leftRank = getRankCode(left);
+  const rightRank = getRankCode(right);
+  return Boolean(leftName && rightName && leftName === rightName && leftRank === rightRank);
 }
 
 export function isBeltRank(employee) {

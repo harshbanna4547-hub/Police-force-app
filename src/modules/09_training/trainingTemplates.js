@@ -36,10 +36,10 @@ export function renderTrainingDocument(type, nomination, instructions = "") {
     ["पद", nomination.CADER],
     ["बेल्ट नं.", nomination["BELT NO"]],
     ["वर्तमान पदस्थापन", nomination.POSTING],
-    ["मोबाइल नं.", nomination.MOBILE],
-    ["ई-मेल", nomination.EMAIL],
     ["शैक्षणिक योग्यता", nomination.EDUCATION],
-    ["जन्मतिथि", nomination.DOB]
+    ["जन्मतिथि", nomination.DOB],
+    ["मोबाइल नं.", nomination.MOBILE],
+    ["ई-मेल", nomination.EMAIL]
   ];
   const employeeTable = `<table>${rows.map(([label, value], index) =>
     `<tr><th>${index + 1}. ${escapeHtml(label)}</th><td>${escapeHtml(value || "-")}</td></tr>`

@@ -14,11 +14,43 @@
 .training-heading,
 .training-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
 .training-generator-form input,
+.training-generator-form select,
 .training-add-form input,
-.training-status-row input { min-width: 150px; padding: 8px; }
+.training-status-row input,
+.training-women-form input { min-width: 150px; padding: 8px; }
 .training-clash { flex-basis: 100%; color: #B91C1C; }
+.training-filter-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 12px 0; }
+.training-filter-row label,
+.training-women-form label { display: grid; gap: 4px; color: #475569; font-size: .85rem; }
+.training-filter-row select,
+.training-filter-row input { padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; }
+.training-table-scroll { width: 100%; overflow: auto; }
+.training-data-table { width: 100%; min-width: 950px; border-collapse: collapse; }
+.training-data-table th,
+.training-data-table td { border: 1px solid #CBD5E1; padding: 7px; text-align: left; vertical-align: middle; }
+.training-data-table th { background: #F1F5F9; white-space: nowrap; }
+.training-data-table input { width: 100%; min-width: 85px; box-sizing: border-box; padding: 6px; }
+.training-name-button { padding: 0 !important; color: #1D63DC !important; background: transparent !important; border: 0 !important; text-decoration: underline; }
+.training-pagination { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 12px; }
+.training-pagination button:disabled { opacity: .5; cursor: not-allowed; }
+.training-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; width: 100%; }
+.training-summary-cards article { display: grid; gap: 5px; padding: 12px; border: 1px solid #CBD5E1; border-radius: 9px; background: #F8FAFC; }
+.training-summary-cards strong { font-size: 1.4rem; }
+.training-women-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end; gap: 10px; margin: 12px 0; }
+.training-women-form > input { box-sizing: border-box; width: 100%; }
+.training-modal-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; background: rgb(15 23 42 / 55%); }
+.training-detail-modal { width: min(1100px, 100%); max-height: 90vh; overflow: auto; padding: 18px; border: 1px solid #CBD5E1; border-radius: 12px; background: #fff; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
+.training-detail-modal h4 { margin: 16px 0 8px; }
+.training-detail-modal .training-add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); align-items: end; }
+.training-detail-modal .training-add-form input { box-sizing: border-box; width: 100%; }
 @media print {
   .training-tabs,
-  .training-generator-form button,
-  .training-add-form { display: none !important; }
+  .training-generator-form,
+  .training-add-form,
+  .training-filter-row,
+  .training-pagination,
+  .training-modal-backdrop button { display: none !important; }
+  .training-module { border: 0 !important; padding: 0 !important; }
+  .training-table-scroll { overflow: visible; }
+  .training-data-table { min-width: 0; }
 }
