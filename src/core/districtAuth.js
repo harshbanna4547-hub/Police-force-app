@@ -5,11 +5,18 @@ import {
   isOfflineDemoCredentialsValid,
   OFFLINE_AUTH_STORAGE_KEY
 } from "./offlineDemoAuth.js";
+import {
+  clearOfficeServerConfig,
+  fetchOfficeDistrictData,
+  getOfficeServerConfig,
+  saveOfficeServerConfig
+} from "./lanSyncClient.js";
 
 const SUPABASE_URL = String(import.meta.env.VITE_SUPABASE_URL || "").trim();
 const SUPABASE_ANON_KEY = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
 
 export const isCloudConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+const OFFICE_AUTH_STORAGE_KEY = "police_portal_office_lan_auth";
 
 export const DISTRICT_OPTIONS = [
   { code: "CHITTORGARH", name: "Chittorgarh" },
@@ -62,10 +69,16 @@ async function getDistrictProfile(client, userId) {
 }
 
 function readOfflineAuthState() {
-  if (isCloudConfigured || typeof window === "undefined") {
+  if (typeof window === "undefined") {
     return { user: null, profile: null, error: "" };
   }
   try {
+    if (
+      window.localStorage.getItem(OFFICE_AUTH_STORAGE_KEY) === "true"
+      && getOfficeServerConfig().token
+    ) {
+      return createOfficeLanIdentity();
+    }
     if (window.localStorage.getItem(OFFLINE_AUTH_STORAGE_KEY) === "true") {
       return { ...createOfflineDemoIdentity(), error: "" };
     }
@@ -80,14 +93,29 @@ function readOfflineAuthState() {
   }
 }
 
+function createOfficeLanIdentity() {
+  const user = { id: "office-lan-admin", email: "Office LAN User" };
+  const profile = {
+    user_id: user.id,
+    district_id: "CHITTORGARH",
+    district_name: "Chittorgarh",
+    role: "admin",
+    office_lan: true
+  };
+  return { user, profile, error: "" };
+}
+
 export function useDistrictAuth() {
   const [initialOfflineState] = useState(readOfflineAuthState);
   const [user, setUser] = useState(initialOfflineState.user);
   const [profile, setProfile] = useState(initialOfflineState.profile);
-  const [loading, setLoading] = useState(isCloudConfigured);
+  const [loading, setLoading] = useState(isCloudConfigured && !initialOfflineState.profile);
   const [error, setError] = useState(initialOfflineState.error);
 
   useEffect(() => {
+    if (initialOfflineState.profile?.office_lan || initialOfflineState.profile?.offline_demo) {
+      return undefined;
+    }
     const client = getSupabaseClient();
     if (!client) return undefined;
 
@@ -141,24 +169,27 @@ export function useDistrictAuth() {
       active = false;
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [initialOfflineState.profile]);
 
   const signIn = useCallback(async (email, password, selectedDistrictId) => {
     const client = getSupabaseClient();
     setLoading(true);
     setError("");
     try {
-      if (!client) {
-        if (!isOfflineDemoCredentialsValid(email, password)) {
-          throw new Error("ऑफ़लाइन डेमो लॉगिन के लिए मान्य यूज़रनेम और पासवर्ड दर्ज करें।");
-        }
+      if (isOfflineDemoCredentialsValid(email, password)) {
         const offlineIdentity = createOfflineDemoIdentity();
         localStorage.setItem(OFFLINE_AUTH_STORAGE_KEY, "true");
+        localStorage.removeItem(OFFICE_AUTH_STORAGE_KEY);
         setUser(offlineIdentity.user);
         setProfile(offlineIdentity.profile);
         return offlineIdentity.profile;
       }
+      if (!client) {
+        throw new Error("Supabase उपलब्ध नहीं है। Offline Demo credentials या Direct Office Login इस्तेमाल करें।");
+      }
 
+      localStorage.removeItem(OFFLINE_AUTH_STORAGE_KEY);
+      localStorage.removeItem(OFFICE_AUTH_STORAGE_KEY);
       const { data, error: signInError } = await client.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
       const districtProfile = await getDistrictProfile(client, data.user.id);
@@ -177,18 +208,39 @@ export function useDistrictAuth() {
     }
   }, []);
 
+  const signInOffice = useCallback(async (serverUrl, officeToken) => {
+    setLoading(true);
+    setError("");
+    try {
+      saveOfficeServerConfig(serverUrl, officeToken);
+      await fetchOfficeDistrictData("CHITTORGARH");
+      const officeIdentity = createOfficeLanIdentity();
+      localStorage.setItem(OFFICE_AUTH_STORAGE_KEY, "true");
+      localStorage.removeItem(OFFLINE_AUTH_STORAGE_KEY);
+      setUser(officeIdentity.user);
+      setProfile(officeIdentity.profile);
+      return officeIdentity.profile;
+    } catch (signInError) {
+      setError(signInError.message || "Direct Office Login असफल हुआ।");
+      throw signInError;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const signOut = useCallback(async () => {
     const client = getSupabaseClient();
-    if (client) {
+    if (client && !profile?.offline_demo && !profile?.office_lan) {
       const { error: signOutError } = await client.auth.signOut();
       if (signOutError) throw signOutError;
-    } else {
-      localStorage.removeItem(OFFLINE_AUTH_STORAGE_KEY);
     }
+    localStorage.removeItem(OFFLINE_AUTH_STORAGE_KEY);
+    localStorage.removeItem(OFFICE_AUTH_STORAGE_KEY);
+    clearOfficeServerConfig();
     setUser(null);
     setProfile(null);
     setError("");
-  }, []);
+  }, [profile]);
 
   return {
     user,
@@ -197,6 +249,7 @@ export function useDistrictAuth() {
     error,
     configured: isCloudConfigured,
     signIn,
+    signInOffice,
     signOut
   };
 }

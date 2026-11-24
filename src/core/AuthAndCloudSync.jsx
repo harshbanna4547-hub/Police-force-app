@@ -4,6 +4,7 @@ import {
   OFFLINE_DEMO_EMAIL,
   OFFLINE_DEMO_PASSWORD
 } from "./offlineDemoAuth.js";
+import { getOfficeServerConfig } from "./lanSyncClient.js";
 
 export default function AuthAndCloudSync({
   districtName,
@@ -38,13 +39,15 @@ export default function AuthAndCloudSync({
   );
 }
 
-export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn }) {
+export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn, onOfficeSignIn }) {
   const [email, setEmail] = useState(OFFLINE_DEMO_EMAIL);
   const [password, setPassword] = useState("");
   const [district, setDistrict] = useState("CHITTORGARH");
   const [otherDistrict, setOtherDistrict] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [officeServerUrl, setOfficeServerUrl] = useState(() => getOfficeServerConfig().url);
+  const [officeAccessKey, setOfficeAccessKey] = useState("");
 
   const attemptSignIn = async (loginEmail, loginPassword, districtId) => {
     setSubmitting(true);
@@ -70,6 +73,19 @@ export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn
     OFFLINE_DEMO_PASSWORD,
     "CHITTORGARH"
   );
+
+  const loginOffice = async () => {
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      await onOfficeSignIn(officeServerUrl, officeAccessKey);
+    } catch (signInError) {
+      console.error("Direct Office login failed:", signInError);
+      setSubmitError(signInError.message || "Direct Office Login असफल हुआ।");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: "24px", background: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
@@ -109,11 +125,27 @@ export function DistrictPoliceLoginScreen({ loading, configured, error, onSignIn
         <button type="submit" disabled={loading || submitting} style={{ padding: "11px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
           {loading || submitting ? "⏳ कृपया प्रतीक्षा करें…" : "🔐 Login"}
         </button>
-        {!configured && (
-          <button type="button" onClick={loginDemo} disabled={loading || submitting} style={{ padding: "11px", border: "1px solid #0F766E", borderRadius: "8px", background: "#ECFDF5", color: "#065F46", fontWeight: "bold", cursor: "pointer" }}>
-            ⚡ Quick Demo / Offline Login
+        <button type="button" onClick={loginDemo} disabled={loading || submitting} style={{ padding: "11px", border: "1px solid #0F766E", borderRadius: "8px", background: "#ECFDF5", color: "#065F46", fontWeight: "bold", cursor: "pointer" }}>
+          ⚡ Quick Demo / Offline Login
+        </button>
+        <div style={{ borderTop: "1px solid #E2E8F0", paddingTop: "14px", display: "grid", gap: "10px" }}>
+          <strong style={{ color: "#0B1E3D" }}>GR कार्यालय LAN सर्वर</strong>
+          <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
+            GR PC Server URL
+            <input type="url" value={officeServerUrl} onChange={(event) => setOfficeServerUrl(event.target.value)} placeholder="http://192.168.1.10:5050" style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
+          </label>
+          <label style={{ display: "grid", gap: "6px", color: "#334155" }}>
+            Office Access Key
+            <input type="password" autoComplete="current-password" value={officeAccessKey} onChange={(event) => setOfficeAccessKey(event.target.value)} placeholder="GR PC server console से key लें" style={{ padding: "10px", border: "1px solid #CBD5E1", borderRadius: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
+          </label>
+          <button type="button" onClick={loginOffice} disabled={loading || submitting || !officeServerUrl || officeAccessKey.trim().length < 32 || !onOfficeSignIn} style={{ padding: "11px", border: "1px solid #1D4ED8", borderRadius: "8px", background: "#EFF6FF", color: "#1E40AF", fontWeight: "bold", cursor: "pointer" }}>
+            ⚡ Direct Office Login
           </button>
-        )}
+          <small style={{ color: "#64748B" }}>Office Access Key server console या `server/data/office_access.token` से लें; डेमो पासवर्ड से असली कार्यालय डेटा नहीं खुलता।</small>
+        </div>
+        <small style={{ color: "#64748B" }}>
+          Offline Demo credentials: {OFFLINE_DEMO_EMAIL} / {OFFLINE_DEMO_PASSWORD} (या admin / 123456); यह अलग डेमो डेटा है।
+        </small>
         <small style={{ color: "#64748B" }}>नया जिला यूज़र केवल प्रशासक Supabase में provision कर सकता है।</small>
       </form>
     </main>

@@ -10,6 +10,7 @@ export default function TopHeader({
   onRemoveDistrictData,
   hasData,
   persistenceError,
+  lanSyncStatus,
   onExportMasterFile,
   isExportingMaster
 }) {
@@ -35,6 +36,21 @@ export default function TopHeader({
             {fileName ? `✔ सक्रिय डेटा: ${fileName}` : `⚠️ ${activeProfile} के लिए कृपया Master Excel अपलोड करें`}
           </small>
           {persistenceError && <small role="alert" style={{ display: "block", color: "#B91C1C" }}>{persistenceError}</small>}
+          {lanSyncStatus !== "disabled" && (
+            <small role="status" style={{ display: "block", color: lanSyncStatus === "connected" ? "#15803D" : lanSyncStatus === "key-required" || lanSyncStatus === "error" || lanSyncStatus === "conflict" ? "#B45309" : "#A16207" }}>
+              {lanSyncStatus === "connected"
+                ? "🟢 Connected to GR Server"
+                : lanSyncStatus === "checking"
+                  ? "🟡 Checking GR Server…"
+                  : lanSyncStatus === "key-required"
+                    ? "🔒 GR Server Office Access Key required"
+                    : lanSyncStatus === "conflict"
+                      ? "⚠️ GR Server data conflict; review before continuing"
+                      : lanSyncStatus === "error"
+                        ? "⚠️ GR Server sync error; local data remains saved"
+                        : "🟡 Local Mode (GR Server Offline)"}
+            </small>
+          )}
         </div>
       </div>
 

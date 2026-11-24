@@ -16,6 +16,13 @@ import {
   isCloudConfigured,
   saveDistrictCloudData
 } from "./districtAuth";
+import {
+  OfficeServerError,
+  synchronizeOfficeVault
+} from "./lanSyncClient.js";
+
+const OFFICE_DISTRICT_ID = "CHITTORGARH";
+const LAN_SYNC_INTERVAL_MS = 15000;
 
 function readDistrictSetting(key, districtId, fallback) {
   try {
@@ -74,6 +81,51 @@ function hydrateEmployeeData(sheets, sourceRecords, mainSheetName = "Master_All_
   allSheets[mainSheetName] = records;
   allSheets["Master_All_Data"] = records;
   return { records, allSheets };
+}
+
+function encodeArrayBuffer(buffer) {
+  const bytes = buffer instanceof ArrayBuffer
+    ? new Uint8Array(buffer)
+    : new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function decodeArrayBuffer(base64) {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes.buffer;
+}
+
+function serializeVaultForOffice(vault) {
+  if (!vault?.originalWorkbook?.buffer) return vault;
+  const { buffer, ...metadata } = vault.originalWorkbook;
+  return {
+    ...vault,
+    originalWorkbook: {
+      ...metadata,
+      bufferBase64: encodeArrayBuffer(buffer)
+    }
+  };
+}
+
+function deserializeVaultFromOffice(vault) {
+  if (!vault?.originalWorkbook?.bufferBase64) return vault;
+  const { bufferBase64, ...metadata } = vault.originalWorkbook;
+  return {
+    ...vault,
+    originalWorkbook: {
+      ...metadata,
+      buffer: decodeArrayBuffer(bufferBase64)
+    }
+  };
 }
 
 function createUniqueEmployeeUid(rows) {
@@ -190,10 +242,98 @@ export default function usePortalData({ districtId = "", districtName = "", auth
     isCloudConfigured ? "क्लाउड बैकअप उपलब्ध" : "क्लाउड कॉन्फ़िगरेशन लंबित"
   );
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [lanSyncStatus, setLanSyncStatus] = useState("offline");
 
   const fileHandleRef = useRef(null);
   const isInitialLoad = useRef(true);
+  const lanSyncInProgress = useRef(false);
   const isDistrictDataReady = Boolean(districtId && loadedDistrictId === districtId);
+
+  const applyOfficeVault = useCallback(async (officeVault) => {
+    const restoredVault = deserializeVaultFromOffice(officeVault);
+    const { storageVaultItems, ...savedData } = restoredVault;
+    if (Array.isArray(storageVaultItems)) {
+      await replaceDistrictStorageItems(activeProfile, storageVaultItems);
+    }
+
+    const sourceRecords = Array.isArray(savedData.records) ? savedData.records : [];
+    const mainSheetName = savedData.allSheets?.["Master_All_Data"]
+      ? "Master_All_Data"
+      : Object.keys(savedData.allSheets || {})[0] || "Master_All_Data";
+    const hydrated = hydrateEmployeeData(savedData.allSheets || {}, sourceRecords, mainSheetName);
+    const nextSanctioned = savedData.sanctioned
+      || readDistrictSetting("police_sanctioned_data", districtId, DEFAULT_SANCTIONED);
+    const nextUnitRankSanc = savedData.unitRankSanc
+      || readDistrictSetting("police_unit_rank_sanctioned", districtId, {});
+
+    setAllSheets(hydrated.allSheets);
+    setRecords(hydrated.records);
+    setAttRecords(savedData.attRecords || []);
+    setDepRecords(savedData.depRecords || []);
+    setPlLeaveRows(savedData.plLeaveRows || hydrated.allSheets.PL_Leave_Account || []);
+    setSanctioned(nextSanctioned);
+    setUnitRankSanc(nextUnitRankSanc);
+    setFileName(savedData.fileName || "");
+    setOriginalWorkbook(savedData.originalWorkbook || null);
+    fileHandleRef.current = null;
+    setHasUnsavedChanges(false);
+    await saveDistrictVault(districtId, {
+      ...savedData,
+      ...hydrated,
+      sanctioned: nextSanctioned,
+      unitRankSanc: nextUnitRankSanc
+    });
+  }, [activeProfile, districtId]);
+
+  const syncLanData = useCallback(async (sourceVault, forceLocalUpdate = false) => {
+    if (districtId !== OFFICE_DISTRICT_ID) return;
+    if (lanSyncInProgress.current) return;
+    lanSyncInProgress.current = true;
+    setLanSyncStatus("checking");
+    try {
+      let localVault = sourceVault || await loadDistrictVault(districtId);
+      if (forceLocalUpdate && localVault) {
+        localVault = { ...localVault, updatedAt: new Date().toISOString() };
+        await saveDistrictVault(districtId, localVault);
+      }
+      const storageVaultItems = await getDistrictStorageItems(activeProfile);
+      const result = await synchronizeOfficeVault(
+        districtId,
+        serializeVaultForOffice(localVault),
+        storageVaultItems
+      );
+      if (result.direction === "pull" && result.vault) {
+        await applyOfficeVault({
+          ...result.vault,
+          updatedAt: result.updatedAt || result.vault.updatedAt
+        });
+      } else if (result.direction === "conflict") {
+        setLanSyncStatus("conflict");
+        return;
+      } else if (result.direction === "push" && localVault && result.updatedAt) {
+        await saveDistrictVault(districtId, {
+          ...localVault,
+          updatedAt: result.updatedAt
+        });
+      }
+      setLanSyncStatus("connected");
+    } catch (error) {
+      if (error instanceof OfficeServerError && error.code === "OFFLINE") {
+        setLanSyncStatus("offline");
+      } else if (error instanceof OfficeServerError && error.code === "CONFIG_MISSING") {
+        setLanSyncStatus("offline");
+      } else if (error instanceof OfficeServerError && error.code === "AUTH_REQUIRED") {
+        setLanSyncStatus("key-required");
+      } else if (error instanceof OfficeServerError && error.code === "CONFLICT") {
+        setLanSyncStatus("conflict");
+      } else {
+        console.error("GR office server sync failed:", error);
+        setLanSyncStatus("error");
+      }
+    } finally {
+      lanSyncInProgress.current = false;
+    }
+  }, [activeProfile, applyOfficeVault, districtId]);
 
   useEffect(() => {
     if (!districtId) return undefined;
@@ -276,6 +416,14 @@ export default function usePortalData({ districtId = "", districtName = "", auth
         if (mounted) {
           isInitialLoad.current = false;
           setLoadedDistrictId(districtId);
+          if (districtId === OFFICE_DISTRICT_ID) {
+            void syncLanData(vault ? {
+              ...savedData,
+              ...hydrated,
+              sanctioned: nextSanctioned,
+              unitRankSanc: nextUnitRankSanc
+            } : null);
+          }
         }
       } catch (error) {
         console.error("District IndexedDB data could not be loaded:", error);
@@ -290,7 +438,7 @@ export default function usePortalData({ districtId = "", districtName = "", auth
     void loadDistrictData();
 
     return () => { mounted = false; };
-  }, [districtId, activeProfile, authUserId]);
+  }, [districtId, activeProfile, authUserId, syncLanData]);
 
   const districtVaultPayload = useMemo(() => ({
       fileName,
@@ -305,17 +453,38 @@ export default function usePortalData({ districtId = "", districtName = "", auth
     }), [fileName, allSheets, records, attRecords, depRecords, plLeaveRows, sanctioned, unitRankSanc, originalWorkbook]);
 
   useEffect(() => {
+    if (districtId !== OFFICE_DISTRICT_ID || loadedDistrictId !== districtId) return undefined;
+    const pollOfficeServer = () => {
+      void syncLanData();
+    };
+    const syncStorageVault = () => {
+      void syncLanData(undefined, true);
+    };
+    const interval = window.setInterval(pollOfficeServer, LAN_SYNC_INTERVAL_MS);
+    window.addEventListener("police-vault-updated", syncStorageVault);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("police-vault-updated", syncStorageVault);
+    };
+  }, [districtId, loadedDistrictId, syncLanData]);
+
+  useEffect(() => {
     if (isInitialLoad.current || !districtId) return undefined;
     const timeout = setTimeout(async () => {
       try {
-        await saveDistrictVault(districtId, districtVaultPayload);
+        const localPayload = {
+          ...districtVaultPayload,
+          updatedAt: new Date().toISOString()
+        };
+        await saveDistrictVault(districtId, localPayload);
         setPersistenceError("");
         setHasUnsavedChanges(true);
+        if (districtId === OFFICE_DISTRICT_ID) void syncLanData(localPayload);
         if (authUserId && isCloudConfigured) {
           setCloudSyncStatus("क्लाउड में बदलाव सेव हो रहे हैं…");
           const storageVaultItems = await getDistrictStorageItems(activeProfile);
           await saveDistrictCloudData(districtId, {
-            ...districtVaultPayload,
+            ...localPayload,
             storageVaultItems
           });
           setCloudSyncStatus("स्थानीय और क्लाउड डेटा सिंक");
@@ -327,7 +496,7 @@ export default function usePortalData({ districtId = "", districtName = "", auth
       }
     }, 350);
     return () => clearTimeout(timeout);
-  }, [districtId, activeProfile, authUserId, districtVaultPayload]);
+  }, [districtId, activeProfile, authUserId, districtVaultPayload, syncLanData]);
 
   const updateEmployeeRecord = (updatedEmp, originalEmployee) => {
     const {
@@ -724,6 +893,7 @@ export default function usePortalData({ districtId = "", districtName = "", auth
     persistenceError,
     cloudSyncStatus,
     isCloudSyncing,
+    lanSyncStatus: districtId === OFFICE_DISTRICT_ID ? lanSyncStatus : "disabled",
     onSaveSanctioned: saveSanctionedSettings,
     onSaveUnitRankSanc: saveUnitRankSettings,
     onCloudSync: syncCloudBackup,

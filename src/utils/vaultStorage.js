@@ -86,7 +86,7 @@ export async function saveDistrictVault(districtName, payload) {
     const tx = db.transaction(STORE_NAME, "readwrite");
     tx.objectStore(STORE_NAME).put({
       ...payload,
-      updatedAt: new Date().toISOString()
+      updatedAt: payload.updatedAt || new Date().toISOString()
     }, current);
     tx.oncomplete = () => resolve(true);
     tx.onerror = () => reject(tx.error);

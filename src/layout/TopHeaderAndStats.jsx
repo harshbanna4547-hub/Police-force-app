@@ -17,6 +17,7 @@ export default function TopHeaderAndStats({
     totalSanc,
     hasUnsavedChanges,
     persistenceError,
+    lanSyncStatus,
     isExportingMaster,
     onDirectExcelConnect,
     onSaveToExcel,
@@ -38,6 +39,7 @@ export default function TopHeaderAndStats({
         onRemoveDistrictData={onRemoveDistrictData}
         hasUnsavedChanges={hasUnsavedChanges}
         persistenceError={persistenceError}
+        lanSyncStatus={lanSyncStatus}
         hasData={records.length > 0}
         onExportMasterFile={onExportMasterFile}
         isExportingMaster={isExportingMaster}

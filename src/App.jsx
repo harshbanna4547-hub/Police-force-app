@@ -13,7 +13,7 @@ export default function App() {
   const portalData = usePortalData({
     districtId: auth.profile?.district_id || "",
     districtName: auth.profile?.district_name || "",
-    authUserId: auth.user?.id || ""
+    authUserId: (auth.profile?.offline_demo || auth.profile?.office_lan) ? "" : auth.user?.id || ""
   });
   const [activeView, setActiveView] = useState("HOME");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
@@ -38,6 +38,7 @@ export default function App() {
         configured={auth.configured}
         error={auth.error}
         onSignIn={auth.signIn}
+        onOfficeSignIn={auth.signInOffice}
       />
     );
   }
@@ -56,7 +57,7 @@ export default function App() {
         modules={modules}
         authUser={auth.user}
         authProfile={auth.profile}
-        cloudConfigured={auth.configured}
+        cloudConfigured={auth.configured && !auth.profile?.offline_demo && !auth.profile?.office_lan}
         onLogout={handleLogout}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
