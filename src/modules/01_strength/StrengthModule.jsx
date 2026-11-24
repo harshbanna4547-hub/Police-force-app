@@ -210,7 +210,6 @@ export default function StrengthModule({
               {POST_FILTER_TABS.find((p) => p.id === selectedPostTab)?.label} — स्वीकृत एवं कार्यरत नफरी
             </h3>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} />
               {!editing ? (
                 <button onClick={() => setEditing(true)} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "7px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
                   ✏️ स्वीकृत नफरी बदलें
@@ -404,6 +403,16 @@ export default function StrengthModule({
           </div>
         </div>
       )}
+      <footer className="strength-footer-bar">
+        <label>
+          पद / फ़िल्टर
+          <select value={selectedPostTab} onChange={(event) => setSelectedPostTab(event.target.value)}>
+            {POST_FILTER_TABS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
+          </select>
+        </label>
+        <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} />
+        <button type="button" onClick={() => window.print()}>🖨 Print</button>
+      </footer>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import ExportBar from "../../core/ExportBar";
 import { appendRowToSheet } from "../../shared/commonFunctions";
 import { getMissingTrainingCourses, REQUIRED_COURSES } from "./trainingLogic";
 import { openDriveVaultDB } from "../../utils/vaultStorage";
+import { formatDateOnly } from "../../shared/commonFunctions";
 import "./training.css";
 
 const CATEGORIES = [
@@ -277,7 +278,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
               <dl className="training-employee-data">
                 {[["नाम", employee.NAME], ["पिता का नाम", employee["FATHER NAME"]], ["पद", employee.CADER], ["बेल्ट नं.", employee["BELT NO"] || employee["BELT NO."]], ["वर्तमान पदस्थापन", employee.POSTING], ["मोबाइल नं.", employee["MOBILE NO 1"] || employee["MOBILE NO"]], ["ई-मेल", employee.EMAIL], ["शैक्षणिक योग्यता", employee.EDUCATION], ["जन्मतिथि", employee["DATE OF BIRTH"]]].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{devToHindi(value) || "-"}</dd></div>)}
               </dl>
-              <p>गत 02 वर्ष के प्रशिक्षण: {recentHistory.map((row) => row.COURSE_NAME).join(", ") || "कोई रिकॉर्ड नहीं"}</p>
+              <p>गत 02 वर्ष के प्रशिक्षण: {recentHistory.map((row) => `${row.COURSE_NAME} (${formatDateOnly(row.FROM_DATE)}–${formatDateOnly(row.TO_DATE)})`).join(", ") || "कोई रिकॉर्ड नहीं"}</p>
               <form onSubmit={generateNomination} className="training-generator-form">
                 <input required value={course} onChange={(event) => setCourse(event.target.value)} placeholder="प्रशिक्षण विषय / कोर्स" />
                 <input required value={institute} onChange={(event) => setInstitute(event.target.value)} placeholder="संस्थान" />
@@ -364,7 +365,7 @@ function TrainingNominationList({ rows, onNotDone }) {
   return (
     <section>
       <h3>⏳ Pending Training ({rows.length})</h3>
-      {rows.map((row, index) => <p key={`${row["BELT NO"]}-${index}`}>{row.NAME} · {row["BELT NO"]} · {row.COURSE_NAME} · {row.FROM_DATE}—{row.TO_DATE} <button type="button" onClick={() => onNotDone(row)}>प्रशिक्षण नहीं किया</button></p>)}
+      {rows.map((row, index) => <p key={`${row["BELT NO"]}-${index}`}>{row.NAME} · {row["BELT NO"]} · {row.COURSE_NAME} · {formatDateOnly(row.FROM_DATE)}—{formatDateOnly(row.TO_DATE)} <button type="button" onClick={() => onNotDone(row)}>प्रशिक्षण नहीं किया</button></p>)}
       {rows.length === 0 && <p>कोई प्रशिक्षण लंबित नहीं है।</p>}
     </section>
   );

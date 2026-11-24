@@ -306,7 +306,7 @@ export default function StorageVaultModule({
           )}
           {fileName && hasUnsavedChanges && (
             <button type="button" onClick={onSaveToExcel} style={{ backgroundColor: "#7C3AED", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
-              💾 Save / Restore Excel
+              💾 Save Excel Changes
             </button>
           )}
           {fileName && (
