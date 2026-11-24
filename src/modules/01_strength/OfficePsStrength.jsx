@@ -4,7 +4,7 @@ import { OFFICE_SECTIONS, PS_CHOWKI_MAP, CO_PS_MAP } from "../../data/officeUnit
 import { resolveUnitAndChowki } from "../../core/postingResolver";
 import ExportBar from "../../core/ExportBar";
 import HindiText from "../../core/HindiText";
-import { getBeltNo, getRankCode } from "../../shared/commonFunctions";
+import { formatDateOnly, getBeltNo, getRankCode } from "../../shared/commonFunctions";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
 
 const RANKS = ["ASP", "DYSP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
@@ -399,13 +399,13 @@ export default function OfficePsStrength({
                       <td style={{ padding: "5px", textAlign: "center" }}>{e["CADER"]}</td>
                       <td style={{ padding: "5px", textAlign: "center", fontWeight: "bold", color: "#0369A1" }}>{getBeltNo(e)}</td>
                       <td style={{ padding: "5px", fontWeight: "bold" }}><HindiText text={e["NAME"]} /></td>
-                      <td style={{ padding: "5px", textAlign: "center" }}>{e["POSTING DOB NO"] || "-"}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{formatDateOnly(e["POSTING DOB NO"])}</td>
                       <td style={{ padding: "5px" }}>{e.POSTING || "-"}</td>
                       <td style={{ padding: "5px", textAlign: "center" }}>{e["WITHOUT DOB"] || "-"}</td>
                       <td style={{ padding: "5px" }}>{e.EDUCATION || "-"}</td>
-                      <td style={{ padding: "5px", textAlign: "center" }}>{e["DATE OF BIRTH"] || "-"}</td>
-                      <td style={{ padding: "5px", textAlign: "center" }}>{e["DATE OF JOINING"] || "-"}</td>
-                      <td style={{ padding: "5px", textAlign: "center" }}>{e.DOC || e["DATE OF CONFIRMATION"] || "-"}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{formatDateOnly(e["DATE OF BIRTH"])}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{formatDateOnly(e["DATE OF JOINING"])}</td>
+                      <td style={{ padding: "5px", textAlign: "center" }}>{formatDateOnly(e.DOC || e["DATE OF CONFIRMATION"])}</td>
                       <td style={{ padding: "5px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{getMobileNo(e)}</td>
                     </EmployeeActionRow>
                   ))}

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import ExportBar from "../../core/ExportBar";
+import { formatDateOnly } from "../../shared/commonFunctions";
 import { sortSeniorityRows } from "./seniorityLogic";
 import "./seniority.css";
 
@@ -49,9 +50,9 @@ export default function SeniorityModule({ seniorityList, devToHindi }) {
                 <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
                 <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
                 <td style={{ padding: "6px" }}>{devToHindi(r["FATHER NAME"])}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF BIRTH"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#1D63DC", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF JOINING"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF CONFIRMATION"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF BIRTH"])}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#1D63DC", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF JOINING"])}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF CONFIRMATION"])}</td>
                 <td style={{ padding: "6px" }}>{devToHindi(r["POSTING"])}</td>
               </tr>
             ))}

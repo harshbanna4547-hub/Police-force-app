@@ -1,6 +1,6 @@
 import { useState } from "react";
 import ExportBar from "../../core/ExportBar";
-import { appendRowToSheet } from "../../shared/commonFunctions";
+import { appendRowToSheet, formatDateOnly } from "../../shared/commonFunctions";
 import { getCleanRecordEmployees } from "./punishmentLogic";
 import "./punishment.css";
 
@@ -78,7 +78,7 @@ export default function PunishmentModule({ records = [], allSheets, setAllSheets
               {cleanOnly ? <td style={{ padding: "6px", textAlign: "center", color: "#15803D" }}>कोई दर्ज सजा नहीं</td> : <>
                 <td style={{ padding: "6px", textAlign: "center", color: "#B91C1C", fontWeight: "bold" }}>{r["PUNISHMENT_TYPE"]}</td>
                 <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["ORDER_NO"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["ORDER_DATE"]}</td>
+                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["ORDER_DATE"])}</td>
                 <td style={{ padding: "6px" }}>{devToHindi(r["BRIEF_REASON"])}</td>
               </>}
             </tr>

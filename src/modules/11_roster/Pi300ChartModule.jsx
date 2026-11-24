@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import ExportBar from "../../core/ExportBar";
+import { formatDateOnly } from "../../shared/commonFunctions";
 
 export default function Pi300ChartModule({ plSummary = [], devToHindi }) {
   const [search, setSearch] = useState("");
@@ -52,7 +53,7 @@ export default function Pi300ChartModule({ plSummary = [], devToHindi }) {
                 <td style={{ padding: "7px", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
                 <td style={{ padding: "7px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
                 <td style={{ padding: "7px" }}>{devToHindi(r["POSTING"])}</td>
-                <td style={{ padding: "7px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["DATE OF JOINING"]}</td>
+                <td style={{ padding: "7px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF JOINING"])}</td>
                 <td style={{ padding: "7px", textAlign: "center" }}>{r["कुल अर्जित PL"]}</td>
                 <td style={{ padding: "7px", textAlign: "center", color: "#DC2626" }}>{r["कुल ली गई PL"]}</td>
                 <td style={{ padding: "7px", textAlign: "center", fontWeight: "bold", color: "#15803D", backgroundColor: "#F0FDF4" }}>

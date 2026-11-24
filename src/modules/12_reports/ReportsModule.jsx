@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import ExportBar from "../../core/ExportBar";
-import { parseAnyDate } from "../../shared/commonFunctions";
+import { formatDateOnly, parseAnyDate } from "../../shared/commonFunctions";
 import { printTemplateDocument } from "../../shared/printTemplateEngine";
 import { filterPostingReport } from "./reportsLogic";
 import reportsTemplate from "./reportsTemplate.html?raw";
@@ -82,7 +82,7 @@ export default function ReportsModule({ records, devToHindi }) {
                 <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>{r["CADER"]}</td>
                 <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>{r["BELT NO"]}</td>
                 <td style={{ padding: "7px", border: "1px solid #E2E8F0" }}>{devToHindi(r["NAME"])}</td>
-                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>{r["POSTING DOB NO"]}</td>
+                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>{formatDateOnly(r["POSTING DOB NO"])}</td>
                 <td style={{ padding: "7px", border: "1px solid #E2E8F0" }}>{devToHindi(r["WITHOUR DOB"])}</td>
               </tr>
             ))}

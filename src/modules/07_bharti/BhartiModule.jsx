@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import ExportBar from "../../core/ExportBar";
+import { formatDateOnly } from "../../shared/commonFunctions";
 import { getProbationDetails, getVacantBelts } from "./bhartiLogic";
 import "./bharti.css";
 
@@ -164,7 +165,7 @@ export default function BhartiModule({ records, setRecords, allSheets = {}, setA
                 <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
                 <td style={{ padding: "7px", border: "1px solid #E2E8F0", fontWeight: "bold" }}>{devToHindi(r["NAME"])}</td>
                 <td style={{ padding: "7px", border: "1px solid #E2E8F0" }}>{devToHindi(r["FATHER NAME"])}</td>
-                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{String(r["DATE OF JOINING"] || "")}</td>
+                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF JOINING"])}</td>
                 <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["PROBATION END"]}</td>
                 <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>{r["PROBATION STATUS"]}</td>
               </tr>

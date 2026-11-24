@@ -6,6 +6,13 @@ import {
 
 export { calculateEarnedPL, formatDateDDMMYYYY, parseAnyDate };
 
+export function formatDateOnly(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  const parsed = parseAnyDate(value);
+  if (parsed) return formatDateDDMMYYYY(parsed);
+  return String(value).split(/[T ]/)[0] || "-";
+}
+
 export function calculateServiceYears(startValue, asOfDate = new Date()) {
   const startDate = parseAnyDate(startValue);
   if (!startDate || !(asOfDate instanceof Date) || Number.isNaN(asOfDate.getTime())) return 0;

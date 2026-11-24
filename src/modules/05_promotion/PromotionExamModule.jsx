@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import ExportBar from "../../core/ExportBar";
-import { formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
+import { formatDateDDMMYYYY, formatDateOnly, parseAnyDate } from "../../shared/commonFunctions";
 import { getPromotionCandidate } from "./promotionLogic";
 import "./promotion.css";
 
@@ -141,7 +141,7 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
           <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(row.NAME)}</td>
           <td style={{ padding: "6px", textAlign: "center" }}>{row.POSTING_PLACE}</td>
           <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_NO_DATE}</td>
-          <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_DATE}</td>
+          <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row.ORDER_DATE)}</td>
         </tr>)}</tbody>
       </table>
     </div>
