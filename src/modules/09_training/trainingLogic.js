@@ -1,5 +1,7 @@
+import { getRankCode, getBeltNo } from "../../shared/commonFunctions";
+
 export const REQUIRED_COURSES = [
-  { label: "PCC", aliases: ["pcc"] },
+  { label: "PCC", aliases: ["pcc"], ranks: ["FC", "HC"] },
   { label: "बुनियादी प्रशिक्षण", aliases: ["बुनियादी", "basic training", "basic course"] },
   { label: "साइबर", aliases: ["साइबर", "cyber"] },
   { label: "विशेष कोर्स", aliases: ["विशेष", "special course", "special training"] }
@@ -7,17 +9,47 @@ export const REQUIRED_COURSES = [
 
 export function getMissingTrainingCourses(records, trainingRows) {
   const rows = Array.isArray(trainingRows) ? trainingRows : [];
-  return (records || []).flatMap((record) => REQUIRED_COURSES
-    .filter((course) => !rows.some((row) => {
-      const sameBelt = String(row["BELT NO"] || "").trim().toUpperCase() ===
-        String(record["BELT NO"] || "").trim().toUpperCase();
-      const courseName = String(row.COURSE_NAME || "").toLowerCase();
-      return sameBelt && course.aliases.some((alias) => courseName.includes(alias.toLowerCase()));
-    }))
-    .map((course) => ({
-      "BELT NO": record["BELT NO"],
-      CADER: record.CADER,
-      NAME: record.NAME,
-      "अपूर्ण कोर्स": course.label
-    })));
+  const uniqueEmployees = new Map();
+  for (const record of Array.isArray(records) ? records : []) {
+    const belt = getBeltNo(record);
+    const key = belt !== "-" ? `belt:${belt.trim().toUpperCase()}` : `uid:${record._uid || `${record.NAME || ""}:${record.CADER || ""}`}`;
+    if (!uniqueEmployees.has(key)) uniqueEmployees.set(key, record);
+  }
+
+  return Array.from(uniqueEmployees.values(), (record) => {
+    const belt = getBeltNo(record);
+    const rank = getRankCode(record);
+    const employeeRows = rows.filter((row) => {
+      const rowBelt = getBeltNo(row);
+      return belt !== "-" && rowBelt !== "-" &&
+        rowBelt.trim().toUpperCase() === belt.trim().toUpperCase();
+    });
+    const missing = REQUIRED_COURSES
+      .filter((course) => !course.ranks || course.ranks.includes(rank))
+      .filter((course) => !employeeRows.some((row) => {
+        const courseName = String(row.COURSE_NAME || "").toLocaleLowerCase();
+        return course.aliases.some((alias) => courseName.includes(alias.toLocaleLowerCase()));
+      }))
+      .map((course) => course.label);
+    return {
+      employee: record,
+      "BELT NO": belt,
+      CADER: record.CADER || "",
+      NAME: record.NAME || "",
+      POSTING: record.POSTING || "",
+      "पूर्ण प्रशिक्षण संख्या": employeeRows.length,
+      "अपूर्ण कोर्स": missing
+    };
+  });
+}
+
+export function getTrainingEmployeeKey(employee) {
+  const belt = getBeltNo(employee);
+  if (belt !== "-") return `belt:${belt.trim().toUpperCase()}`;
+  return `uid:${employee?._uid || `${employee?.NAME || ""}:${employee?.CADER || ""}`}`;
+}
+
+export function isBeltRank(employee) {
+  const rank = getRankCode(employee);
+  return rank === "HC" || rank === "FC";
 }
