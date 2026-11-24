@@ -158,6 +158,7 @@ export function createTransferOrderUpdates(records, assignments, selectedKeys, o
       NAME: employee.NAME || "",
       CADER: employee.CADER || "",
       OLD_POSTING: employee.POSTING || "",
+      NEW_POSTING: assignment.destination,
       POSTING_PLACE: assignment.destination,
       ORDER_NO: orderDetails.orderNo,
       ORDER_DATE: orderDetails.orderDate,

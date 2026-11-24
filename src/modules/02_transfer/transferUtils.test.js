@@ -61,6 +61,7 @@ test("updates selected postings and creates durable order-history rows", () => {
   assert.strictEqual(updatedRecords[1], records[1]);
   assert.equal(historyEntries.length, 1);
   assert.equal(historyEntries[0].OLD_POSTING, "Old station");
+  assert.equal(historyEntries[0].NEW_POSTING, "New station");
   assert.equal(historyEntries[0].POSTING_PLACE, "New station");
   assert.equal(historyEntries[0].ORDER_ID, "TRANSFER-test");
   assert.equal(historyEntries[0].REMARK, "प्रशासनिक");
