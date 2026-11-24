@@ -78,7 +78,9 @@ function printTransferOrder(order, displayText) {
   };
   const headers = ORDER_COLUMNS.map((column) => `<th class="hindi">${escapeHtml(unicodeToDevlys(column))}</th>`).join("");
   const body = rows.map((row) => `<tr>${row.map((value, index) => (
-    `<td${index === 1 || index === 2 ? ' class="english-cell"' : ""}>${printValue(value)}</td>`
+    index === 1 || index === 2
+      ? `<td class="english-cell">${escapeHtml(value)}</td>`
+      : `<td>${printValue(value)}</td>`
   )).join("")}</tr>`).join("");
   const orderNo = escapeHtml(order.orderNo);
   const orderDate = escapeHtml(order.orderDate);
