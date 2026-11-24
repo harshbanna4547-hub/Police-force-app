@@ -45,7 +45,9 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
       punishmentCount
     }];
   }), [records, allSheets, sourceRank, minimumService, educationFilter, reviewDate]);
-  const selectedEmployee = records.find((record) => String(record["BELT NO"] || "").trim().toUpperCase() === belt);
+  const selectedEmployee = candidates.find((candidate) =>
+    String(candidate.belt || "").trim().toUpperCase() === belt
+  )?.record;
   const history = (allSheets["Posting_History"] || []).filter((row) =>
     String(row.POSTING_PLACE || "").includes("[Promotion]")
   );
@@ -66,11 +68,12 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
     }
     if (!window.confirm(`${selectedEmployee.NAME} (${belt}) का ${selectedEmployee.CADER} से ${targetRank} पदोन्नति आदेश दर्ज करें? पात्रता एवं सजा रिकॉर्ड की मैनुअल जाँच सुनिश्चित करें।`)) return;
     const beltKey = belt.trim().toUpperCase();
-    setRecords((previous) => previous.map((record) =>
+    const nextRecords = records.map((record) =>
       String(record["BELT NO"] || "").trim().toUpperCase() === beltKey
         ? { ...record, CADER: targetRank, "PROMOTION ORDER NO": orderNo, "PROMOTION ORDER DATE": orderDate }
         : record
-    ));
+    );
+    setRecords(nextRecords);
     const entry = {
       "BELT NO": selectedEmployee["BELT NO"],
       NAME: selectedEmployee.NAME,
@@ -81,6 +84,7 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
     };
     setAllSheets((previous) => ({
       ...previous,
+      Master_All_Data: nextRecords,
       Posting_History: [entry, ...(previous["Posting_History"] || [])]
     }));
     setBelt("");
