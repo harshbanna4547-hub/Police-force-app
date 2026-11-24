@@ -1,4 +1,4 @@
-// src/components/TopHeader.jsx
+// src/layout/TopHeader.jsx
 export default function TopHeader({
   sidebarOpen,
   setSidebarOpen,

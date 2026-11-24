@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
 import { devToHindi } from "../utils/devlysConverter";
-import { isDevlysText } from "./HindiText";
+import { isDevlysText } from "./isDevlysText";
 
 const POSTING_OPTIONS = [
   ...new Set([...OFFICE_CO_PS_LIST, ...Object.values(PS_CHOWKI_MAP).flat()])

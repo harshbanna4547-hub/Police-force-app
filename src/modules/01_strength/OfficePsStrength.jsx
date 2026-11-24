@@ -1,9 +1,9 @@
-// src/components/OfficePsStrength.jsx
+// src/modules/01_strength/OfficePsStrength.jsx
 import React, { useState, useMemo } from "react";
-import { OFFICE_SECTIONS, PS_CHOWKI_MAP, CO_PS_MAP } from "../data/officeUnits";
-import { resolveUnitAndChowki } from "../utils/postingResolver";
-import ExportBar from "./ExportBar";
-import HindiText from "./HindiText";
+import { OFFICE_SECTIONS, PS_CHOWKI_MAP, CO_PS_MAP } from "../../data/officeUnits";
+import { resolveUnitAndChowki } from "../../core/postingResolver";
+import ExportBar from "../../core/ExportBar";
+import HindiText from "../../core/HindiText";
 
 const RANKS = ["ASP", "DYSP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
 const fmtVac = (s, w) => (s - w < 0 ? `+${Math.abs(s - w)}` : s - w);
@@ -134,7 +134,7 @@ export default function OfficePsStrength({ records, devToHindi, onEditEmployee }
 
   let sn = 1;
   return (
-    <div>
+    <div className="office-ps-strength">
       <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "10px" }}>
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
           {[["ALL", "All"], ["SEC_SPO", "SP Office"], ["SEC_ASP", "ASP Offices"], ["SEC_CO", "CO Offices"], ["SEC_PS", "Police Stations"], ["SEC_RPL", "Police Line"]].map(([id, lbl]) => (

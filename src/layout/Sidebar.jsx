@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function Sidebar({ sidebarOpen, setSidebarOpen, activeView, setActiveView, activeProfile, onDownloadReports }) {
   const handleNav = (viewKey) => {
     setActiveView(viewKey);
@@ -35,7 +33,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen, activeView, setAc
 
         <nav style={{ padding: "14px 10px", display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
           <button onClick={() => handleNav("HOME")} style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: activeView === "HOME" ? "#1D63DC" : "transparent", color: "#fff" }}>
-            🏠 Dashboard (All 13)
+            🏠 Dashboard (All Modules)
           </button>
           <button onClick={onDownloadReports} style={{ textAlign: "left", padding: "10px 14px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "bold", backgroundColor: "transparent", color: "#4ADE80" }}>
             📥 Download All 8 Reports

@@ -1,4 +1,4 @@
-// src/utils/postingResolver.js
+// src/core/postingResolver.js
 
 const UNIT_RULES = [
   // 1. SP Office Branches

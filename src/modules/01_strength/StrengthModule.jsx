@@ -1,9 +1,10 @@
-// src/modules/StrengthModule.jsx
+// src/modules/01_strength/StrengthModule.jsx
 import React, { useState, useMemo } from "react";
-import { CADRE_GROUPS, DEFAULT_SANCTIONED, mapRankToCode } from "../data/cadreConfig";
-import ExportBar from "../components/ExportBar";
-import OfficePsStrength from "../components/OfficePsStrength";
-import HindiText from "../components/HindiText";
+import { CADRE_GROUPS, DEFAULT_SANCTIONED, mapRankToCode } from "../../data/cadreConfig";
+import ExportBar from "../../core/ExportBar";
+import OfficePsStrength from "./OfficePsStrength";
+import HindiText from "../../core/HindiText";
+import "./strength.css";
 
 const POST_FILTER_TABS = [
   { id: "ALL", label: "सभी पद (ALL)", groupIds: null },
@@ -170,7 +171,7 @@ export default function StrengthModule({ records, sanctioned, setSanctioned, dev
     alert("पद-वार स्वीकृत नफरी सुरक्षित हो गई है!");
   };
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="strength-module" style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid #E2E8F0", paddingBottom: "12px", marginBottom: "14px", flexWrap: "wrap" }}>
         {[
           { id: "POST_WISE", label: "1. Post-Wise Sanctioned Strength" },

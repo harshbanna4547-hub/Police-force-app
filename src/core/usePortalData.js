@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { DEFAULT_SANCTIONED } from "../data/cadreConfig";
 import { generateAllReportsData, downloadAllReportsExcel } from "../utils/reportEngine";
-import { exportMasterFile } from "../utils/masterExportHelper";
+import { exportMasterFile } from "./masterExportHelper";
 import { saveDistrictVault, loadDistrictVault, removeDistrictVault, writeBackToExcelFile } from "../utils/vaultStorage";
 
 function ensureEmployeeUids(rows) {

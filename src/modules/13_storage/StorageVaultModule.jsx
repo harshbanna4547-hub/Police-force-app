@@ -1,7 +1,8 @@
-// src/modules/StorageVaultModule.jsx
+// src/modules/13_storage/StorageVaultModule.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../utils/fontInstaller";
+import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
+import "./storage.css";
 
 const DRIVE_DB = "PoliceOneDriveVaultDB";
 const DRIVE_STORE = "drive_items";
@@ -277,7 +278,7 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
     return "📄";
   };
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" }}>
+    <div className="storage-vault-module" style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" }}>
       {/* ऊपरी Action Toolbar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px", marginBottom: "12px" }}>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>

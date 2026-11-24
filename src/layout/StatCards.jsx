@@ -1,5 +1,3 @@
-import React from "react";
-
 export default function StatCards({ totalSanc, activeCount, attCount, depCount, setActiveView }) {
   const cards = [
     { title: "Total Sanctioned Strength", val: totalSanc, color: "#059669", bg: "#D1FAE5", icon: "👥", view: "STRENGTH" },

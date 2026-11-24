@@ -1,14 +1,26 @@
 import { useState } from "react";
-import EmployeeFooterManager from "./components/EmployeeFooterManager";
+import EmployeeFooterManager from "./core/EmployeeFooterManager";
 import PortalModuleContent from "./components/PortalModuleContent";
-import SidebarNav from "./components/SidebarNav";
-import TopHeaderAndStats from "./components/TopHeaderAndStats";
-import usePortalData from "./hooks/usePortalData";
+import SidebarNav from "./layout/SidebarNav";
+import TopHeaderAndStats from "./layout/TopHeaderAndStats";
+import usePortalData from "./core/usePortalData";
+import { MODULES_CONFIG } from "./modules/moduleRegistry";
 
 export default function App() {
   const portalData = usePortalData();
   const [activeView, setActiveView] = useState("HOME");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
+  const [enabledModuleIds, setEnabledModuleIds] = useState(() =>
+    Object.fromEntries(MODULES_CONFIG.map((module) => [module.id, module.enabled]))
+  );
+  const modules = MODULES_CONFIG.map((module) => ({
+    ...module,
+    enabled: Boolean(enabledModuleIds[module.id])
+  }));
+  const onToggleModule = (moduleId, enabled) => {
+    setEnabledModuleIds((current) => ({ ...current, [moduleId]: enabled }));
+    if (!enabled && activeView === moduleId) setActiveView("HOME");
+  };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
@@ -32,6 +44,8 @@ export default function App() {
             activeView={activeView}
             setActiveView={setActiveView}
             portalData={portalData}
+            modules={modules}
+            onToggleModule={onToggleModule}
           />
         </main>
         <EmployeeFooterManager

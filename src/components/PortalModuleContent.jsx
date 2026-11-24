@@ -1,21 +1,13 @@
 import { devToHindi } from "../utils/devlysConverter";
-import StorageVaultModule from "../modules/StorageVaultModule";
-import HomeGrid from "./HomeGrid";
-import StrengthModule from "../modules/StrengthModule";
-import TransferModule from "../modules/TransferModule";
-import PostingModule from "../modules/PostingModule";
-import BhartiModule from "../modules/BhartiModule";
-import TrainingModule from "../modules/TrainingModule";
-import LeaveModule from "../modules/LeaveModule";
-import Pl300ChartModule from "../modules/Pl300ChartModule";
-import IncrementModule from "../modules/IncrementModule";
-import AcpModule from "../modules/AcpModule";
-import PunishmentModule from "../modules/PunishmentModule";
-import PromotionExamModule from "../modules/PromotionExamModule";
-import SeniorityModule from "../modules/SeniorityModule";
-import RosterModule from "../modules/RosterModule";
+import ModuleCardGrid from "../layout/ModuleCardGrid";
 
-export default function PortalModuleContent({ activeView, setActiveView, portalData }) {
+export default function PortalModuleContent({
+  activeView,
+  setActiveView,
+  portalData,
+  modules,
+  onToggleModule
+}) {
   const {
     activeProfile,
     allSheets,
@@ -33,38 +25,44 @@ export default function PortalModuleContent({ activeView, setActiveView, portalD
     onLoadExcelBlob
   } = portalData;
 
-  const moduleViews = {
-    HOME: <HomeGrid setActiveView={setActiveView} />,
-    STRENGTH: (
-      <StrengthModule
-        records={records}
-        sanctioned={sanctioned}
-        setSanctioned={setSanctioned}
-        devToHindi={devToHindi}
-        onEditEmployee={setEditingEmployee}
+  if (activeView === "HOME") {
+    return (
+      <ModuleCardGrid
+        modules={modules}
+        setActiveView={setActiveView}
+        onToggleModule={onToggleModule}
       />
-    ),
-    TRANSFER: <TransferModule records={records} setRecords={setRecords} setAttRecords={setAttRecords} setDepRecords={setDepRecords} devToHindi={devToHindi} />,
-    POSTING: <PostingModule records={records} devToHindi={devToHindi} />,
-    BHARTI: <BhartiModule records={records} setRecords={setRecords} devToHindi={devToHindi} />,
-    TRAINING: <TrainingModule allSheets={allSheets} setAllSheets={setAllSheets} devToHindi={devToHindi} />,
-    LEAVE: <LeaveModule plLeaveRows={plLeaveRows} setPlLeaveRows={setPlLeaveRows} devToHindi={devToHindi} />,
-    PL300: <Pl300ChartModule plSummary={reports.plSummary} devToHindi={devToHindi} />,
-    INCREMENT: <IncrementModule allSheets={allSheets} setAllSheets={setAllSheets} devToHindi={devToHindi} />,
-    ACP: <AcpModule records={records} devToHindi={devToHindi} />,
-    PUNISHMENT: <PunishmentModule allSheets={allSheets} setAllSheets={setAllSheets} devToHindi={devToHindi} />,
-    PROMOTION: <PromotionExamModule records={records} setRecords={setRecords} allSheets={allSheets} setAllSheets={setAllSheets} devToHindi={devToHindi} />,
-    SENIORITY: <SeniorityModule seniorityList={reports.seniorityList} devToHindi={devToHindi} />,
-    ROSTER: <RosterModule reports={reports} devToHindi={devToHindi} />,
-    STORAGE: (
-      <StorageVaultModule
-        activeProfile={activeProfile}
-        records={records}
-        allSheets={allSheets}
-        onLoadExcelBlob={onLoadExcelBlob}
-      />
-    )
-  };
+    );
+  }
 
-  return moduleViews[activeView];
+  const selectedModule = modules.find((module) => module.id === activeView && module.enabled);
+  if (!selectedModule) {
+    return (
+      <ModuleCardGrid
+        modules={modules}
+        setActiveView={setActiveView}
+        onToggleModule={onToggleModule}
+      />
+    );
+  }
+
+  const propsByModule = {
+    STRENGTH: { records, sanctioned, setSanctioned, devToHindi, onEditEmployee: setEditingEmployee },
+    TRANSFER: { records, setRecords, setAttRecords, setDepRecords, devToHindi },
+    POSTING: { records, devToHindi },
+    BHARTI: { records, setRecords, devToHindi },
+    TRAINING: { allSheets, setAllSheets, devToHindi },
+    LEAVE: { plLeaveRows, setPlLeaveRows, devToHindi },
+    PL300: { plSummary: reports.plSummary, devToHindi },
+    INCREMENT: { allSheets, setAllSheets, devToHindi },
+    ACP: { records, devToHindi },
+    PUNISHMENT: { allSheets, setAllSheets, devToHindi },
+    PROMOTION: { records, setRecords, allSheets, setAllSheets, devToHindi },
+    SENIORITY: { seniorityList: reports.seniorityList, devToHindi },
+    ROSTER: { reports, devToHindi },
+    STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob }
+  };
+  const ActiveModule = selectedModule.component;
+
+  return <ActiveModule {...propsByModule[activeView]} />;
 }

@@ -1,0 +1,10 @@
+.strength-module,
+.office-ps-strength {
+  min-width: 0;
+  width: 100%;
+}
+
+.strength-module table,
+.office-ps-strength table {
+  min-width: 680px;
+}
