@@ -3,7 +3,7 @@ import * as XLSX from "xlsx";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
 import { CHITTOR_BASE_GEO, RAJ_ALL_DISTRICTS_DEVLYS, RAJASTHAN_BLOCK_HOME_PS, RAJASTHAN_PINCODE_GEO, buildRajasthanGeoIndex, cleanDev, matchStandardDistrict } from "../data/rajasthanGeo";
 import { devToHindi } from "../utils/devlysConverter";
-import { INDIA_STATES, INDIA_STATES_DISTRICTS, fetchDistrictGeo, fetchPincodeGeo, getOfflinePincodeGeo } from "../utils/indiaGeoService";
+import { INDIA_STATE_HINDI, INDIA_STATES, INDIA_STATES_DISTRICTS, RAJASTHAN_DISTRICT_HINDI, fetchDistrictGeo, fetchPincodeGeo, getOfflinePincodeGeo, uniqueGeoNames } from "../utils/indiaGeoService";
 
 const CADER_OPTIONS = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)", "Sr. Asst", "Jr. Asst", "Class-IV"];
 const EDUCATION_OPTIONS = ["10th", "12th", "BA", "B.Sc", "B.Com", "B.A B.Ed", "B.Sc B.Ed", "MA", "M.Sc", "M.Com", "LLB", "B.Tech", "Other"];
@@ -56,21 +56,11 @@ function calculateDays(fromDate, toDate) {
 }
 
 function createInitialEmployee(records) {
-  const usedBelts = new Set((records || []).map((employee) => {
-    const belt = employee["BELT NO"] || employee["BELT NO."] || employee.BELT_NO || employee["Belt No"] || employee.BELT || "";
-    return String(belt).match(/\d+/)?.[0];
-  }).filter(Boolean));
-  let suggestedBelt = "";
-  for (let belt = 1; belt <= 1750; belt += 1) {
-    if (!usedBelts.has(String(belt))) {
-      suggestedBelt = String(belt);
-      break;
-    }
-  }
+  const usedBelts = getUsedBeltNumbers(records);
   return {
     entryType: "NEW_JOINING",
     CADER: "FC",
-    "BELT NO": suggestedBelt,
+    "BELT NO": getNextAvailableBelt(usedBelts),
     "DISTRICT JOINING ORDER NO": "",
     "DISTRICT JOINING ORDER DATE": todayDmy(),
     NAME: "",
@@ -80,7 +70,7 @@ function createInitialEmployee(records) {
     "DATE OF BIRTH": "",
     STATE: "Rajasthan",
     PINCODE: "",
-    DISTRICT: "fpÙkkSMx<+",
+    DISTRICT: "Chittorgarh",
     TAHSIL: "",
     BLOCK: "",
     VILLAGE: "",
@@ -121,6 +111,22 @@ function normalizeGeoName(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
+function getUsedBeltNumbers(records) {
+  return new Set((records || []).flatMap((employee) => {
+    const cadre = String(employee.CADER || "").trim().toUpperCase();
+    if (cadre !== "HC" && !cadre.startsWith("FC")) return [];
+    const belt = employee["BELT NO"] || employee["BELT NO."] || employee.BELT_NO || employee["Belt No"] || employee.BELT || "";
+    const number = String(belt).match(/\d+/)?.[0];
+    return number ? [String(Number(number))] : [];
+  }));
+}
+
+function getNextAvailableBelt(usedBelts) {
+  let belt = 1;
+  while (usedBelts.has(String(belt))) belt += 1;
+  return String(belt);
+}
+
 export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll, onClose }) {
   const [form, setForm] = useState(() => createInitialEmployee(records));
   const [activeTab, setActiveTab] = useState("PL");
@@ -139,19 +145,19 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   const geoIndex = useMemo(() => buildRajasthanGeoIndex(records || []), [records]);
   const districtNames = useMemo(() => INDIA_STATES_DISTRICTS[form.STATE] || [], [form.STATE]);
   const selectedDistrictName = useMemo(() => {
-    const catalogMatch = districtNames.find((district) => {
-      const value = form.STATE === "Rajasthan" && district === "Chittorgarh" ? "fpÙkkSMx<+" : district;
-      return value === form.DISTRICT;
-    });
-    return catalogMatch || form.DISTRICT;
+    return districtNames.find((district) =>
+      normalizeGeoName(district) === normalizeGeoName(form.DISTRICT) ||
+      (form.STATE === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(form.DISTRICT)))
+    ) || form.DISTRICT;
   }, [districtNames, form.DISTRICT, form.STATE]);
+  const legacyDistrict = useMemo(() => matchStandardDistrict(form.DISTRICT), [form.DISTRICT]);
   const districtRows = useMemo(
-    () => (records || []).filter((row) => matchStandardDistrict(row.DISTRICT) === form.DISTRICT),
-    [records, form.DISTRICT]
+    () => (records || []).filter((row) => matchStandardDistrict(row.DISTRICT) === legacyDistrict),
+    [records, legacyDistrict]
   );
   const districtGeo = useMemo(
-    () => geoIndex[form.DISTRICT] || CHITTOR_BASE_GEO[form.DISTRICT] || { TAHSIL: new Set(), BLOCK: new Set(), PS: new Set(), VILLAGES: new Set() },
-    [geoIndex, form.DISTRICT]
+    () => geoIndex[legacyDistrict] || CHITTOR_BASE_GEO[legacyDistrict] || { TAHSIL: new Set(), BLOCK: new Set(), PS: new Set(), VILLAGES: new Set() },
+    [geoIndex, legacyDistrict]
   );
   const selectedTahsilRows = useMemo(
     () => districtRows.filter((row) => cleanDev(row.TAHSIL || row.CIRCLE) === form.TAHSIL),
@@ -161,7 +167,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     () => selectedTahsilRows.filter((row) => !form.BLOCK || cleanDev(row.BLOCK) === form.BLOCK),
     [selectedTahsilRows, form.BLOCK]
   );
-  const villageOptions = useMemo(() => [...new Set(
+  const villageOptions = useMemo(() => uniqueGeoNames(
     [
       ...selectedAreaRows.map((row) => cleanDev(row.VILLAGE || row["VILLAGE "])),
       ...postalLocations.filter((location) =>
@@ -173,21 +179,21 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
         (!form.BLOCK || !location.block || location.block === form.BLOCK)
       ).map((location) => location.village)
     ].filter(Boolean)
-  )], [selectedAreaRows, postalLocations, districtLocations, form.BLOCK, form.TAHSIL]);
-  const tahsilOptions = useMemo(() => [...new Set([
+  ), [selectedAreaRows, postalLocations, districtLocations, form.BLOCK, form.TAHSIL]);
+  const tahsilOptions = useMemo(() => uniqueGeoNames([
     ...districtGeo.TAHSIL,
     ...districtRows.map((row) => cleanDev(row.TAHSIL || row.CIRCLE)).filter(Boolean),
     ...postalLocations.map((location) => location.block).filter(Boolean),
     ...districtLocations.map((location) => location.block).filter(Boolean)
-  ])], [districtGeo, districtRows, postalLocations, districtLocations]);
+  ]), [districtGeo, districtRows, postalLocations, districtLocations]);
   const blockOptions = useMemo(() => {
     const selectedTahsilBlocks = selectedTahsilRows.map((row) => cleanDev(row.BLOCK)).filter(Boolean);
     const blocks = selectedTahsilBlocks.length ? selectedTahsilBlocks : [...districtGeo.BLOCK];
-    return [...new Set([
+    return uniqueGeoNames([
       ...blocks,
       ...postalLocations.map((location) => location.block).filter(Boolean),
       ...districtLocations.map((location) => location.block).filter(Boolean)
-    ])];
+    ]);
   }, [selectedTahsilRows, districtGeo, postalLocations, districtLocations]);
   const homePsOptions = useMemo(() => [...new Set([
     ...selectedAreaRows.map((row) => cleanDev(row["HOME PS"] || row["POLICE STATION"])).filter(Boolean),
@@ -195,10 +201,12 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   ])], [selectedAreaRows, districtGeo]);
   const nextPLDays = calculateDays(plDraft.fromDate, plDraft.toDate);
   const beltEnabled = form.CADER === "HC" || form.CADER.startsWith("FC");
-  const usedBelts = new Set((records || []).map((employee) => String(
-    employee["BELT NO"] || employee["BELT NO."] || employee.BELT_NO || employee["Belt No"] || employee.BELT || ""
-  ).match(/\d+/)?.[0]).filter(Boolean));
-  const availableBelts = Array.from({ length: 1750 }, (_, index) => String(index + 1)).filter((belt) => !usedBelts.has(belt));
+  const usedBelts = getUsedBeltNumbers(records);
+  const nextAvailableBelt = getNextAvailableBelt(usedBelts);
+  const availableBelts = uniqueGeoNames([
+    ...Array.from({ length: 1750 }, (_, index) => String(index + 1)).filter((belt) => !usedBelts.has(belt)),
+    nextAvailableBelt
+  ]);
   const legacyGeoValues = new Set([
     ...RAJ_ALL_DISTRICTS_DEVLYS,
     ...districtGeo.TAHSIL,
@@ -219,15 +227,17 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
         const first = locations[0];
         const matchingState = INDIA_STATES.find((state) => normalizeGeoName(state) === normalizeGeoName(first.state)) || first.state || "";
         const districts = INDIA_STATES_DISTRICTS[matchingState] || [];
-        const districtName = districts.find((district) => normalizeGeoName(district) === normalizeGeoName(first.district)) || first.district;
-        const districtValue = matchingState === "Rajasthan" && districtName === "Chittorgarh" ? "fpÙkkSMx<+" : districtName;
-        const uniqueBlocks = [...new Set(locations.map((location) => location.block).filter(Boolean))];
+        const districtName = districts.find((district) =>
+          normalizeGeoName(district) === normalizeGeoName(first.district) ||
+          (matchingState === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(first.district)))
+        ) || first.district;
+        const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block).filter(Boolean));
         const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
         setPostalLocations(locations);
         setForm((prev) => ({
           ...prev,
           STATE: matchingState,
-          DISTRICT: districtValue,
+          DISTRICT: districtName,
           TAHSIL: defaultBlock,
           BLOCK: defaultBlock,
           VILLAGE: "",
@@ -240,12 +250,17 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
         setPostalLocations(locations);
         if (locations.length) {
           const first = locations[0];
-          const uniqueBlocks = [...new Set(locations.map((location) => location.block).filter(Boolean))];
+          const uniqueBlocks = uniqueGeoNames(locations.map((location) => location.block).filter(Boolean));
           const defaultBlock = uniqueBlocks.length === 1 ? uniqueBlocks[0] : "";
+          const stateName = INDIA_STATES.find((state) => normalizeGeoName(state) === normalizeGeoName(first.state)) || first.state;
+          const districtName = (INDIA_STATES_DISTRICTS[stateName] || []).find((district) =>
+            normalizeGeoName(district) === normalizeGeoName(first.district) ||
+            (stateName === "Rajasthan" && normalizeGeoName(matchStandardDistrict(district)) === normalizeGeoName(matchStandardDistrict(first.district)))
+          ) || first.district;
           setForm((prev) => ({
             ...prev,
-            STATE: first.state || prev.STATE,
-            DISTRICT: first.district || prev.DISTRICT,
+            STATE: stateName || prev.STATE,
+            DISTRICT: districtName || prev.DISTRICT,
             TAHSIL: defaultBlock,
             BLOCK: defaultBlock,
             VILLAGE: "",
@@ -284,7 +299,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     setForm((prev) => ({
       ...prev,
       CADER: cader,
-      "BELT NO": needsBelt ? (prev["BELT NO"] || availableBelts[0] || "") : ""
+      "BELT NO": needsBelt ? (prev["BELT NO"] || nextAvailableBelt) : ""
     }));
   };
   const field = (label, key, type = "text", options = null, extraStyle = {}) => (
@@ -320,6 +335,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
   const selectDistrict = (district) => {
     setPostalLocations([]);
+    setDistrictLocations([]);
     setForm((prev) => ({
       ...prev,
       DISTRICT: district,
@@ -334,7 +350,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
   const selectVillage = (village) => {
     const match = selectedAreaRows.find((row) => cleanDev(row.VILLAGE || row["VILLAGE "]) === village);
     const postalMatch = [...postalLocations, ...districtLocations].find((location) => location.village === village);
-    const chittorgarh = matchStandardDistrict(form.DISTRICT) === "fpÙkkSMx<+";
+    const chittorgarh = legacyDistrict === "fpÙkkSMx<+";
     const blockHomePs = RAJASTHAN_BLOCK_HOME_PS[postalMatch?.block] || "";
     setForm((prev) => ({
       ...prev,
@@ -473,7 +489,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       alert("HC/FC कर्मचारी के लिए खाली बेल्ट नं. चुनें।");
       return;
     }
-    if (beltEnabled && usedBelts.has(String(form["BELT NO"]).match(/\d+/)?.[0])) {
+    if (beltEnabled && usedBelts.has(String(Number(String(form["BELT NO"]).match(/\d+/)?.[0])))) {
       alert("यह बेल्ट नं. पहले से किसी कर्मचारी को आवंटित है। कृपया खाली बेल्ट नं. चुनें।");
       return;
     }
@@ -589,19 +605,20 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                 राज्य / केंद्र शासित प्रदेश (STATE)
                 <select value={form.STATE} onChange={(event) => selectState(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
                   <option value="">राज्य चुनें</option>
-                  {INDIA_STATES.map((state) => <option key={state} value={state}>{state}</option>)}
+                  {INDIA_STATES.map((state) => <option key={state} value={state}>{INDIA_STATE_HINDI[state]} ({state})</option>)}
                 </select>
               </label>
               <label style={labelStyle}>
                 जिला (DISTRICT)
                 <select value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
                   <option value="">जिला चुनें</option>
-                  {form.DISTRICT && !districtNames.some((district) =>
-                    (form.STATE === "Rajasthan" && district === "Chittorgarh" ? "fpÙkkSMx<+" : district) === form.DISTRICT
-                  ) && <option value={form.DISTRICT}>{geoLabel(form.DISTRICT)}</option>}
+                  {form.DISTRICT && !districtNames.some((district) => normalizeGeoName(district) === normalizeGeoName(form.DISTRICT)) &&
+                    <option value={form.DISTRICT}>{geoLabel(form.DISTRICT)}</option>}
                   {districtNames.map((district) => {
-                    const value = form.STATE === "Rajasthan" && district === "Chittorgarh" ? "fpÙkkSMx<+" : district;
-                    return <option key={district} value={value}>{district}</option>;
+                    const label = form.STATE === "Rajasthan" && RAJASTHAN_DISTRICT_HINDI[district]
+                      ? `${RAJASTHAN_DISTRICT_HINDI[district]} (${district})`
+                      : district;
+                    return <option key={district} value={district}>{label}</option>;
                   })}
                 </select>
               </label>

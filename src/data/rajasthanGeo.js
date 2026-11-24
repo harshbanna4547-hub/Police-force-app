@@ -50,6 +50,15 @@ export const RAJ_ALL_DISTRICTS_DEVLYS = [
   "fljksgh"            // सिरोही
 ];
 
+export const RAJ_ALL_DISTRICTS_ENGLISH = [
+  "Chittorgarh", "Udaipur", "Bhilwara", "Pratapgarh", "Rajsamand", "Banswara", "Dungarpur", "Salumbar",
+  "Shahpura", "Kota", "Bundi", "Baran", "Jhalawar", "Ajmer", "Beawar", "Kekri", "Nagaur", "Didwana-Kuchaman",
+  "Tonk", "Jaipur", "Dudu", "Kotputli-Behror", "Alwar", "Bharatpur", "Deeg", "Dholpur", "Karauli",
+  "Sawai Madhopur", "Gangapur City", "Dausa", "Sikar", "Neem Ka Thana", "Jhunjhunu", "Churu", "Bikaner",
+  "Ganganagar", "Hanumangarh", "Anupgarh", "Jodhpur", "Phalodi", "Jaisalmer", "Barmer", "Balotra", "Jalore",
+  "Sanchore", "Pali", "Sirohi"
+];
+
 export const CHITTOR_BASE_GEO = {
   "fpÙkkSMx<+": {
     TAHSIL: ["fpÙkkSMx<+", "xaxjkj", "csxw¡", "jkorHkkVk", "diklu", "Hkwikylkxj", "jk'keh", "Hknlsj", "cM+hlknM+h", "Mw¡xyk", "cLlh", "fuEckgsM+k"],
@@ -101,6 +110,11 @@ export function matchStandardDistrict(rawDist) {
   const s = cleanDev(rawDist);
   if (!s) return "";
   if (RAJ_ALL_DISTRICTS_DEVLYS.includes(s)) return s;
+
+  const englishIndex = RAJ_ALL_DISTRICTS_ENGLISH.findIndex(
+    (district) => district.toLowerCase() === s.toLowerCase()
+  );
+  if (englishIndex >= 0) return RAJ_ALL_DISTRICTS_DEVLYS[englishIndex];
 
   const baseS = s.replace(/[+¡.\s&-]/g, "");
   for (const stdD of RAJ_ALL_DISTRICTS_DEVLYS) {

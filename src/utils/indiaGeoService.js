@@ -46,6 +46,100 @@ export const INDIA_STATES_DISTRICTS = Object.freeze(Object.fromEntries(
 
 export const INDIA_STATES = Object.keys(INDIA_STATES_DISTRICTS);
 
+export const INDIA_STATE_HINDI = Object.freeze({
+  "Andaman and Nicobar Islands": "अंडमान और निकोबार द्वीपसमूह",
+  "Andhra Pradesh": "आंध्र प्रदेश",
+  "Arunachal Pradesh": "अरुणाचल प्रदेश",
+  Assam: "असम",
+  Bihar: "बिहार",
+  Chandigarh: "चंडीगढ़",
+  Chhattisgarh: "छत्तीसगढ़",
+  "Dadra and Nagar Haveli and Daman and Diu": "दादरा और नगर हवेली और दमन और दीव",
+  Delhi: "दिल्ली",
+  Goa: "गोवा",
+  Gujarat: "गुजरात",
+  Haryana: "हरियाणा",
+  "Himachal Pradesh": "हिमाचल प्रदेश",
+  "Jammu and Kashmir": "जम्मू और कश्मीर",
+  Jharkhand: "झारखंड",
+  Karnataka: "कर्नाटक",
+  Kerala: "केरल",
+  Ladakh: "लद्दाख",
+  Lakshadweep: "लक्षद्वीप",
+  "Madhya Pradesh": "मध्य प्रदेश",
+  Maharashtra: "महाराष्ट्र",
+  Manipur: "मणिपुर",
+  Meghalaya: "मेघालय",
+  Mizoram: "मिजोरम",
+  Nagaland: "नागालैंड",
+  Odisha: "ओडिशा",
+  Puducherry: "पुदुच्चेरी",
+  Punjab: "पंजाब",
+  Rajasthan: "राजस्थान",
+  Sikkim: "सिक्किम",
+  "Tamil Nadu": "तमिलनाडु",
+  Telangana: "तेलंगाना",
+  Tripura: "त्रिपुरा",
+  "Uttar Pradesh": "उत्तर प्रदेश",
+  Uttarakhand: "उत्तराखंड",
+  "West Bengal": "पश्चिम बंगाल"
+});
+
+export const RAJASTHAN_DISTRICT_HINDI = Object.freeze({
+  Ajmer: "अजमेर",
+  Alwar: "अलवर",
+  Balotra: "बालोतरा",
+  Banswara: "बांसवाड़ा",
+  Baran: "बारां",
+  Barmer: "बाड़मेर",
+  Beawar: "ब्यावर",
+  Bharatpur: "भरतपुर",
+  Bhilwara: "भीलवाड़ा",
+  Bikaner: "बीकानेर",
+  Bundi: "बूंदी",
+  Chittorgarh: "चित्तौड़गढ़",
+  Churu: "चूरू",
+  Dausa: "दौसा",
+  Deeg: "डीग",
+  Dholpur: "धौलपुर",
+  "Didwana-Kuchaman": "डीडवाना-कुचामन",
+  Dungarpur: "डूंगरपुर",
+  Ganganagar: "श्रीगंगानगर",
+  Hanumangarh: "हनुमानगढ़",
+  Jaipur: "जयपुर",
+  Jaisalmer: "जैसलमेर",
+  Jalore: "जालौर",
+  Jhalawar: "झालावाड़",
+  Jhunjhunu: "झुंझुनू",
+  Jodhpur: "जोधपुर",
+  Karauli: "करौली",
+  "Khairthal-Tijara": "खैरथल-तिजारा",
+  Kota: "कोटा",
+  "Kotputli-Behror": "कोटपुतली-बहरोड़",
+  Nagaur: "नागौर",
+  Pali: "पाली",
+  Phalodi: "फलोदी",
+  Pratapgarh: "प्रतापगढ़",
+  Rajsamand: "राजसमंद",
+  Salumbar: "सलूम्बर",
+  "Sawai Madhopur": "सवाई माधोपुर",
+  Sikar: "सीकर",
+  Sirohi: "सिरोही",
+  Tonk: "टोंक",
+  Udaipur: "उदयपुर"
+});
+
+export function uniqueGeoNames(values) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const name = String(value || "").trim().replace(/\s+/g, " ");
+    const key = name.toLocaleLowerCase("en-IN");
+    if (!name || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function normalizeText(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -63,6 +157,13 @@ function normalizePostalBlock(value) {
   return ["chittorgah", "chitttorgarh", "cittorgarh"].includes(normalized) ? "Chittorgarh" : block;
 }
 
+function cleanPostOfficeName(value) {
+  return String(value || "")
+    .trim()
+    .replace(/\s*(?:\((?:B\.?O\.?|S\.?O\.?|H\.?O\.?)\)|(?:B\.?O\.?|S\.?O\.?|H\.?O\.?))\s*$/i, "")
+    .trim();
+}
+
 function getPostOffices(payload) {
   const parsed = typeof payload === "string" ? JSON.parse(payload) : payload;
   const bodies = Array.isArray(parsed) ? parsed : [parsed];
@@ -70,7 +171,7 @@ function getPostOffices(payload) {
     const offices = body?.PostOffice || body?.postOffices || body?.data || body?.results || [];
     return Array.isArray(offices) ? offices : [];
   }).map((office) => ({
-    village: readFirst(office, ["Name", "name", "Village", "village", "PostOffice"]),
+    village: cleanPostOfficeName(readFirst(office, ["Name", "name", "Village", "village", "PostOffice"])),
     district: readFirst(office, ["District", "district"]),
     state: readFirst(office, ["State", "state"]),
     block: normalizePostalBlock(readFirst(office, ["Block", "block", "Taluk", "taluk", "Circle", "circle"])),
