@@ -5,11 +5,11 @@ export default function TopHeader({
   activeView,
   setActiveView,
   activeProfile,
-  onDistrictChange,
   fileName,
   onDirectExcelConnect,
   onRemoveDistrictData,
   hasData,
+  persistenceError,
   onExportMasterFile,
   isExportingMaster
 }) {
@@ -34,6 +34,7 @@ export default function TopHeader({
           <small style={{ color: fileName ? "#15803D" : "#DC2626", fontWeight: "bold" }}>
             {fileName ? `✔ सक्रिय डेटा: ${fileName}` : `⚠️ ${activeProfile} के लिए कृपया Master Excel अपलोड करें`}
           </small>
+          {persistenceError && <small role="alert" style={{ display: "block", color: "#B91C1C" }}>{persistenceError}</small>}
         </div>
       </div>
 
@@ -66,12 +67,9 @@ export default function TopHeader({
           </button>
         )}
 
-        <button
-          onClick={onDistrictChange}
-          style={{ backgroundColor: "#fff", border: "1px solid #CBD5E1", padding: "8px 15px", borderRadius: "20px", fontWeight: "bold", cursor: "pointer", fontSize: "0.85rem" }}
-        >
-          👤 {activeProfile} ▾
-        </button>
+        <span style={{ backgroundColor: "#fff", border: "1px solid #CBD5E1", padding: "8px 15px", borderRadius: "20px", fontWeight: "bold", fontSize: "0.85rem" }}>
+          👮‍♂️ {activeProfile}
+        </span>
       </div>
     </header>
   );

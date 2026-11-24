@@ -16,8 +16,8 @@ export default function TopHeaderAndStats({
     depRecords,
     totalSanc,
     hasUnsavedChanges,
+    persistenceError,
     isExportingMaster,
-    onDistrictChange,
     onDirectExcelConnect,
     onSaveToExcel,
     onRemoveDistrictData,
@@ -32,12 +32,12 @@ export default function TopHeaderAndStats({
         activeView={activeView}
         setActiveView={setActiveView}
         activeProfile={activeProfile}
-        onDistrictChange={onDistrictChange}
         fileName={fileName}
         onDirectExcelConnect={onDirectExcelConnect}
         onSaveToExcel={onSaveToExcel}
         onRemoveDistrictData={onRemoveDistrictData}
         hasUnsavedChanges={hasUnsavedChanges}
+        persistenceError={persistenceError}
         hasData={records.length > 0}
         onExportMasterFile={onExportMasterFile}
         isExportingMaster={isExportingMaster}

@@ -19,6 +19,10 @@ export default function PortalModuleContent({
     setPlLeaveRows,
     sanctioned,
     setSanctioned,
+    unitRankSanc,
+    setUnitRankSanc,
+    onSaveSanctioned,
+    onSaveUnitRankSanc,
     reports,
     setEditingEmployee,
     onLoadExcelBlob
@@ -34,7 +38,17 @@ export default function PortalModuleContent({
   }
 
   const propsByModule = {
-    STRENGTH: { records, sanctioned, setSanctioned, devToHindi, onEditEmployee: setEditingEmployee },
+    STRENGTH: {
+      records,
+      sanctioned,
+      setSanctioned,
+      unitRankSanc,
+      setUnitRankSanc,
+      onSaveSanctioned,
+      onSaveUnitRankSanc,
+      devToHindi,
+      onEditEmployee: setEditingEmployee
+    },
     TRANSFER: {
       records,
       setRecords,

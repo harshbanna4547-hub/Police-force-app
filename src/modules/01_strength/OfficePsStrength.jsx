@@ -35,8 +35,14 @@ function getMobileNo(emp) {
   return ["_", "-"].includes(String(value).trim()) ? "-" : (value || "-");
 }
 
-export default function OfficePsStrength({ records, devToHindi, onEditEmployee }) {
-  const [unitRankSanc, setUnitRankSanc] = useState(() => JSON.parse(localStorage.getItem("police_unit_rank_sanctioned") || "{}"));
+export default function OfficePsStrength({
+  records,
+  devToHindi,
+  onEditEmployee,
+  unitRankSanc,
+  setUnitRankSanc,
+  onSaveUnitRankSanc
+}) {
   const [editing, setEditing] = useState(false);
   const [secFilter, setSecFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -132,6 +138,17 @@ export default function OfficePsStrength({ records, devToHindi, onEditEmployee }
     return rows;
   }, [secFilter, search, unitRankSanc, workingMap]);
 
+  const saveUnitSanc = async () => {
+    try {
+      await onSaveUnitRankSanc(unitRankSanc);
+      setEditing(false);
+      alert("इकाई-वार स्वीकृत नफरी IndexedDB में सुरक्षित हो गई है!");
+    } catch (error) {
+      console.error("Office/PS sanctioned strength could not be saved:", error);
+      alert(`इकाई-वार नफरी सेव नहीं हो सकी: ${error.message}`);
+    }
+  };
+
   let sn = 1;
   return (
     <div className="office-ps-strength">
@@ -148,7 +165,7 @@ export default function OfficePsStrength({ records, devToHindi, onEditEmployee }
           {!editing ? (
             <button onClick={() => setEditing(true)} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>✏️ स्वीकृत भरें</button>
           ) : (
-            <button onClick={() => { localStorage.setItem("police_unit_rank_sanctioned", JSON.stringify(unitRankSanc)); setEditing(false); }} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>✅ Save</button>
+            <button onClick={saveUnitSanc} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>✅ Save</button>
           )}
         </div>
       </div>

@@ -2,10 +2,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
+import { openDriveVaultDB } from "../../utils/vaultStorage";
 import "./storage.css";
-
-const DRIVE_DB = "PoliceOneDriveVaultDB";
-const DRIVE_STORE = "drive_items";
 
 const MODULE_DEFAULT_FOLDERS = [
   "01. Strength (स्वीकृत एवं कार्यरत नफरी)",
@@ -23,20 +21,6 @@ const MODULE_DEFAULT_FOLDERS = [
   "13. Roster (मासिक थाना रोस्टर)"
 ];
 
-function openDriveDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DRIVE_DB, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(DRIVE_STORE)) {
-        db.createObjectStore(DRIVE_STORE, { keyPath: "id" });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
 export default function StorageVaultModule({ activeProfile, records, allSheets, onLoadExcelBlob }) {
   const [items, setItems] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState("ROOT");
@@ -47,19 +31,19 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
   const [installedFonts, setInstalledFonts] = useState([]);
   const [fontChoice, setFontChoice] = useState("DevLys 010");
   const loadAllItems = useCallback(async () => {
-    const db = await openDriveDB();
-    const tx = db.transaction(DRIVE_STORE, "readonly");
-    const req = tx.objectStore(DRIVE_STORE).getAll();
+    const db = await openDriveVaultDB();
+    const tx = db.transaction("drive_items", "readonly");
+    const req = tx.objectStore("drive_items").getAll();
     req.onsuccess = async () => {
-      const existing = req.result || [];
+      const existing = (req.result || []).filter((item) => item.district === activeProfile);
       const rootFolderNames = new Set(
         existing.filter((x) => x.parentId === "ROOT" && x.kind === "FOLDER").map((x) => x.name)
       );
 
       const missingFolders = MODULE_DEFAULT_FOLDERS.filter((name) => !rootFolderNames.has(name));
       if (missingFolders.length > 0) {
-        const writeTx = db.transaction(DRIVE_STORE, "readwrite");
-        const store = writeTx.objectStore(DRIVE_STORE);
+        const writeTx = db.transaction("drive_items", "readwrite");
+        const store = writeTx.objectStore("drive_items");
         missingFolders.forEach((fName, idx) => {
           store.put({
             id: `mod_fld_${idx}_${Date.now()}`,
@@ -71,9 +55,10 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
           });
         });
         writeTx.oncomplete = () => {
-          const reTx = db.transaction(DRIVE_STORE, "readonly");
-          const reReq = reTx.objectStore(DRIVE_STORE).getAll();
-          reReq.onsuccess = () => setItems(reReq.result || []);
+          window.dispatchEvent(new Event("police-vault-updated"));
+          const reTx = db.transaction("drive_items", "readonly");
+          const reReq = reTx.objectStore("drive_items").getAll();
+          reReq.onsuccess = () => setItems((reReq.result || []).filter((item) => item.district === activeProfile));
         };
       } else {
         setItems(existing);
@@ -100,11 +85,14 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
   };
 
   const saveItemToDB = async (item) => {
-    const db = await openDriveDB();
+    const db = await openDriveVaultDB();
     return new Promise((res, rej) => {
-      const tx = db.transaction(DRIVE_STORE, "readwrite");
-      tx.objectStore(DRIVE_STORE).put(item);
-      tx.oncomplete = () => res(true);
+      const tx = db.transaction("drive_items", "readwrite");
+      tx.objectStore("drive_items").put(item);
+      tx.oncomplete = () => {
+        window.dispatchEvent(new Event("police-vault-updated"));
+        res(true);
+      };
       tx.onerror = () => rej(tx.error);
     });
   };
@@ -228,7 +216,7 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
 
   const handleDelete = async (item) => {
     if (!window.confirm(`क्या आप "${item.name}" को हमेशा के लिए हटाना चाहते हैं?`)) return;
-    const db = await openDriveDB();
+    const db = await openDriveVaultDB();
     const toDelete = [item.id];
     const collectChildren = (pid) => {
       items.filter((x) => x.parentId === pid).forEach((child) => {
@@ -238,10 +226,13 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
     };
     if (item.kind === "FOLDER") collectChildren(item.id);
 
-    const tx = db.transaction(DRIVE_STORE, "readwrite");
-    const store = tx.objectStore(DRIVE_STORE);
+    const tx = db.transaction("drive_items", "readwrite");
+    const store = tx.objectStore("drive_items");
     toDelete.forEach((id) => store.delete(id));
-    tx.oncomplete = () => loadAllItems();
+    tx.oncomplete = () => {
+      window.dispatchEvent(new Event("police-vault-updated"));
+      loadAllItems();
+    };
   };
 
   const breadcrumbs = useMemo(() => {

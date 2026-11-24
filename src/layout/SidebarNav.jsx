@@ -6,7 +6,11 @@ export default function SidebarNav({
   setSidebarOpen,
   activeView,
   setActiveView,
-  modules
+  modules,
+  authUser,
+  authProfile,
+  onLogout,
+  cloudConfigured
 }) {
   return (
     <Sidebar
@@ -16,6 +20,13 @@ export default function SidebarNav({
       setActiveView={setActiveView}
       modules={modules}
       activeProfile={portalData.activeProfile}
+      authUser={authUser}
+      authProfile={authProfile}
+      cloudConfigured={cloudConfigured}
+      syncStatus={portalData.cloudSyncStatus}
+      syncing={portalData.isCloudSyncing}
+      onCloudSync={portalData.onCloudSync}
+      onLogout={onLogout}
       onDownloadReports={portalData.downloadReports}
     />
   );

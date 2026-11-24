@@ -5,12 +5,45 @@ import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry";
+import { DistrictPoliceLoginScreen } from "./core/AuthAndCloudSync";
+import { useDistrictAuth } from "./core/districtAuth";
 
 export default function App() {
-  const portalData = usePortalData();
+  const auth = useDistrictAuth();
+  const portalData = usePortalData({
+    districtId: auth.profile?.district_id || "",
+    districtName: auth.profile?.district_name || "",
+    authUserId: auth.user?.id || ""
+  });
   const [activeView, setActiveView] = useState("HOME");
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const modules = MODULES_CONFIG;
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setActiveView("HOME");
+    } catch (error) {
+      console.error("District logout failed:", error);
+      alert(`लॉगआउट असफल हुआ: ${error.message}`);
+    }
+  };
+
+  if (auth.loading) {
+    return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "Segoe UI, sans-serif" }}>लॉगिन स्थिति जाँची जा रही है…</main>;
+  }
+  if (!auth.profile) {
+    return (
+      <DistrictPoliceLoginScreen
+        loading={auth.loading}
+        configured={auth.configured}
+        error={auth.error}
+        onSignIn={auth.signIn}
+      />
+    );
+  }
+  if (!portalData.isDistrictDataReady) {
+    return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "Segoe UI, sans-serif" }}>जिला डेटा सुरक्षित स्टोरेज से लोड हो रहा है…</main>;
+  }
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
@@ -21,6 +54,10 @@ export default function App() {
         activeView={activeView}
         setActiveView={setActiveView}
         modules={modules}
+        authUser={auth.user}
+        authProfile={auth.profile}
+        cloudConfigured={auth.configured}
+        onLogout={handleLogout}
       />
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats

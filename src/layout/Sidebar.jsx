@@ -1,3 +1,5 @@
+import AuthAndCloudSync from "../core/AuthAndCloudSync";
+
 export default function Sidebar({
   sidebarOpen,
   setSidebarOpen,
@@ -5,6 +7,13 @@ export default function Sidebar({
   setActiveView,
   modules,
   activeProfile,
+  authUser,
+  authProfile,
+  cloudConfigured,
+  syncStatus,
+  syncing,
+  onCloudSync,
+  onLogout,
   onDownloadReports
 }) {
   const handleNav = (viewKey) => {
@@ -74,6 +83,16 @@ export default function Sidebar({
             📥 Download All 8 Reports
           </button>
         </nav>
+
+        <AuthAndCloudSync
+          districtName={authProfile.district_name || activeProfile}
+          email={authUser.email}
+          onLogout={onLogout}
+          onCloudSync={onCloudSync}
+          cloudConfigured={cloudConfigured}
+          syncStatus={syncStatus}
+          syncing={syncing}
+        />
 
         <div style={{ padding: "12px", fontSize: "0.72rem", color: "#64748B", textAlign: "center", borderTop: "1px solid #1E293B" }}>
           © 2026 Made by Harsh<br />{activeProfile} Police

@@ -1,9 +1,52 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { DEFAULT_SANCTIONED } from "../data/cadreConfig";
 import { generateAllReportsData, downloadAllReportsExcel } from "../utils/reportEngine";
 import { exportMasterFile } from "./masterExportHelper";
-import { saveDistrictVault, loadDistrictVault, removeDistrictVault, writeBackToExcelFile } from "../utils/vaultStorage";
+import {
+  getDistrictStorageItems,
+  loadDistrictVault,
+  removeDistrictVault,
+  replaceDistrictStorageItems,
+  saveDistrictVault,
+  writeBackToExcelFile
+} from "../utils/vaultStorage";
+import {
+  fetchDistrictCloudData,
+  isCloudConfigured,
+  saveDistrictCloudData
+} from "./districtAuth";
+
+function readDistrictSetting(key, districtId, fallback) {
+  try {
+    const scopedKey = `${key}_${districtId}`;
+    const scopedValue = localStorage.getItem(scopedKey);
+    if (scopedValue) return JSON.parse(scopedValue);
+    if (districtId === "CHITTORGARH") {
+      const legacyValue = localStorage.getItem(key);
+      if (legacyValue) {
+        localStorage.setItem(scopedKey, legacyValue);
+        return JSON.parse(legacyValue);
+      }
+    }
+  } catch (error) {
+    console.error(`District setting "${key}" could not be read:`, error);
+  }
+  return fallback;
+}
+
+function readLegacyDistrictBackup(districtId, districtName) {
+  if (districtId !== "CHITTORGARH") return null;
+  try {
+    const saved = localStorage.getItem("police_portal_saved_data");
+    if (!saved) return null;
+    const parsed = JSON.parse(saved);
+    return parsed.district === districtName && Array.isArray(parsed.records) ? parsed : null;
+  } catch (error) {
+    console.error("Legacy district backup could not be read:", error);
+    return null;
+  }
+}
 
 function ensureEmployeeUids(rows) {
   const used = new Set(rows.map((employee) => employee?._uid).filter(Boolean));
@@ -127,8 +170,8 @@ function makeOriginalWorkbook(buffer, workbook, allSheets, mainSheetName) {
   };
 }
 
-export default function usePortalData() {
-  const [activeProfile, setActiveProfile] = useState(() => localStorage.getItem("police_active_district") || "Chittorgarh");
+export default function usePortalData({ districtId = "", districtName = "", authUserId = "" } = {}) {
+  const activeProfile = districtName;
   const [allSheets, setAllSheets] = useState({});
   const [records, setRecords] = useState([]);
   const [attRecords, setAttRecords] = useState([]);
@@ -139,94 +182,152 @@ export default function usePortalData() {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [originalWorkbook, setOriginalWorkbook] = useState(null);
   const [isExportingMaster, setIsExportingMaster] = useState(false);
-  const [sanctioned, setSanctioned] = useState(() => {
-    const saved = localStorage.getItem("police_sanctioned_data");
-    return saved ? JSON.parse(saved) : DEFAULT_SANCTIONED;
-  });
+  const [sanctioned, setSanctioned] = useState(DEFAULT_SANCTIONED);
+  const [unitRankSanc, setUnitRankSanc] = useState({});
+  const [loadedDistrictId, setLoadedDistrictId] = useState("");
+  const [persistenceError, setPersistenceError] = useState("");
+  const [cloudSyncStatus, setCloudSyncStatus] = useState(
+    isCloudConfigured ? "क्लाउड बैकअप उपलब्ध" : "क्लाउड कॉन्फ़िगरेशन लंबित"
+  );
+  const [isCloudSyncing, setIsCloudSyncing] = useState(false);
 
   const fileHandleRef = useRef(null);
   const isInitialLoad = useRef(true);
+  const isDistrictDataReady = Boolean(districtId && loadedDistrictId === districtId);
 
   useEffect(() => {
+    if (!districtId) return undefined;
+
     let mounted = true;
     isInitialLoad.current = true;
-    localStorage.setItem("police_active_district", activeProfile);
 
-    loadDistrictVault(activeProfile).then(async (vault) => {
-      if (!mounted) return;
-      if (vault && vault.records && vault.records.length > 0) {
-        const mainSheetName = vault.allSheets?.["Master_All_Data"]
+    const loadDistrictData = async () => {
+      try {
+        const localVault = await loadDistrictVault(districtId);
+        const localStorageItems = await getDistrictStorageItems(activeProfile);
+        let vault = localVault || readLegacyDistrictBackup(districtId, activeProfile);
+        let remoteWasNewer = false;
+
+        if (authUserId && isCloudConfigured) {
+          try {
+            const cloudRecord = await fetchDistrictCloudData(districtId);
+            if (cloudRecord?.payload) {
+              const cloudTime = Date.parse(cloudRecord.updated_at || cloudRecord.payload.updatedAt || "") || 0;
+              const localTime = Date.parse(vault?.updatedAt || "") || 0;
+              if (!vault || cloudTime > localTime) {
+                vault = { ...cloudRecord.payload, updatedAt: cloudRecord.updated_at };
+                remoteWasNewer = true;
+              } else {
+                await saveDistrictCloudData(districtId, {
+                  ...vault,
+                  storageVaultItems: localStorageItems
+                });
+              }
+            } else if (vault) {
+              await saveDistrictCloudData(districtId, {
+                ...vault,
+                storageVaultItems: localStorageItems
+              });
+            }
+            setCloudSyncStatus("क्लाउड डेटा सिंक हो गया");
+          } catch (cloudError) {
+            console.error("District cloud sync during login failed:", cloudError);
+            setCloudSyncStatus(`क्लाउड सिंक असफल: ${cloudError.message}`);
+          }
+        }
+
+        if (!mounted) return;
+        if (remoteWasNewer && Array.isArray(vault.storageVaultItems)) {
+          await replaceDistrictStorageItems(activeProfile, vault.storageVaultItems);
+        }
+        const savedData = { ...(vault || {}) };
+        delete savedData.storageVaultItems;
+        const sourceRecords = Array.isArray(savedData.records) ? savedData.records : [];
+        const mainSheetName = savedData.allSheets?.["Master_All_Data"]
           ? "Master_All_Data"
-          : Object.keys(vault.allSheets || {})[0] || "Master_All_Data";
-        const hydrated = hydrateEmployeeData(vault.allSheets, vault.records, mainSheetName);
-        const hydratedVault = { ...vault, ...hydrated };
+          : Object.keys(savedData.allSheets || {})[0] || "Master_All_Data";
+        const hydrated = hydrateEmployeeData(savedData.allSheets || {}, sourceRecords, mainSheetName);
+        const nextSanctioned = savedData.sanctioned
+          || readDistrictSetting("police_sanctioned_data", districtId, DEFAULT_SANCTIONED);
+        const nextUnitRankSanc = savedData.unitRankSanc
+          || readDistrictSetting("police_unit_rank_sanctioned", districtId, {});
+
         setAllSheets(hydrated.allSheets);
         setRecords(hydrated.records);
-        setAttRecords(vault.attRecords || []);
-        setDepRecords(vault.depRecords || []);
-        setPlLeaveRows(vault.plLeaveRows || []);
-        setFileName(vault.fileName || `${activeProfile}_MASTER.xlsx`);
-        setOriginalWorkbook(vault.originalWorkbook || null);
-        setHasUnsavedChanges(false);
-        try {
-          await saveDistrictVault(activeProfile, hydratedVault);
-        } catch (error) {
-          console.error("Could not persist employee IDs to the district vault:", error);
-          alert(`कर्मचारी ID स्थायी रूप से सेव नहीं हो सकीं: ${error.message}`);
-        }
-      } else {
-        const backup = localStorage.getItem("police_portal_saved_data");
-        let savedData = null;
-        if (backup) {
-          try {
-            const parsed = JSON.parse(backup);
-            if (parsed.district === activeProfile && Array.isArray(parsed.records)) savedData = parsed;
-          } catch (error) {
-            console.error("Saved employee backup could not be read:", error);
-          }
-        }
-        if (savedData) {
-          const mainSheetName = savedData.allSheets?.["Master_All_Data"]
-            ? "Master_All_Data"
-            : Object.keys(savedData.allSheets || {})[0] || "Master_All_Data";
-          const hydrated = hydrateEmployeeData(savedData.allSheets, savedData.records, mainSheetName);
-          savedData = { ...savedData, ...hydrated };
-          try {
-            localStorage.setItem("police_portal_saved_data", JSON.stringify(savedData));
-          } catch (error) {
-            console.error("Could not persist employee IDs to localStorage:", error);
-            alert(`कर्मचारी ID स्थानीय स्टोरेज में सेव नहीं हो सकीं: ${error.message}`);
-          }
-        }
-        setAllSheets(savedData?.allSheets || {});
-        setRecords(savedData?.records || []);
-        setAttRecords(savedData?.attRecords || []);
-        setDepRecords(savedData?.depRecords || []);
-        setPlLeaveRows(savedData?.plLeaveRows || []);
-        setFileName(savedData?.fileName || "");
-        setOriginalWorkbook(savedData?.originalWorkbook || null);
+        setAttRecords(savedData.attRecords || []);
+        setDepRecords(savedData.depRecords || []);
+        setPlLeaveRows(savedData.plLeaveRows || hydrated.allSheets.PL_Leave_Account || []);
+        setSanctioned(nextSanctioned);
+        setUnitRankSanc(nextUnitRankSanc);
+        setFileName(savedData.fileName || "");
+        setOriginalWorkbook(savedData.originalWorkbook || null);
         fileHandleRef.current = null;
+        setHasUnsavedChanges(false);
+        setPersistenceError("");
+
+        if (remoteWasNewer) {
+          await saveDistrictVault(districtId, {
+            ...savedData,
+            ...hydrated,
+            sanctioned: nextSanctioned,
+            unitRankSanc: nextUnitRankSanc
+          });
+        }
+        if (mounted) {
+          isInitialLoad.current = false;
+          setLoadedDistrictId(districtId);
+        }
+      } catch (error) {
+        console.error("District IndexedDB data could not be loaded:", error);
+        if (mounted) {
+          setPersistenceError(`स्थानीय जिला डेटा लोड नहीं हो सका: ${error.message}`);
+          isInitialLoad.current = false;
+          setLoadedDistrictId(districtId);
+        }
       }
-      if (!mounted) return;
-      setTimeout(() => { isInitialLoad.current = false; }, 300);
-    });
+    };
+
+    void loadDistrictData();
 
     return () => { mounted = false; };
-  }, [activeProfile]);
+  }, [districtId, activeProfile, authUserId]);
 
-  useEffect(() => {
-    if (isInitialLoad.current || !fileName) return;
-    saveDistrictVault(activeProfile, {
+  const districtVaultPayload = useMemo(() => ({
       fileName,
       allSheets,
       records,
       attRecords,
       depRecords,
       plLeaveRows,
+      sanctioned,
+      unitRankSanc,
       originalWorkbook
-    });
-    setHasUnsavedChanges(true);
-  }, [records, attRecords, depRecords, plLeaveRows, allSheets, fileName, activeProfile, originalWorkbook]);
+    }), [fileName, allSheets, records, attRecords, depRecords, plLeaveRows, sanctioned, unitRankSanc, originalWorkbook]);
+
+  useEffect(() => {
+    if (isInitialLoad.current || !districtId) return undefined;
+    const timeout = setTimeout(async () => {
+      try {
+        await saveDistrictVault(districtId, districtVaultPayload);
+        setPersistenceError("");
+        setHasUnsavedChanges(true);
+        if (authUserId && isCloudConfigured) {
+          setCloudSyncStatus("क्लाउड में बदलाव सेव हो रहे हैं…");
+          const storageVaultItems = await getDistrictStorageItems(activeProfile);
+          await saveDistrictCloudData(districtId, {
+            ...districtVaultPayload,
+            storageVaultItems
+          });
+          setCloudSyncStatus("स्थानीय और क्लाउड डेटा सिंक");
+        }
+      } catch (error) {
+        console.error("District data could not be persisted:", error);
+        setPersistenceError(`डेटा स्थायी रूप से सेव नहीं हो सका: ${error.message}`);
+        if (authUserId && isCloudConfigured) setCloudSyncStatus(`क्लाउड सिंक असफल: ${error.message}`);
+      }
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [districtId, activeProfile, authUserId, districtVaultPayload]);
 
   const updateEmployeeRecord = (updatedEmp, originalEmployee) => {
     const {
@@ -273,23 +374,6 @@ export default function usePortalData() {
       ])
     );
     nextSheets["Master_All_Data"] = nextRecords;
-    const backup = {
-      district: activeProfile,
-      fileName,
-      allSheets: nextSheets,
-      records: nextRecords,
-      attRecords,
-      depRecords,
-      plLeaveRows
-    };
-
-    try {
-      localStorage.setItem("police_portal_saved_data", JSON.stringify(backup));
-    } catch (error) {
-      console.error("Employee update could not be saved to localStorage:", error);
-      alert(`स्थानीय स्टोरेज में सेव नहीं हो सका: ${error.message}`);
-      return false;
-    }
 
     setRecords((prev) => {
       const updated = prev.map((record) =>
@@ -371,23 +455,6 @@ export default function usePortalData() {
       Training_History: nextTrainingRows,
       Saja_Record: nextSajaRows
     };
-    const backup = {
-      district: activeProfile,
-      fileName,
-      allSheets: nextSheets,
-      records: nextRecords,
-      attRecords,
-      depRecords,
-      plLeaveRows: nextPLRows
-    };
-
-    try {
-      localStorage.setItem("police_portal_saved_data", JSON.stringify(backup));
-    } catch (error) {
-      console.error("Smart employee form could not be saved to localStorage:", error);
-      alert(`कर्मचारी और इतिहास सेव नहीं हो सके: ${error.message}`);
-      return false;
-    }
 
     setRecords(nextRecords);
     setAllSheets(nextSheets);
@@ -415,30 +482,13 @@ export default function usePortalData() {
       ])
     );
     nextSheets["Master_All_Data"] = nextRecords;
-    const backup = {
-      district: activeProfile,
-      fileName,
-      allSheets: nextSheets,
-      records: nextRecords,
-      attRecords,
-      depRecords,
-      plLeaveRows
-    };
-
-    try {
-      localStorage.setItem("police_portal_saved_data", JSON.stringify(backup));
-    } catch (error) {
-      console.error("Could not save employee removal to localStorage:", error);
-      alert(`कर्मचारी हटाने का बदलाव सेव नहीं हो सका: ${error.message}`);
-      return false;
-    }
 
     setRecords(nextRecords);
     setAllSheets(nextSheets);
     return true;
   };
 
-  const handleDirectExcelConnect = async (targetProfile = activeProfile) => {
+  const handleDirectExcelConnect = async () => {
     try {
       let file;
       if (window.showOpenFilePicker) {
@@ -476,17 +526,19 @@ export default function usePortalData() {
       setPlLeaveRows(cleanPl);
       setFileName(file.name);
       setOriginalWorkbook(original);
-      await saveDistrictVault(targetProfile, {
+      await saveDistrictVault(districtId, {
         fileName: file.name,
         allSheets: sheets,
         records: hydrated.records,
         attRecords: cleanAtt,
         depRecords: cleanDep,
         plLeaveRows: cleanPl,
+        sanctioned,
+        unitRankSanc,
         originalWorkbook: original
       });
       setHasUnsavedChanges(false);
-      alert(`✔ ${targetProfile} के लिए "${file.name}" स्थायी रूप से सेव (Overwrite) हो गई है!`);
+      alert(`✔ ${activeProfile} के लिए "${file.name}" स्थायी रूप से सेव (Overwrite) हो गई है!`);
     } catch (error) {
       if (error.name !== "AbortError") alert("फ़ाइल पढ़ने में त्रुटि: " + error.message);
     }
@@ -530,32 +582,18 @@ export default function usePortalData() {
 
   const handleRemoveDistrictData = async () => {
     if (!window.confirm(`क्या आप वाकई ${activeProfile} का सारा डेटा हटाना (Remove) चाहते हैं?`)) return;
-    await removeDistrictVault(activeProfile);
+    await removeDistrictVault(districtId);
     setAllSheets({});
     setRecords([]);
     setAttRecords([]);
     setDepRecords([]);
     setPlLeaveRows([]);
+    setSanctioned(DEFAULT_SANCTIONED);
+    setUnitRankSanc({});
     setFileName("");
     setOriginalWorkbook(null);
     fileHandleRef.current = null;
     alert(`${activeProfile} का डेटा हटा दिया गया है।`);
-  };
-
-  const handleDistrictChange = async () => {
-    const newDist = prompt("नया जिला लिखें (जैसे: Chittorgarh, Udaipur, Bhilwara):", activeProfile);
-    if (!newDist || newDist.trim() === activeProfile) return;
-    const cleanDist = newDist.trim();
-    setActiveProfile(cleanDist);
-
-    const existing = await loadDistrictVault(cleanDist);
-    if (!existing || !existing.records || existing.records.length === 0) {
-      setTimeout(() => {
-        if (window.confirm(`${cleanDist} जिले का कोई डेटा सेव नहीं है। क्या आप अभी ${cleanDist} की Excel फ़ाइल अपलोड करना चाहते हैं?`)) {
-          handleDirectExcelConnect(cleanDist);
-        }
-      }, 250);
-    }
   };
 
   const loadExcelBlob = async (buffer, name) => {
@@ -575,13 +613,15 @@ export default function usePortalData() {
     setPlLeaveRows(cleanPl);
     setFileName(name);
     setOriginalWorkbook(original);
-    await saveDistrictVault(activeProfile, {
+    await saveDistrictVault(districtId, {
       fileName: name,
       allSheets: sheets,
       records: hydrated.records,
       attRecords: cleanAtt,
       depRecords: cleanDep,
       plLeaveRows: cleanPl,
+      sanctioned,
+      unitRankSanc,
       originalWorkbook: original
     });
     alert(`✔ "${name}" अब ${activeProfile} पोर्टल पर सक्रिय हो गई है!`);
@@ -598,10 +638,70 @@ export default function usePortalData() {
   const downloadReports = () => (
     records.length ? downloadAllReportsExcel(reports) : alert("पहले Master Excel अपलोड करें!")
   );
+  const persistDistrictSettings = async (payload) => {
+    try {
+      await saveDistrictVault(districtId, payload);
+      if (authUserId && isCloudConfigured) {
+        const storageVaultItems = await getDistrictStorageItems(activeProfile);
+        await saveDistrictCloudData(districtId, { ...payload, storageVaultItems });
+      }
+      setPersistenceError("");
+    } catch (error) {
+      console.error("District settings could not be saved:", error);
+      setPersistenceError(`जिला सेटिंग सेव नहीं हो सकी: ${error.message}`);
+      throw error;
+    }
+  };
+  const saveSanctionedSettings = (value) => persistDistrictSettings({
+    ...districtVaultPayload,
+    sanctioned: value
+  });
+  const saveUnitRankSettings = (value) => persistDistrictSettings({
+    ...districtVaultPayload,
+    unitRankSanc: value
+  });
+  const syncCloudBackup = useCallback(async () => {
+    if (!districtId || !authUserId || !isCloudConfigured) {
+      setCloudSyncStatus("क्लाउड सिंक के लिए मान्य लॉगिन और कॉन्फ़िगरेशन आवश्यक है।");
+      return;
+    }
+
+    setIsCloudSyncing(true);
+    setCloudSyncStatus("क्लाउड बैकअप चल रहा है…");
+    try {
+      await saveDistrictVault(districtId, districtVaultPayload);
+      const storageVaultItems = await getDistrictStorageItems(activeProfile);
+      await saveDistrictCloudData(districtId, {
+        ...districtVaultPayload,
+        storageVaultItems
+      });
+      setPersistenceError("");
+      setCloudSyncStatus("क्लाउड बैकअप सफल");
+    } catch (error) {
+      console.error("Manual district cloud backup failed:", error);
+      setCloudSyncStatus(`क्लाउड बैकअप असफल: ${error.message}`);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  }, [districtId, activeProfile, authUserId, districtVaultPayload]);
+
+  useEffect(() => {
+    if (!districtId || !authUserId || !isCloudConfigured) return undefined;
+    let timeout;
+    const scheduleCloudBackup = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => { void syncCloudBackup(); }, 600);
+    };
+    window.addEventListener("police-vault-updated", scheduleCloudBackup);
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("police-vault-updated", scheduleCloudBackup);
+    };
+  }, [districtId, authUserId, syncCloudBackup]);
 
   return {
     activeProfile,
-    setActiveProfile,
+    isDistrictDataReady,
     allSheets,
     setAllSheets,
     records,
@@ -619,6 +719,14 @@ export default function usePortalData() {
     isExportingMaster,
     sanctioned,
     setSanctioned,
+    unitRankSanc,
+    setUnitRankSanc,
+    persistenceError,
+    cloudSyncStatus,
+    isCloudSyncing,
+    onSaveSanctioned: saveSanctionedSettings,
+    onSaveUnitRankSanc: saveUnitRankSettings,
+    onCloudSync: syncCloudBackup,
     reports,
     totalSanc,
     downloadReports,
@@ -629,7 +737,6 @@ export default function usePortalData() {
     onSaveToExcel: handleSaveToExcel,
     onExportMasterFile: exportMaster,
     onRemoveDistrictData: handleRemoveDistrictData,
-    onDistrictChange: handleDistrictChange,
     onLoadExcelBlob: loadExcelBlob
   };
 }

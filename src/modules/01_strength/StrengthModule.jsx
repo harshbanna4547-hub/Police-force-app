@@ -96,7 +96,17 @@ function calcYearMonth(val) {
   }
   return years < 0 ? "-" : `${years} Year ${months} Month`;
 }
-export default function StrengthModule({ records, sanctioned, setSanctioned, devToHindi, onEditEmployee }) {
+export default function StrengthModule({
+  records,
+  sanctioned,
+  setSanctioned,
+  unitRankSanc,
+  setUnitRankSanc,
+  onSaveSanctioned,
+  onSaveUnitRankSanc,
+  devToHindi,
+  onEditEmployee
+}) {
   const [subTab, setSubTab] = useState("POST_WISE");
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
   const [expanded, setExpanded] = useState({});
@@ -165,10 +175,15 @@ export default function StrengthModule({ records, sanctioned, setSanctioned, dev
     return rows;
   }, [visibleGroups, sanctioned, workStats]);
 
-  const savePostSanctioned = () => {
-    localStorage.setItem("police_sanctioned_data", JSON.stringify(sanctioned));
-    setEditing(false);
-    alert("पद-वार स्वीकृत नफरी सुरक्षित हो गई है!");
+  const savePostSanctioned = async () => {
+    try {
+      await onSaveSanctioned(sanctioned);
+      setEditing(false);
+      alert("पद-वार स्वीकृत नफरी IndexedDB में सुरक्षित हो गई है!");
+    } catch (error) {
+      console.error("Post-wise sanctioned strength could not be saved:", error);
+      alert(`स्वीकृत नफरी सेव नहीं हो सकी: ${error.message}`);
+    }
   };
   return (
     <div className="strength-module" style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0" }}>
@@ -372,7 +387,16 @@ export default function StrengthModule({ records, sanctioned, setSanctioned, dev
           )}
         </div>
       )}
-      {subTab === "OFFICE_PS_WISE" && <OfficePsStrength records={records} devToHindi={devToHindi} onEditEmployee={onEditEmployee} />}
+      {subTab === "OFFICE_PS_WISE" && (
+        <OfficePsStrength
+          records={records}
+          devToHindi={devToHindi}
+          onEditEmployee={onEditEmployee}
+          unitRankSanc={unitRankSanc}
+          setUnitRankSanc={setUnitRankSanc}
+          onSaveUnitRankSanc={onSaveUnitRankSanc}
+        />
+      )}
 
       {subTab === "VACANCY_SUMMARY" && (
         <div>

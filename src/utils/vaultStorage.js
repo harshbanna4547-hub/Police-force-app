@@ -3,6 +3,8 @@ import * as XLSX from "xlsx";
 
 const DB_NAME = "RajasthanPoliceVaultDB";
 const STORE_NAME = "district_vaults";
+const DRIVE_DB_NAME = "PoliceOneDriveVaultDB";
+const DRIVE_STORE_NAME = "drive_items";
 
 function getDistrictVaultKeys(districtName) {
   const district = String(districtName || "").trim();
@@ -30,6 +32,49 @@ function openVaultDB() {
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+  });
+}
+
+export function openDriveVaultDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DRIVE_DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(DRIVE_STORE_NAME)) {
+        db.createObjectStore(DRIVE_STORE_NAME, { keyPath: "id" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function getDistrictStorageItems(districtName) {
+  const db = await openDriveVaultDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DRIVE_STORE_NAME, "readonly");
+    const req = tx.objectStore(DRIVE_STORE_NAME).getAll();
+    req.onsuccess = () => resolve((req.result || []).filter((item) => item.district === districtName));
+    req.onerror = () => reject(req.error);
+  });
+}
+
+export async function replaceDistrictStorageItems(districtName, items) {
+  const db = await openDriveVaultDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DRIVE_STORE_NAME, "readwrite");
+    const store = tx.objectStore(DRIVE_STORE_NAME);
+    const req = store.getAll();
+    req.onsuccess = () => {
+      (req.result || [])
+        .filter((item) => item.district === districtName)
+        .forEach((item) => store.delete(item.id));
+      (Array.isArray(items) ? items : []).forEach((item) => {
+        store.put({ ...item, district: districtName });
+      });
+    };
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
   });
 }
 
