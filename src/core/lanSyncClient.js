@@ -13,7 +13,7 @@ export class OfficeServerError extends Error {
 }
 
 function getDefaultServerUrl() {
-  const configuredUrl = String(import.meta.env.VITE_GR_SERVER_URL || "").trim();
+  const configuredUrl = String(import.meta.env?.VITE_GR_SERVER_URL || "").trim();
   if (configuredUrl) return configuredUrl.replace(/\/+$/, "");
   if (typeof window !== "undefined" && window.location.hostname) {
     return `http://${window.location.hostname}:5050`;
