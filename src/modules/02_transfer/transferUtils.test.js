@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   buildTransferPostingOptions,
+  createTemporaryDutyEntry,
   createTransferOrderUpdates,
   getCompletedTenureYears,
   getTransferRank,
   groupTransferOrders,
+  isHomePoliceStation,
   normalizeTransferDateInput,
   parsePostingDate
 } from "./transferUtils.js";
@@ -37,6 +39,53 @@ test("deduplicates station and chowki choices case-insensitively", () => {
     buildTransferPostingOptions(["Unit X", "unit x"], { office: ["Post Y"] }),
     ["Post Y", "Unit X"]
   );
+});
+
+test("warns when the selected post is the employee's home station or its chowki", () => {
+  const chowkiMap = {
+    "थाना कोतवाली चित्तौड़गढ़": ["चौकी किला"]
+  };
+  assert.equal(
+    isHomePoliceStation(
+      "थाना कोतवाली चित्तौड़गढ़",
+      { "POLICE STATION": "कोतवाली चित्तौड़गढ़" },
+      (value) => value,
+      chowkiMap
+    ),
+    true
+  );
+  assert.equal(
+    isHomePoliceStation(
+      "चौकी किला",
+      { "HOME PS": "थाना कोतवाली चित्तौड़गढ़" },
+      (value) => value,
+      chowkiMap
+    ),
+    true
+  );
+  assert.equal(
+    isHomePoliceStation("थाना सदर चित्तौड़गढ़", { "HOME PS": "थाना कोतवाली चित्तौड़गढ़" }),
+    false
+  );
+});
+
+test("creates separate attachment and deputation sheet rows without master UID", () => {
+  const entry = createTemporaryDutyEntry(
+    { _uid: "employee-1", NAME: "Officer", POSTING: "Old station" },
+    "DEPUTATION",
+    {
+      place: "मेला ड्यूटी",
+      orderNo: "5",
+      orderDate: "01-01-2025",
+      remark: "ड्यूटी",
+      issuedAt: "2025-01-01T00:00:00.000Z"
+    }
+  );
+  assert.equal(entry._uid, undefined);
+  assert.equal(entry.DEPUTATION_PLACE, "मेला ड्यूटी");
+  assert.equal(entry.POSTING_PLACE, "मेला ड्यूटी");
+  assert.equal(entry.ORDER_NO_DATE, "5 / 01-01-2025");
+  assert.equal(entry.STATUS, "ACTIVE");
 });
 
 test("updates selected postings and creates durable order-history rows", () => {

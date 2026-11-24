@@ -5,12 +5,14 @@ import { unicodeToDevlys } from "../../utils/devlysConverter";
 import {
   buildTransferPostingOptions,
   createTransferOrderUpdates,
+  createTemporaryDutyEntry,
   createTransferOrderId,
   formatTransferDate,
   getCompletedTenureYears,
   getTransferRank,
   getTransferEmployeeKey,
   groupTransferOrders,
+  isHomePoliceStation,
   normalizeTransferDateInput,
   TRANSFER_RANKS,
   TRANSFER_REMARKS
@@ -30,7 +32,8 @@ const ORDER_COLUMNS = [
 const TAB_ITEMS = [
   { id: "CREATE", label: "नया स्थानांतरण आदेश" },
   { id: "TENURE", label: "कार्यकाल / Overstay जाँच" },
-  { id: "ISSUED", label: "जारी आदेश / प्रिंट / Excel" }
+  { id: "ISSUED", label: "जारी आदेश / प्रिंट / Excel" },
+  { id: "DUTY", label: "4. Attachment & Deputation" }
 ];
 
 function escapeHtml(value) {
@@ -123,6 +126,78 @@ function printTransferOrder(order, displayText) {
   }, 400);
 }
 
+function printRelievingJoiningSlip(order, employee, displayText) {
+  const printableValue = (value) => {
+    const text = displayText(value);
+    const hasHindi = /[\u0900-\u097F]/.test(text);
+    return `<span class="${hasHindi ? "hindi" : "english"}">${escapeHtml(hasHindi ? unicodeToDevlys(text) : text)}</span>`;
+  };
+  const title = escapeHtml(unicodeToDevlys("रवानगी एवं आगमन प्रमाण-पत्र"));
+  const html = `<!doctype html>
+    <html lang="hi">
+      <head>
+        <meta charset="utf-8" />
+        <title>Relieving and Joining Certificate</title>
+        <style>
+          @page { size: A4 portrait; margin: 20mm; }
+          body { color: #000; font: 12pt "Times New Roman", serif; line-height: 1.7; }
+          h1, h2, .hindi { font-family: "DevLys 010", "Kruti Dev 010", "Times New Roman", serif; }
+          h1, h2 { text-align: center; margin: 0 0 8px; }
+          h1 { font-size: 19pt; }
+          h2 { font-size: 14pt; }
+          .english { font-family: "Times New Roman", serif; }
+          .meta { margin: 20px 0; border: 1px solid #000; padding: 10px 14px; }
+          .certificate { margin: 24px 0; text-align: justify; }
+          .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 70px; text-align: center; }
+          .signature-line { border-top: 1px solid #000; padding-top: 7px; }
+        </style>
+      </head>
+      <body>
+        <h1 class="hindi">${title}</h1>
+        <h2 class="english">Relieving &amp; Joining Certificate</h2>
+        <div class="meta">
+          <div><b class="hindi">${escapeHtml(unicodeToDevlys("आदेश क्रमांक"))}:</b> ${escapeHtml(order.orderNo)}</div>
+          <div><b class="hindi">${escapeHtml(unicodeToDevlys("आदेश दिनांक"))}:</b> ${escapeHtml(order.orderDate)}</div>
+        </div>
+        <p class="certificate">
+          <b class="hindi">${escapeHtml(unicodeToDevlys("रवानगी प्रमाण-पत्र"))}:</b>
+          <span class="hindi">${escapeHtml(unicodeToDevlys("प्रमाणित किया जाता है कि"))}</span>
+          ${printableValue(employee.NAME || "")},
+          <span class="hindi">${escapeHtml(unicodeToDevlys("पद"))}:</span> ${printableValue(employee.CADER || "")},
+          <span class="hindi">${escapeHtml(unicodeToDevlys("बेल्ट नं."))}:</span> ${printableValue(employee["BELT NO"] || "")},
+          को ${printableValue(employee.OLD_POSTING || "")}
+          <span class="hindi">${escapeHtml(unicodeToDevlys("से दिनांक"))}</span> __________________
+          <span class="hindi">${escapeHtml(unicodeToDevlys("को कार्यमुक्त किया गया।"))}</span>
+        </p>
+        <p class="certificate">
+          <b class="hindi">${escapeHtml(unicodeToDevlys("आगमन / कार्यग्रहण प्रमाण-पत्र"))}:</b>
+          ${printableValue(employee.NAME || "")}
+          <span class="hindi">${escapeHtml(unicodeToDevlys("ने"))}</span>
+          ${printableValue(employee.POSTING_PLACE || "")}
+          <span class="hindi">${escapeHtml(unicodeToDevlys("में दिनांक"))}</span> __________________
+          <span class="hindi">${escapeHtml(unicodeToDevlys("को कार्यभार ग्रहण कर लिया है।"))}</span>
+        </p>
+        <div class="signatures">
+          <div class="signature-line"><span class="hindi">${escapeHtml(unicodeToDevlys("रवानगी अधिकारी / कार्यालयाध्यक्ष"))}</span></div>
+          <div class="signature-line"><span class="hindi">${escapeHtml(unicodeToDevlys("आगमन अधिकारी / कार्यालयाध्यक्ष"))}</span></div>
+        </div>
+      </body>
+    </html>`;
+
+  const printWindow = window.open("", "_blank", "width=900,height=1000");
+  if (!printWindow) {
+    alert("कृपया ब्राउज़र में पॉप-अप की अनुमति दें।");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 400);
+}
+
 function exportTransferOrder(order, displayText) {
   if (!order?.rows?.length) {
     alert("Excel निर्यात के लिए जारी स्थानांतरण आदेश उपलब्ध नहीं है।");
@@ -204,7 +279,9 @@ export default function TransferModule({
   setRecords,
   allSheets = {},
   setAllSheets,
+  attRecords = [],
   setAttRecords,
+  depRecords = [],
   setDepRecords,
   devToHindi
 }) {
@@ -221,10 +298,13 @@ export default function TransferModule({
   const [tenureYears, setTenureYears] = useState(2);
   const [tenureSelectedIds, setTenureSelectedIds] = useState(() => new Set());
   const [selectedOrderId, setSelectedOrderId] = useState("");
-  const [otherActionKey, setOtherActionKey] = useState("");
-  const [otherAction, setOtherAction] = useState("ATTACHMENT");
-  const [otherOrderNo, setOtherOrderNo] = useState("");
-  const [otherPlace, setOtherPlace] = useState("");
+  const [dutyEmployeeKey, setDutyEmployeeKey] = useState("");
+  const [dutyType, setDutyType] = useState("ATTACHMENT");
+  const [dutyPlace, setDutyPlace] = useState("");
+  const [dutyCustomPlace, setDutyCustomPlace] = useState("");
+  const [dutyOrderNo, setDutyOrderNo] = useState("");
+  const [dutyOrderDate, setDutyOrderDate] = useState(() => formatTransferDate(new Date()));
+  const [dutyRemark, setDutyRemark] = useState("");
 
   const displayText = useCallback((value) => (
     typeof devToHindi === "function" ? devToHindi(value ?? "") : String(value ?? "")
@@ -232,6 +312,13 @@ export default function TransferModule({
   const postingOptions = useMemo(
     () => buildTransferPostingOptions(OFFICE_CO_PS_LIST, PS_CHOWKI_MAP),
     []
+  );
+  const temporaryDutyOptions = useMemo(
+    () => buildTransferPostingOptions(
+      [...postingOptions, "चुनाव ड्यूटी", "मेला ड्यूटी", "अन्य स्थान"],
+      {}
+    ),
+    [postingOptions]
   );
   const recordsWithKeys = useMemo(
     () => records.map((employee, index) => ({
@@ -275,6 +362,7 @@ export default function TransferModule({
     });
   }, [recordsWithKeys, rankFilter, stationFilter, searchText, displayText]);
   const selectedEmployees = recordsWithKeys.filter(({ key }) => selectedIds.has(key));
+  const dutyEmployee = recordsWithKeys.find(({ key }) => key === dutyEmployeeKey)?.employee || null;
   const postingHistory = allSheets["Posting_History"];
   const issuedOrders = useMemo(
     () => groupTransferOrders(Array.isArray(postingHistory) ? postingHistory : []),
@@ -392,48 +480,91 @@ export default function TransferModule({
     setActiveTab("CREATE");
   };
 
-  const applyOtherAction = (event) => {
+  const applyDutyAction = (event) => {
     event.preventDefault();
-    const selected = recordsWithKeys.find(({ key }) => key === otherActionKey);
+    const selected = recordsWithKeys.find(({ key }) => key === dutyEmployeeKey);
     if (!selected) {
-      alert("अन्य कार्यवाही के लिए कर्मचारी चुनें।");
+      alert("कार्यवाही के लिए कर्मचारी चुनें।");
       return;
     }
-    if (!otherOrderNo.trim()) {
-      alert("आदेश क्रमांक / दिनांक भरें।");
+    if (!dutyOrderNo.trim()) {
+      alert("आदेश क्रमांक भरें।");
       return;
     }
-    if (["ATTACHMENT", "DEPUTATION"].includes(otherAction) && !otherPlace.trim()) {
-      alert("नया थाना / कार्यालय भरें।");
+    const normalizedDate = normalizeTransferDateInput(dutyOrderDate);
+    if (!normalizedDate) {
+      alert("आदेश दिनांक DD-MM-YYYY में सही रूप से भरें।");
       return;
     }
 
     const employee = selected.employee;
-    let updatedRecords;
-    if (otherAction === "ATTACHMENT") {
-      const updatedEmployee = {
-        ...employee,
-        "WITHOUR DOB": `${otherPlace.trim()} (${otherOrderNo.trim()})`
-      };
-      updatedRecords = recordsWithKeys.map((row) => row.key === selected.key ? updatedEmployee : row.employee);
-      setAttRecords((previous) => [...previous, updatedEmployee]);
-    } else if (otherAction === "DEPUTATION") {
-      const deputedEmployee = { ...employee, POSTING: otherPlace.trim() };
-      updatedRecords = recordsWithKeys.filter((row) => row.key !== selected.key).map((row) => row.employee);
-      setDepRecords((previous) => [...previous, deputedEmployee]);
-    } else {
-      updatedRecords = recordsWithKeys.filter((row) => row.key !== selected.key).map((row) => row.employee);
+    if (dutyType === "RELIEVE" || dutyType === "RETIRE") {
+      const updatedRecords = recordsWithKeys
+        .filter((row) => row.key !== selected.key)
+        .map((row) => row.employee);
+      setRecords(updatedRecords);
+      setAllSheets((previous) => ({
+        ...previous,
+        Master_All_Data: updatedRecords
+      }));
+      setDutyEmployeeKey("");
+      setDutyOrderNo("");
+      alert(`कार्यवाही (${dutyType}) सफलतापूर्वक पूरी हुई।`);
+      return;
     }
 
+    const place = dutyPlace === "अन्य स्थान" ? dutyCustomPlace.trim() : dutyPlace;
+    if (!place) {
+      alert("नया थाना / कार्यालय / ड्यूटी स्थान चुनें या लिखें।");
+      return;
+    }
+    const orderNo = dutyOrderNo.trim();
+    const orderNoDate = `${orderNo} / ${normalizedDate}`;
+    let updatedEmployee = employee;
+    let updatedRecords;
+    if (dutyType === "ATTACHMENT") {
+      updatedEmployee = {
+        ...employee,
+        "WITHOUR DOB": `${place} (${orderNoDate})`
+      };
+      updatedRecords = recordsWithKeys.map((row) => row.key === selected.key ? updatedEmployee : row.employee);
+    } else {
+      const deputedEmployee = { ...employee, POSTING: place };
+      updatedRecords = recordsWithKeys.filter((row) => row.key !== selected.key).map((row) => row.employee);
+      updatedEmployee = deputedEmployee;
+    }
+
+    const dutyEntry = createTemporaryDutyEntry(updatedEmployee, dutyType, {
+      place,
+      orderNo,
+      orderDate: normalizedDate,
+      remark: dutyRemark.trim(),
+      issuedAt: new Date().toISOString()
+    });
+    const sheetName = dutyType === "ATTACHMENT" ? "Attachment" : "Deputation";
+    if (dutyType === "ATTACHMENT") {
+      setAttRecords((previous) => [...(Array.isArray(previous) ? previous : []), dutyEntry]);
+    } else {
+      setDepRecords((previous) => [...(Array.isArray(previous) ? previous : []), dutyEntry]);
+    }
     setRecords(updatedRecords);
     setAllSheets((previous) => ({
       ...previous,
-      Master_All_Data: updatedRecords
+      Master_All_Data: updatedRecords,
+      [sheetName]: [
+        dutyEntry,
+        ...(Array.isArray(previous[sheetName]) ? previous[sheetName] : [])
+      ]
     }));
-    setOtherActionKey("");
-    setOtherOrderNo("");
-    setOtherPlace("");
-    alert(`कार्यवाही (${otherAction}) सफलतापूर्वक पूरी हुई।`);
+    setDutyEmployeeKey("");
+    setDutyPlace("");
+    setDutyCustomPlace("");
+    setDutyOrderNo("");
+    setDutyOrderDate(formatTransferDate(new Date()));
+    setDutyRemark("");
+    alert(
+      `${dutyType === "ATTACHMENT" ? "संलग्नीकरण" : "प्रतिनियुक्ति"} रिकॉर्ड सुरक्षित हुआ; डैशबोर्ड गणना अपडेट की गई।`
+    );
   };
 
   const renderRankOptions = () => TRANSFER_RANKS.map((rank) => (
@@ -623,6 +754,16 @@ export default function TransferModule({
                                 <option key={place} value={place}>{displayText(place)}</option>
                               ))}
                             </select>
+                            {isHomePoliceStation(
+                              assignments[key]?.destination,
+                              employee,
+                              displayText,
+                              PS_CHOWKI_MAP
+                            ) && (
+                              <p className="transfer-home-ps-warning" role="alert">
+                                ⚠️ सावधान: यह कर्मचारी का गृह थाना (Home PS) है!
+                              </p>
+                            )}
                           </td>
                           <td>
                             <select
@@ -653,42 +794,6 @@ export default function TransferModule({
             )}
           </form>
 
-          <details className="transfer-legacy-actions">
-            <summary>अन्य कार्यवाही (अटैचमेंट / प्रतिनियुक्ति / कार्यमुक्ति / सेवानिवृत्ति)</summary>
-            <form onSubmit={applyOtherAction} className="transfer-filter-grid">
-              <label className="transfer-field">
-                <span>कर्मचारी</span>
-                <select value={otherActionKey} onChange={(event) => setOtherActionKey(event.target.value)} required>
-                  <option value="">कर्मचारी चुनें</option>
-                  {recordsWithKeys.map(({ employee, key }) => (
-                    <option key={key} value={key}>
-                      {displayText(employee["BELT NO"] || "")} · {displayText(employee.NAME || "")}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="transfer-field">
-                <span>कार्यवाही</span>
-                <select value={otherAction} onChange={(event) => setOtherAction(event.target.value)}>
-                  <option value="ATTACHMENT">Attachment</option>
-                  <option value="DEPUTATION">Deputation</option>
-                  <option value="RELIEVE">Relieve</option>
-                  <option value="RETIRE">Retire / Death</option>
-                </select>
-              </label>
-              <label className="transfer-field">
-                <span>आदेश नं. / दिनांक</span>
-                <input value={otherOrderNo} onChange={(event) => setOtherOrderNo(event.target.value)} required />
-              </label>
-              {["ATTACHMENT", "DEPUTATION"].includes(otherAction) && (
-                <label className="transfer-field">
-                  <span>नया थाना / कार्यालय</span>
-                  <input value={otherPlace} onChange={(event) => setOtherPlace(event.target.value)} required />
-                </label>
-              )}
-              <button type="submit" className="transfer-secondary-button">कार्यवाही लागू करें</button>
-            </form>
-          </details>
         </div>
       )}
 
@@ -828,6 +933,19 @@ export default function TransferModule({
                           {getTransferRows(currentOrder, displayText).map((row, index) => (
                             <tr key={`${currentOrder.id}-${row[2]}-${index}`}>
                               {row.map((value, cellIndex) => <td key={`${index}-${cellIndex}`}>{value}</td>)}
+                              <td>
+                                <button
+                                  type="button"
+                                  className="transfer-slip-button"
+                                  onClick={() => printRelievingJoiningSlip(
+                                    currentOrder,
+                                    currentOrder.rows[index],
+                                    displayText
+                                  )}
+                                >
+                                  📄 रिलीविंग पर्ची
+                                </button>
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -845,6 +963,128 @@ export default function TransferModule({
                 )}
               </>
             )}
+          </section>
+        </div>
+      )}
+
+      {activeTab === "DUTY" && (
+        <div
+          id="transfer-panel-duty"
+          role="tabpanel"
+          aria-labelledby="transfer-tab-duty"
+          className="transfer-panel"
+        >
+          <section className="transfer-card">
+            <div className="transfer-section-heading">
+              <div>
+                <h3>संलग्नीकरण एवं प्रतिनियुक्ति</h3>
+                <p>कार्यालय, थाना, चुनाव/मेला ड्यूटी में अस्थायी तैनाती दर्ज करें।</p>
+              </div>
+            </div>
+            <div className="transfer-duty-counts">
+              <div><span>On Attachment</span><strong>{attRecords.length}</strong></div>
+              <div><span>On Deputation</span><strong>{depRecords.length}</strong></div>
+            </div>
+            <form onSubmit={applyDutyAction}>
+              <div className="transfer-filter-grid">
+                <label className="transfer-field">
+                  <span>कर्मचारी</span>
+                  <select
+                    value={dutyEmployeeKey}
+                    onChange={(event) => setDutyEmployeeKey(event.target.value)}
+                    required
+                  >
+                    <option value="">कर्मचारी चुनें</option>
+                    {recordsWithKeys.map(({ employee, key }) => (
+                      <option key={key} value={key}>
+                        {displayText(employee["BELT NO"] || "")} · {displayText(employee.NAME || "")}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="transfer-field">
+                  <span>कार्यवाही</span>
+                  <select value={dutyType} onChange={(event) => setDutyType(event.target.value)}>
+                    <option value="ATTACHMENT">संलग्नीकरण (Attachment)</option>
+                    <option value="DEPUTATION">प्रतिनियुक्ति (Deputation)</option>
+                    <option value="RELIEVE">कार्य-मुक्त (Relieve)</option>
+                    <option value="RETIRE">सेवानिवृत्ति / मृत्यु</option>
+                  </select>
+                </label>
+                {["ATTACHMENT", "DEPUTATION"].includes(dutyType) && (
+                  <>
+                    <label className="transfer-field">
+                      <span>नया कार्यालय / थाना / ड्यूटी</span>
+                      <select
+                        value={dutyPlace}
+                        onChange={(event) => setDutyPlace(event.target.value)}
+                        required
+                      >
+                        <option value="">स्थान चुनें</option>
+                        {temporaryDutyOptions.map((place) => (
+                          <option key={place} value={place}>{displayText(place)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    {dutyPlace === "अन्य स्थान" && (
+                      <label className="transfer-field">
+                        <span>अन्य ड्यूटी / स्थान का नाम</span>
+                        <input
+                          value={dutyCustomPlace}
+                          onChange={(event) => setDutyCustomPlace(event.target.value)}
+                          required
+                        />
+                      </label>
+                    )}
+                  </>
+                )}
+                <label className="transfer-field">
+                  <span>आदेश क्रमांक</span>
+                  <input
+                    value={dutyOrderNo}
+                    onChange={(event) => setDutyOrderNo(event.target.value)}
+                    placeholder="उदा. 875"
+                    required
+                  />
+                </label>
+                <label className="transfer-field">
+                  <span>आदेश दिनांक (DD-MM-YYYY)</span>
+                  <input
+                    inputMode="numeric"
+                    value={dutyOrderDate}
+                    onChange={(event) => setDutyOrderDate(event.target.value)}
+                    onBlur={() => {
+                      const normalized = normalizeTransferDateInput(dutyOrderDate);
+                      if (normalized) setDutyOrderDate(normalized);
+                    }}
+                    placeholder="DD-MM-YYYY"
+                    pattern="\\d{1,2}[-/.]\\d{1,2}[-/.]\\d{4}"
+                    required
+                  />
+                </label>
+                {["ATTACHMENT", "DEPUTATION"].includes(dutyType) && (
+                  <label className="transfer-field">
+                    <span>ड्यूटी / कार्यवाही का विवरण</span>
+                    <input
+                      value={dutyRemark}
+                      onChange={(event) => setDutyRemark(event.target.value)}
+                      placeholder="वैकल्पिक विवरण"
+                    />
+                  </label>
+                )}
+              </div>
+              {dutyEmployee && (
+                <p className="transfer-duty-employee">
+                  चयनित कर्मचारी: <strong>{displayText(dutyEmployee.NAME || "")}</strong>
+                  {" · "}{displayText(dutyEmployee["BELT NO"] || "")}
+                  {" · वर्तमान पदस्थापन: "}{displayText(dutyEmployee.POSTING || "—")}
+                </p>
+              )}
+              <button type="submit" className="transfer-primary-button">
+                {dutyType === "ATTACHMENT" ? "✅ संलग्नीकरण सुरक्षित करें" :
+                  dutyType === "DEPUTATION" ? "✅ प्रतिनियुक्ति सुरक्षित करें" : "✅ कार्यवाही लागू करें"}
+              </button>
+            </form>
           </section>
         </div>
       )}

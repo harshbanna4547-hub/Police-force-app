@@ -14,7 +14,9 @@ export default function PortalModuleContent({
     setAllSheets,
     records,
     setRecords,
+    attRecords,
     setAttRecords,
+    depRecords,
     setDepRecords,
     plLeaveRows,
     setPlLeaveRows,
@@ -48,7 +50,17 @@ export default function PortalModuleContent({
 
   const propsByModule = {
     STRENGTH: { records, sanctioned, setSanctioned, devToHindi, onEditEmployee: setEditingEmployee },
-    TRANSFER: { records, setRecords, allSheets, setAllSheets, setAttRecords, setDepRecords, devToHindi },
+    TRANSFER: {
+      records,
+      setRecords,
+      allSheets,
+      setAllSheets,
+      attRecords,
+      setAttRecords,
+      depRecords,
+      setDepRecords,
+      devToHindi
+    },
     POSTING: { records, devToHindi },
     BHARTI: { records, setRecords, devToHindi },
     TRAINING: { allSheets, setAllSheets, devToHindi },
