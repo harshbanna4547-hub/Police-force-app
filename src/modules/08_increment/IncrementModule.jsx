@@ -1,24 +1,19 @@
 import { useMemo, useState } from "react";
 import ExportBar from "../../core/ExportBar";
-import { calculateServiceYears, formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
+import { appendRowToSheet, calculateServiceYears, formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
+import { getNextIncrementDate, isIncrementEligible } from "./incrementLogic";
+import "./increment.css";
 
 export default function IncrementModule({ records = [], allSheets = {}, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");
   const [payLevel, setPayLevel] = useState("");
   const [orderNo, setOrderNo] = useState("");
-  const [targetDate] = useState(() => {
-    const today = new Date();
-    const nextIncrementDate = new Date(today.getFullYear(), 6, 1);
-    if (nextIncrementDate < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
-      nextIncrementDate.setFullYear(nextIncrementDate.getFullYear() + 1);
-    }
-    return nextIncrementDate;
-  });
+  const [targetDate] = useState(() => getNextIncrementDate());
   const incDate = formatDateDDMMYYYY(targetDate);
   const history = allSheets["Posting_History"] || [];
   const candidates = useMemo(() => records.flatMap((record) => {
     const joiningDate = parseAnyDate(record["DATE OF JOINING"]);
-    if (!joiningDate || joiningDate > targetDate) return [];
+    if (!joiningDate || !isIncrementEligible(record, targetDate)) return [];
     const employeeBelt = String(record["BELT NO"] || "").trim().toUpperCase();
     const lwpRows = (allSheets["PL_Leave_Account"] || []).filter((row) =>
       String(row["BELT NO"] || "").trim().toUpperCase() === employeeBelt &&
@@ -33,16 +28,18 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
       name: record.NAME,
       cader: record.CADER,
       posting: record.POSTING,
+      serviceYears: calculateServiceYears(joiningDate, targetDate).toFixed(1),
       lwpReview: lwpRows.length,
       punishmentReview: punishmentRows.length
     }];
   }), [records, allSheets, targetDate]);
   const rows = history.filter((row) => String(row["POSTING_PLACE"] || "").includes("[Increment]"));
-  const exportRows = candidates.map(({ belt: employeeBelt, name, cader, posting, lwpReview, punishmentReview }) => ({
+  const exportRows = candidates.map(({ belt: employeeBelt, name, cader, posting, serviceYears, lwpReview, punishmentReview }) => ({
     "BELT NO": employeeBelt,
     CADER: cader,
     NAME: devToHindi(name),
     POSTING: devToHindi(posting),
+    "सेवा वर्ष": serviceYears,
     "LWP रिकॉर्ड समीक्षा": lwpReview,
     "सजा रिकॉर्ड समीक्षा": punishmentReview
   }));
@@ -62,15 +59,12 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
       ORDER_NO_DATE: orderNo,
       REMARK: "Annual Increment; LWP/Punishment review required"
     };
-    setAllSheets((previous) => ({
-      ...previous,
-      Posting_History: [entry, ...(previous["Posting_History"] || [])]
-    }));
+    appendRowToSheet(setAllSheets, "Posting_History", entry);
     setOrderNo("");
   };
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="increment-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>📈 वार्षिक वेतन वृद्धि — 1 जुलाई ({incDate})</h2>
         <ExportBar title="वेतन वृद्धि पात्रता समीक्षा" rows={exportRows} fileName="Annual_Increment_Review" />
@@ -89,12 +83,13 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
       <h3>1 जुलाई के लिए कर्मचारी एवं सेवा रिकॉर्ड समीक्षा ({candidates.length})</h3>
       <div style={{ overflowX: "auto", marginBottom: "18px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
-          <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "पद", "नाम", "वर्तमान थाना / कार्यालय", "LWP रिकॉर्ड", "सजा रिकॉर्ड"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
-          <tbody>{candidates.map(({ record, belt: employeeBelt, name, cader, posting, lwpReview, punishmentReview }) => <tr key={record._uid || employeeBelt} style={{ borderBottom: "1px solid #E2E8F0" }}>
+          <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "पद", "नाम", "वर्तमान थाना / कार्यालय", "सेवा वर्ष", "LWP रिकॉर्ड", "सजा रिकॉर्ड"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
+          <tbody>{candidates.map(({ record, belt: employeeBelt, name, cader, posting, serviceYears, lwpReview, punishmentReview }) => <tr key={record._uid || employeeBelt} style={{ borderBottom: "1px solid #E2E8F0" }}>
             <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{employeeBelt}</td>
             <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{cader}</td>
             <td style={{ padding: "6px", fontWeight: "bold" }}>{devToHindi(name)}</td>
             <td style={{ padding: "6px" }}>{devToHindi(posting)}</td>
+            <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{serviceYears}</td>
             <td style={{ padding: "6px", textAlign: "center" }}>{lwpReview ? `${lwpReview} दर्ज` : "कोई दर्ज रिकॉर्ड नहीं"}</td>
             <td style={{ padding: "6px", textAlign: "center" }}>{punishmentReview ? `${punishmentReview} दर्ज` : "कोई दर्ज रिकॉर्ड नहीं"}</td>
           </tr>)}</tbody>

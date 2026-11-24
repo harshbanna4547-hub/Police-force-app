@@ -4,7 +4,7 @@ import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
 import usePortalData from "./core/usePortalData";
-import { MODULES_CONFIG } from "./modules/moduleRegistry";
+import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
 import { DistrictPoliceLoginScreen } from "./core/AuthAndCloudSync";
 import { useDistrictAuth } from "./core/districtAuth";
 

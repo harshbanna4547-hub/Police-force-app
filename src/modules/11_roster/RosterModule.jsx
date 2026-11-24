@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { downloadAllReportsExcel } from "../../utils/reportEngine";
 import ExportBar from "../../core/ExportBar";
+import { appendRowToSheet } from "../../shared/commonFunctions";
+import Pi300ChartModule from "./Pi300ChartModule";
+import { createDutyRosterEntry } from "./rosterLogic";
+import "./roster.css";
 
-export default function RosterModule({ reports, records = [], allSheets = {}, setAllSheets, devToHindi }) {
+export default function RosterModule({ reports, records = [], plSummary = [], allSheets = {}, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");
   const [dutyDate, setDutyDate] = useState("");
   const [dutyType, setDutyType] = useState("गश्त");
@@ -24,24 +28,14 @@ export default function RosterModule({ reports, records = [], allSheets = {}, se
       alert("कर्मचारी और ड्यूटी दिनांक चुनें।");
       return;
     }
-    const dutyRow = {
-      DUTY_DATE: dutyDate,
-      SHIFT: shift,
-      POSTING: selectedEmployee.POSTING,
-      "BELT NO": selectedEmployee["BELT NO"],
-      NAME: selectedEmployee.NAME,
-      DUTY_TYPE: dutyType
-    };
-    setAllSheets((previous) => ({
-      ...previous,
-      Duty_Roster: [...(previous.Duty_Roster || []), dutyRow]
-    }));
+    const dutyRow = createDutyRosterEntry(selectedEmployee, { date: dutyDate, shift, dutyType });
+    appendRowToSheet(setAllSheets, "Duty_Roster", dutyRow, { prepend: false });
     setBelt("");
     setDutyDate("");
   };
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="roster-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
         <h2 style={{ margin: 0, color: "#0B1E3D" }}>🏢 थाना-वार नफरी एवं ड्यूटी रोस्टर</h2>
         <ExportBar title="मासिक थाना-वार नफरी रोस्टर" rows={rows} fileName="Monthly_PS_Roster" />
@@ -110,6 +104,7 @@ export default function RosterModule({ reports, records = [], allSheets = {}, se
           </tr>)}</tbody>
         </table>
       </div>
+      <Pi300ChartModule plSummary={plSummary} devToHindi={devToHindi} />
     </div>
   );
 }

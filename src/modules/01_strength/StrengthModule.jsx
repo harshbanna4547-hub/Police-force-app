@@ -4,6 +4,8 @@ import { CADRE_GROUPS, DEFAULT_SANCTIONED, mapRankToCode } from "../../data/cadr
 import ExportBar from "../../core/ExportBar";
 import OfficePsStrength from "./OfficePsStrength";
 import HindiText from "../../core/HindiText";
+import { getBeltNo } from "../../shared/commonFunctions";
+import { getStrengthEmployeeIdentity } from "./strengthLogic";
 import "./strength.css";
 
 const POST_FILTER_TABS = [
@@ -23,28 +25,6 @@ function formatVacancy(sanc, work) {
   const diff = Number(sanc || 0) - Number(work || 0);
   if (diff < 0) return `+${Math.abs(diff)}`;
   return diff;
-}
-
-function getBeltNo(emp) {
-  if (!emp) return "-";
-  const direct =
-    emp["BELT NO"] ||
-    emp["BELT NO."] ||
-    emp["BELT_NO"] ||
-    emp["Belt No"] ||
-    emp["Belt No."] ||
-    emp["BELT"] ||
-    emp["बेल्ट नं."] ||
-    emp["बेल्ट नं"];
-  if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
-    return String(direct).trim();
-  }
-  const cader = String(emp["CADER"] || "").toUpperCase();
-  if (cader.includes("HC") || cader.includes("FC") || cader.includes("CONST")) {
-    const m = String(emp["NAME"] || "").match(/\b(\d{1,5})\b/);
-    if (m) return m.at(1);
-  }
-  return "-";
 }
 
 function getMobileNo(emp) {
@@ -339,7 +319,7 @@ export default function StrengthModule({
                         <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>{idx + 1}</td>
                         {showBeltCol && (
                           <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", fontWeight: "bold", color: "#0369A1" }}>
-                            {getBeltNo(emp)}
+                            {getStrengthEmployeeIdentity(emp).beltNo}
                           </td>
                         )}
                         <td onClick={() => onEditEmployee?.(emp)} style={{ padding: "6px 8px", border: "1px solid #E2E8F0", fontWeight: "bold", cursor: "pointer" }}>

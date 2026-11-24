@@ -4,31 +4,14 @@ import { OFFICE_SECTIONS, PS_CHOWKI_MAP, CO_PS_MAP } from "../../data/officeUnit
 import { resolveUnitAndChowki } from "../../core/postingResolver";
 import ExportBar from "../../core/ExportBar";
 import HindiText from "../../core/HindiText";
+import { getBeltNo, getRankCode } from "../../shared/commonFunctions";
 
 const RANKS = ["ASP", "DYSP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
 const fmtVac = (s, w) => (s - w < 0 ? `+${Math.abs(s - w)}` : s - w);
-
-function getRank(caderRaw) {
-  const c = String(caderRaw || "").toUpperCase();
-  if (c.includes("ASP")) return "ASP";
-  if (c.includes("DYSP") || c.includes("RPS")) return "DYSP";
-  if (c.includes("ASI")) return "ASI";
-  if (c.startsWith("SI") || c.includes("SUB INSPECTOR")) return "SI";
-  if (c.startsWith("CI") || c.includes("INSPECTOR") || c === "MTO" || c === "RI") return "CI";
-  if (c.includes("HC")) return "HC";
-  if (c.includes("DR") || c.includes("DRIVER")) return "FC(DR)";
-  return "FC";
-}
-
-function getBeltNo(emp) {
-  const direct = emp?.["BELT NO"] || emp?.["BELT NO."] || emp?.["BELT_NO"] || emp?.["Belt No"] || emp?.["बेल्ट नं."];
-  if (direct && String(direct).trim()) return String(direct).trim();
-  if (/HC|FC|CONST|DR/i.test(String(emp?.["CADER"] || ""))) {
-    const m = String(emp?.["NAME"] || "").match(/\b(\d{1,5})\b/);
-    if (m) return m.at(1);
-  }
-  return "-";
-}
+const getOfficeRankCode = (cader) => {
+  const rank = getRankCode(cader);
+  return rank === "OTHER" ? "FC" : rank;
+};
 
 function getMobileNo(emp) {
   const value = emp?.["MOBILE NO 1"] || emp?.["MOBILE NO"] || emp?.MOBILE || emp?.CONTACT || "";
@@ -59,7 +42,7 @@ export default function OfficePsStrength({
       const { unit, chowki } = resolveUnitAndChowki(r["POSTING"], devToHindi);
       if (!unit) return;
       if (!map[unit]) map[unit] = makeEmpty();
-      const rk = getRank(r["CADER"]);
+      const rk = getOfficeRankCode(r["CADER"]);
       map[unit].total += 1;
       map[unit].list.push(r);
       map[unit].byRank[rk].push(r);
@@ -90,7 +73,7 @@ export default function OfficePsStrength({
 
   const modalUnitData = modal ? workingMap[modal.unitName] || { list: [], chowkis: {} } : null;
   const filterModalRank = (list) => modal?.rankFilter
-    ? list.filter((employee) => getRank(employee["CADER"]) === modal.rankFilter)
+    ? list.filter((employee) => getOfficeRankCode(employee["CADER"]) === modal.rankFilter)
     : list;
   const modalTabs = (() => {
     if (!modal || !modalUnitData) return [];

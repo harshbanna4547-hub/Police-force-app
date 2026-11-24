@@ -1,17 +1,17 @@
-import AcpModule from "./AcpModule";
-import BhartiModule from "./BhartiModule";
-import IncrementModule from "./IncrementModule";
-import LeaveModule from "./LeaveModule";
-import Pl300ChartModule from "./Pl300ChartModule";
-import PostingModule from "./PostingModule";
-import PromotionExamModule from "./PromotionExamModule";
-import PunishmentModule from "./PunishmentModule";
-import RosterModule from "./RosterModule";
-import SeniorityModule from "./SeniorityModule";
+import "../shared/sharedModule.css";
 import StrengthModule from "./01_strength/StrengthModule";
-import StorageVaultModule from "./13_storage/StorageVaultModule";
-import TrainingModule from "./TrainingModule";
 import TransferModule from "./02_transfer/TransferModule";
+import LeaveModule from "./03_leave/LeaveModule";
+import AcpModule from "./04_acp/AcpModule";
+import PromotionExamModule from "./05_promotion/PromotionExamModule";
+import SeniorityModule from "./06_seniority/SeniorityModule";
+import BhartiModule from "./07_bharti/BhartiModule";
+import IncrementModule from "./08_increment/IncrementModule";
+import TrainingModule from "./09_training/TrainingModule";
+import PunishmentModule from "./10_punishment/PunishmentModule";
+import RosterModule from "./11_roster/RosterModule";
+import ReportsModule from "./12_reports/ReportsModule";
+import StorageVaultModule from "./13_storage/StorageVaultModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {
@@ -35,64 +35,14 @@ export const MODULES_CONFIG = Object.freeze([
     component: TransferModule
   },
   {
-    id: "POSTING",
-    title: "Posting",
-    hindiTitle: "पदस्थापन",
-    icon: "📍",
-    color: "#4F46E5",
-    description: "थाना-वार पदस्थापन विवरण",
-    enabled: true,
-    component: PostingModule
-  },
-  {
-    id: "BHARTI",
-    title: "Bharti",
-    hindiTitle: "भर्ती",
-    icon: "⚡",
-    color: "#D97706",
-    description: "नवीन भर्ती और खाली बेल्ट नंबर",
-    enabled: true,
-    component: BhartiModule
-  },
-  {
-    id: "TRAINING",
-    title: "Training",
-    hindiTitle: "प्रशिक्षण",
-    icon: "🎓",
-    color: "#7C3AED",
-    description: "प्रशिक्षण और कोर्स रिकॉर्ड",
-    enabled: true,
-    component: TrainingModule
-  },
-  {
     id: "LEAVE",
     title: "Leave",
     hindiTitle: "अवकाश",
     icon: "🏖️",
     color: "#15803D",
-    description: "अवकाश प्रविष्टि और खाता",
+    description: "अवकाश प्रविष्टि और PL खाता",
     enabled: true,
     component: LeaveModule
-  },
-  {
-    id: "PL300",
-    title: "300 PL Chart",
-    hindiTitle: "300 पीएल चार्ट",
-    icon: "📊",
-    color: "#047857",
-    description: "उपार्जित और शेष पीएल चार्ट",
-    enabled: true,
-    component: Pl300ChartModule
-  },
-  {
-    id: "INCREMENT",
-    title: "Increment",
-    hindiTitle: "वेतन वृद्धि",
-    icon: "📈",
-    color: "#0369A1",
-    description: "वार्षिक वेतन वृद्धि विवरण",
-    enabled: true,
-    component: IncrementModule
   },
   {
     id: "ACP",
@@ -100,19 +50,9 @@ export const MODULES_CONFIG = Object.freeze([
     hindiTitle: "एसीपी",
     icon: "🎖️",
     color: "#4338CA",
-    description: "एसीपी पात्रता गणना",
+    description: "9 / 18 / 27 वर्ष सेवा-अवधि समीक्षा",
     enabled: true,
     component: AcpModule
-  },
-  {
-    id: "PUNISHMENT",
-    title: "Punishment",
-    hindiTitle: "दण्ड",
-    icon: "⚖️",
-    color: "#B91C1C",
-    description: "विभागीय सज़ा और कार्रवाई",
-    enabled: true,
-    component: PunishmentModule
   },
   {
     id: "PROMOTION",
@@ -120,7 +60,7 @@ export const MODULES_CONFIG = Object.freeze([
     hindiTitle: "पदोन्नति परीक्षा",
     icon: "🏅",
     color: "#B45309",
-    description: "पीसीसी परीक्षा और डीपीसी",
+    description: "पीसीसी परीक्षा और डीपीसी समीक्षा",
     enabled: true,
     component: PromotionExamModule
   },
@@ -135,14 +75,64 @@ export const MODULES_CONFIG = Object.freeze([
     component: SeniorityModule
   },
   {
+    id: "BHARTI",
+    title: "Bharti",
+    hindiTitle: "भर्ती",
+    icon: "⚡",
+    color: "#D97706",
+    description: "वर्षवार भर्ती और स्थायीकरण",
+    enabled: true,
+    component: BhartiModule
+  },
+  {
+    id: "INCREMENT",
+    title: "Increment",
+    hindiTitle: "वेतन वृद्धि",
+    icon: "📈",
+    color: "#0369A1",
+    description: "वार्षिक वेतन वृद्धि समीक्षा",
+    enabled: true,
+    component: IncrementModule
+  },
+  {
+    id: "TRAINING",
+    title: "Training",
+    hindiTitle: "प्रशिक्षण",
+    icon: "🎓",
+    color: "#7C3AED",
+    description: "प्रशिक्षण इतिहास और लंबित कोर्स",
+    enabled: true,
+    component: TrainingModule
+  },
+  {
+    id: "PUNISHMENT",
+    title: "Punishment",
+    hindiTitle: "दण्ड",
+    icon: "⚖️",
+    color: "#B91C1C",
+    description: "विभागीय सज़ा एवं स्वच्छ-छवि सूची",
+    enabled: true,
+    component: PunishmentModule
+  },
+  {
     id: "ROSTER",
-    title: "Roster",
-    hindiTitle: "रोस्टर",
+    title: "Roster & PL-300",
+    hindiTitle: "रोस्टर एवं पीएल-300",
     icon: "🏢",
     color: "#065F46",
-    description: "मासिक थाना नफरी रोस्टर",
+    description: "थाना रोस्टर, ड्यूटी और PL-300 चार्ट",
     enabled: true,
     component: RosterModule
+  },
+  {
+    id: "REPORTS",
+    title: "Reports",
+    hindiTitle: "रिपोर्ट एवं पदस्थापन",
+    icon: "📑",
+    color: "#4F46E5",
+    description: "पदस्थापन एवं कार्यकाल रिपोर्ट",
+    enabled: true,
+    component: ReportsModule
   },
   {
     id: "STORAGE",

@@ -19,7 +19,7 @@ import {
   normalizeTransferDateInput,
   TRANSFER_RANKS,
   TRANSFER_REMARKS
-} from "./transferUtils";
+} from "./transferLogic";
 import "./transfer.css";
 
 const ENGLISH_CELL_STYLE = { fontFamily: "'Times New Roman', Times, serif" };

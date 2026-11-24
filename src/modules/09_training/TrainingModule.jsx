@@ -1,12 +1,8 @@
 import { useState } from "react";
 import ExportBar from "../../core/ExportBar";
-
-const REQUIRED_COURSES = [
-  { label: "PCC", aliases: ["pcc"] },
-  { label: "बुनियादी प्रशिक्षण", aliases: ["बुनियादी", "basic training", "basic course"] },
-  { label: "साइबर", aliases: ["साइबर", "cyber"] },
-  { label: "विशेष कोर्स", aliases: ["विशेष", "special course", "special training"] }
-];
+import { appendRowToSheet } from "../../shared/commonFunctions";
+import { getMissingTrainingCourses, REQUIRED_COURSES } from "./trainingLogic";
+import "./training.css";
 
 export default function TrainingModule({ records = [], allSheets, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");
@@ -17,24 +13,13 @@ export default function TrainingModule({ records = [], allSheets, setAllSheets, 
   const [institute, setInstitute] = useState("");
 
   const rows = allSheets["Training_History"] || [];
-  const missingRows = records.flatMap((record) => REQUIRED_COURSES
-    .filter((requiredCourse) => !rows.some((row) => {
-      const rowBelt = String(row["BELT NO"] || "").trim().toUpperCase();
-      const courseName = String(row.COURSE_NAME || "").toLowerCase();
-      return rowBelt === String(record["BELT NO"] || "").trim().toUpperCase() &&
-        requiredCourse.aliases.some((alias) => courseName.includes(alias.toLowerCase()));
-    }))
-    .map((requiredCourse) => ({
-      "BELT NO": record["BELT NO"],
-      CADER: record.CADER,
-      NAME: devToHindi(record.NAME),
-      "अपूर्ण कोर्स": requiredCourse.label
-    })));
+  const missingRows = getMissingTrainingCourses(records, rows)
+    .map((row) => ({ ...row, NAME: devToHindi(row.NAME) }));
 
   const handleAdd = (e) => {
     e.preventDefault();
     const newRow = { "BELT NO": belt.toUpperCase(), NAME: name, COURSE_NAME: course, FROM_DATE: fromDt, TO_DATE: toDt, INSTITUTE: institute };
-    setAllSheets((prev) => ({ ...prev, Training_History: [...(prev.Training_History || []), newRow] }));
+    appendRowToSheet(setAllSheets, "Training_History", newRow, { prepend: false });
     alert("प्रशिक्षण रिकॉर्ड जुड़ गया!");
     setFromDt("");
     setToDt("");
@@ -42,7 +27,7 @@ export default function TrainingModule({ records = [], allSheets, setAllSheets, 
   };
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="training-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🎓 प्रशिक्षण रिकॉर्ड (Training History)</h2>
         <ExportBar title="प्रशिक्षण रिकॉर्ड" rows={rows} fileName="Training_History" />

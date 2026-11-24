@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import ExportBar from "../../core/ExportBar";
-import { formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
+import { getProbationDetails, getVacantBelts } from "./bhartiLogic";
+import "./bharti.css";
 
 export default function BhartiModule({ records, setRecords, allSheets = {}, setAllSheets, devToHindi }) {
   const [subTab, setSubTab] = useState("FORM"); // FORM | RT_LIST
@@ -15,24 +16,18 @@ export default function BhartiModule({ records, setRecords, allSheets = {}, setA
 
   // खाली बेल्ट नंबर (1 से 1750) निकालना
   const vacantBelts = useMemo(() => {
-    const used = new Set(records.map((r) => String(r["BELT NO"] || "").replace(/\D/g, "")));
-    const free = [];
-    for (let i = 1; i <= 1750; i++) {
-      if (!used.has(String(i))) free.push(String(i));
-    }
-    return free;
+    return getVacantBelts(records);
   }, [records]);
 
   const rtList = useMemo(() => records
     .filter((r) => String(r["CADER"] || "").toUpperCase().includes("RT"))
     .map((record) => {
-      const joiningDate = parseAnyDate(record["DATE OF JOINING"]);
-      const probationEnd = joiningDate ? new Date(joiningDate.getFullYear() + 2, joiningDate.getMonth(), joiningDate.getDate()) : null;
+      const probation = getProbationDetails(record);
       return {
         ...record,
-        "JOINING YEAR": joiningDate?.getFullYear() || "",
-        "PROBATION END": formatDateDDMMYYYY(probationEnd),
-        "PROBATION STATUS": record["DATE OF CONFIRMATION"] ? "स्थायी" : probationEnd && probationEnd <= new Date() ? "आदेश हेतु लंबित" : "परिवीक्षा में"
+        "JOINING YEAR": probation.joiningYear,
+        "PROBATION END": probation.probationEnd,
+        "PROBATION STATUS": probation.status
       };
     }), [records]);
   const joiningYearRows = [...new Set(rtList.map((record) => record["JOINING YEAR"]).filter(Boolean))]
@@ -96,7 +91,7 @@ export default function BhartiModule({ records, setRecords, allSheets = {}, setA
   }));
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="bharti-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
         <button onClick={() => setSubTab("FORM")} style={{ padding: "8px 14px", borderRadius: "6px", border: "none", fontWeight: "bold", cursor: "pointer", backgroundColor: subTab === "FORM" ? "#0B1E3D" : "#E2E8F0", color: subTab === "FORM" ? "#FACC15" : "#1E293B" }}>
           ➕ नवीन भर्ती पंजीयन फॉर्म (खाली बेल्ट: {vacantBelts.length})

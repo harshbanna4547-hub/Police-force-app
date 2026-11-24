@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import ExportBar from "../../core/ExportBar";
-import { calculateEarnedPL } from "../../shared/commonFunctions";
+import { appendRowToSheet } from "../../shared/commonFunctions";
+import { getLeaveBalance } from "./leaveLogic";
+import "./leave.css";
 
 const LEAVE_TYPES = ["PL", "CL", "Medical", "Maternity", "Paternity"];
 
@@ -17,21 +19,14 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
   const employee = records.find((record) => String(record["BELT NO"] || "").trim().toUpperCase() === belt);
   const ledger = useMemo(() => (Array.isArray(plLeaveRows) ? plLeaveRows : []), [plLeaveRows]);
   const plAccount = useMemo(() => records.map((record) => {
-    const employeeBelt = String(record["BELT NO"] || "").trim().toUpperCase();
-    const used = ledger.reduce((sum, row) => {
-      if (String(row["BELT NO"] || "").trim().toUpperCase() !== employeeBelt) return sum;
-      const type = String(row["LEAVE_TYPE"] || "").trim().toUpperCase();
-      if (type && type !== "PL") return sum;
-      return sum + (Number(row["DAYS_TAKEN"] ?? row["DAYS"] ?? 0) || 0);
-    }, 0);
-    const earned = calculateEarnedPL(record["DATE OF JOINING"]);
+    const { earned, used, balance } = getLeaveBalance(record, ledger);
     return {
       "BELT NO": record["BELT NO"],
       "NAME": record.NAME,
       "CADER": record.CADER,
       "कुल अर्जित PL": earned,
       "कुल ली गई PL": used,
-      "शेष PL (Max 300)": Math.max(0, Math.min(300, earned - used))
+      "शेष PL (Max 300)": balance
     };
   }), [records, ledger]);
   const selectedBalance = plAccount.find((row) => String(row["BELT NO"] || "").trim().toUpperCase() === belt);
@@ -59,10 +54,7 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
       REMARK: remark
     };
     setPlLeaveRows((previous) => [newEntry, ...(previous || [])]);
-    setAllSheets((previous) => ({
-      ...previous,
-      PL_Leave_Account: [newEntry, ...ledger]
-    }));
+    appendRowToSheet(setAllSheets, "PL_Leave_Account", newEntry);
     setFromDt("");
     setToDt("");
     setDays("");
@@ -81,7 +73,7 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
   }));
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="leave-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🏖️ अवकाश एवं उपार्जित अवकाश लेखा</h2>
         <ExportBar title="अवकाश लेखा" rows={leaveRows} fileName="Leave_Ledger" />

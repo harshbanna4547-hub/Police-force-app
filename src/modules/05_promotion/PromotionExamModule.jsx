@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import ExportBar from "../../core/ExportBar";
-import { calculateServiceYears, formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
+import { formatDateDDMMYYYY, parseAnyDate } from "../../shared/commonFunctions";
+import { getPromotionCandidate } from "./promotionLogic";
+import "./promotion.css";
 
 const EXAM_PATHS = {
   "PCC Exam (FC to HC)": { source: "FC", target: "HC" },
@@ -23,13 +25,11 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
   const sourceRank = EXAM_PATHS[examType].source;
   const targetRank = EXAM_PATHS[examType].target;
   const candidates = useMemo(() => records.flatMap((record) => {
-    const cader = String(record.CADER || "").toUpperCase();
     const joiningDate = parseAnyDate(record["DATE OF JOINING"]);
-    if (!cader.includes(sourceRank) || !joiningDate) return [];
-    const serviceYears = calculateServiceYears(joiningDate, reviewDate);
-    const education = String(record.EDUCATION || record.QUALIFICATION || "").trim();
-    if (serviceYears < Number(minimumService || 0)) return [];
-    if (educationFilter !== "ALL" && education !== educationFilter) return [];
+    if (!joiningDate) return [];
+    const eligibility = getPromotionCandidate(record, sourceRank, minimumService, educationFilter, reviewDate);
+    if (!eligibility) return [];
+    const { serviceYears, education } = eligibility;
     const employeeBelt = String(record["BELT NO"] || "").trim().toUpperCase();
     const punishmentCount = (allSheets["Saja_Record"] || []).filter(
       (row) => String(row["BELT NO"] || "").trim().toUpperCase() === employeeBelt
@@ -93,7 +93,7 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
   };
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="promotion-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🎓 पदोन्नति एवं परीक्षा पात्रता समीक्षा</h2>
         <ExportBar title="पदोन्नति पात्रता समीक्षा" rows={exportRows} fileName="Promotion_Eligibility_Review" />

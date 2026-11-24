@@ -1,0 +1,3 @@
+.roster-module { min-width: 0; }
+.roster-module .module-table { min-width: 850px; }
+.roster-module > section { margin-top: 20px; }

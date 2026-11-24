@@ -12,7 +12,7 @@ import {
   isHomePoliceStation,
   normalizeTransferDateInput,
   parsePostingDate
-} from "./transferUtils.js";
+} from "./transferLogic.js";
 
 test("validates DD-MM-YYYY dates and parses dates inside order references", () => {
   assert.equal(normalizeTransferDateInput("7-2-2025"), "07-02-2025");

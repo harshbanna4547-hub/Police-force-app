@@ -20,11 +20,13 @@ export function getRankCode(employeeOrRank) {
   const normalized = cader.trim().toUpperCase();
   if (/\b(DYSP|DSP)\b|DEPUTY SUPERINTENDENT/.test(normalized)) return "DYSP";
   if (/\bASP\b|ADDITIONAL SP|ADDITIONAL SUPERINTENDENT/.test(normalized)) return "ASP";
+  if (/\bRPS\b/.test(normalized)) return "DYSP";
   if (/\bCI\b|\bMTO\b|\bRI\b|INSPECTOR/.test(normalized)) return "CI";
   if (/\bASI\b|ASSISTANT SUB.?INSPECTOR/.test(normalized)) return "ASI";
   if (/\bSI\b|SUB.?INSPECTOR/.test(normalized)) return "SI";
-  if (/\bHC\b|HEAD CONSTABLE/.test(normalized)) return "HC";
-  if (/\bFC\b|\bCT\b|CONSTABLE/.test(normalized)) return "FC";
+  if (/\bM?HC\b|HEAD CONSTABLE/.test(normalized)) return "HC";
+  if (/\bFC\s*\(DR\)|DRIVER|\bDR\b/.test(normalized)) return "FC(DR)";
+  if (/\bM?FC\b|\bCT\b|CONSTABLE/.test(normalized)) return "FC";
   return normalized || "OTHER";
 }
 

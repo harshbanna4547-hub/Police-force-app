@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
-import { parseAnyDate, formatDateDDMMYYYY } from "../../shared/commonFunctions";
+import { appendRowToSheet, parseAnyDate, formatDateDDMMYYYY } from "../../shared/commonFunctions";
 import ExportBar from "../../core/ExportBar";
+import { getAcpServiceStage } from "./acpLogic";
+import "./acp.css";
 
 export default function AcpModule({ records, allSheets = {}, setAllSheets, devToHindi }) {
   const [selectedBelt, setSelectedBelt] = useState("");
@@ -14,10 +16,7 @@ export default function AcpModule({ records, allSheets = {}, setAllSheets, devTo
       const doj = parseAnyDate(rec["DATE OF JOINING"]);
       if (!doj) return;
       const serviceYrs = (today - doj) / (1000 * 60 * 60 * 24 * 365.25);
-      let stage = "";
-      if (serviceYrs >= 27) stage = "27 Year ACP (3rd ACP)";
-      else if (serviceYrs >= 18) stage = "18 Year ACP (2nd ACP)";
-      else if (serviceYrs >= 9) stage = "9 Year ACP (1st ACP)";
+      const stage = getAcpServiceStage(doj, today);
 
       if (stage) {
         const belt = String(rec["BELT NO"] || "").trim().toUpperCase();
@@ -66,16 +65,13 @@ export default function AcpModule({ records, allSheets = {}, setAllSheets, devTo
       ORDER_DATE: orderDate,
       REMARK: `सजा रिकॉर्ड समीक्षा: ${selectedEmployee.punishmentReview}`
     };
-    setAllSheets((previous) => ({
-      ...previous,
-      Posting_History: [approval, ...(previous["Posting_History"] || [])]
-    }));
+    appendRowToSheet(setAllSheets, "Posting_History", approval);
     setOrderNo("");
     setOrderDate("");
   };
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="acp-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>🎖️ 9 / 18 / 27 वर्ष ACP सेवा-अवधि सूची ({acpEligibleList.length})</h2>
         <ExportBar title="ACP सेवा-अवधि सूची" rows={exportRows} fileName="ACP_Eligibility_Review" />

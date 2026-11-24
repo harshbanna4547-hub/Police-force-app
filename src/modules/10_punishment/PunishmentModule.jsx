@@ -1,5 +1,8 @@
 import { useState } from "react";
 import ExportBar from "../../core/ExportBar";
+import { appendRowToSheet } from "../../shared/commonFunctions";
+import { getCleanRecordEmployees } from "./punishmentLogic";
+import "./punishment.css";
 
 export default function PunishmentModule({ records = [], allSheets, setAllSheets, devToHindi }) {
   const [belt, setBelt] = useState("");
@@ -11,10 +14,7 @@ export default function PunishmentModule({ records = [], allSheets, setAllSheets
   const [cleanOnly, setCleanOnly] = useState(false);
 
   const rows = allSheets["Saja_Record"] || [];
-  const cleanRows = records.filter((record) => {
-    const beltKey = String(record["BELT NO"] || "").trim().toUpperCase();
-    return beltKey && !rows.some((row) => String(row["BELT NO"] || "").trim().toUpperCase() === beltKey);
-  });
+  const cleanRows = getCleanRecordEmployees(records, rows);
   const displayedRows = cleanOnly ? cleanRows : rows;
 
   const handleSave = (e) => {
@@ -27,13 +27,13 @@ export default function PunishmentModule({ records = [], allSheets, setAllSheets
       ORDER_DATE: orderDate,
       BRIEF_REASON: reason
     };
-    setAllSheets((prev) => ({ ...prev, Saja_Record: [entry, ...(prev["Saja_Record"] || [])] }));
+    appendRowToSheet(setAllSheets, "Saja_Record", entry);
     alert("सज़ा / विभागीय कार्यवाही रिकॉर्ड सुरक्षित हो गया!");
     setOrderNo(""); setReason("");
   };
 
   return (
-    <div style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
+    <div className="punishment-module" style={{ backgroundColor: "#fff", borderRadius: "12px", padding: "18px", border: "1px solid #E2E8F0" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <h2 style={{ marginTop: 0, color: "#0B1E3D" }}>⚖️ विभागीय सज़ा / दण्ड रिकॉर्ड (17 CC / 16 CC)</h2>
         <ExportBar title={cleanOnly ? "स्वच्छ छवि सूची" : "विभागीय सज़ा रिकॉर्ड"} rows={cleanOnly ? cleanRows.map((record) => ({

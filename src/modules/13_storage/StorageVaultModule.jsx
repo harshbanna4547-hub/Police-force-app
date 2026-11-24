@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
 import { openDriveVaultDB } from "../../utils/vaultStorage";
+import { getStorageItemSummary } from "./storageLogic";
 import "./storage.css";
 
 const MODULE_DEFAULT_FOLDERS = [
@@ -35,7 +36,7 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
     const tx = db.transaction("drive_items", "readonly");
     const req = tx.objectStore("drive_items").getAll();
     req.onsuccess = async () => {
-      const existing = (req.result || []).filter((item) => item.district === activeProfile);
+      const existing = getStorageItemSummary(req.result, activeProfile);
       const rootFolderNames = new Set(
         existing.filter((x) => x.parentId === "ROOT" && x.kind === "FOLDER").map((x) => x.name)
       );
@@ -58,7 +59,7 @@ export default function StorageVaultModule({ activeProfile, records, allSheets, 
           window.dispatchEvent(new Event("police-vault-updated"));
           const reTx = db.transaction("drive_items", "readonly");
           const reReq = reTx.objectStore("drive_items").getAll();
-          reReq.onsuccess = () => setItems((reReq.result || []).filter((item) => item.district === activeProfile));
+          reReq.onsuccess = () => setItems(getStorageItemSummary(reReq.result, activeProfile));
         };
       } else {
         setItems(existing);
