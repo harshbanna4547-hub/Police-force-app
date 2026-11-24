@@ -101,6 +101,38 @@ export function getTransferRank(employee, convertLegacy = (value) => value) {
   return "OTHER";
 }
 
+function normalizeStationName(value, convertLegacy) {
+  return String(convertLegacy(value || "") || "")
+    .normalize("NFC")
+    .trim()
+    .toLocaleLowerCase("hi")
+    .replace(/^(?:पुलिस\s+थाना|थाना|police\s+station|p\.?\s*s\.?)\s*/i, "")
+    .replace(/[.,()/-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function isHomePoliceStation(
+  destination,
+  employee,
+  convertLegacy = (value) => value,
+  chowkiMap = {}
+) {
+  const homeStation = employee?.["HOME PS"]
+    || employee?.HOME_PS
+    || employee?.["POLICE STATION"]
+    || "";
+  const normalizedHome = normalizeStationName(homeStation, convertLegacy);
+  const normalizedDestination = normalizeStationName(destination, convertLegacy);
+  if (!normalizedHome || !normalizedDestination) return false;
+  if (normalizedHome === normalizedDestination) return true;
+
+  return Object.entries(chowkiMap).some(([station, chowkis]) => (
+    normalizeStationName(station, convertLegacy) === normalizedHome &&
+    chowkis.some((chowki) => normalizeStationName(chowki, convertLegacy) === normalizedDestination)
+  ));
+}
+
 export function buildTransferPostingOptions(officeList, chowkiMap) {
   const seen = new Set();
   return [...officeList, ...Object.values(chowkiMap).flat()]
@@ -112,6 +144,25 @@ export function buildTransferPostingOptions(officeList, chowkiMap) {
       return true;
     })
     .sort((left, right) => left.localeCompare(right, "hi"));
+}
+
+export function createTemporaryDutyEntry(employee, action, details) {
+  const employeeFields = Object.fromEntries(
+    Object.entries(employee).filter(([key]) => key !== "_uid")
+  );
+  const placeField = action === "ATTACHMENT" ? "ATTACHMENT_PLACE" : "DEPUTATION_PLACE";
+  return {
+    ...employeeFields,
+    ACTION: action,
+    POSTING_PLACE: details.place,
+    [placeField]: details.place,
+    ORDER_NO: details.orderNo,
+    ORDER_DATE: details.orderDate,
+    ORDER_NO_DATE: `${details.orderNo} / ${details.orderDate}`,
+    REMARK: details.remark,
+    STATUS: "ACTIVE",
+    ISSUED_AT: details.issuedAt
+  };
 }
 
 export function groupTransferOrders(historyRows) {
