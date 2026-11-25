@@ -1,3 +1,234 @@
-.leave-module { min-width: 0; }
-.leave-module .module-table { min-width: 720px; }
-.leave-account-wrap { margin-bottom: 18px; }
+/* ==========================================================================
+   LEAVE & 300 PL ENCASHMENT MODULE STYLES (अवकाश एवं 300 PL मॉड्यूल)
+   ========================================================================== */
+
+.leave-module {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.leave-module .module-table {
+  min-width: 720px;
+}
+
+.leave-account-wrap {
+  margin-bottom: 18px;
+}
+
+/* === 3 SUB-TABS & KPI CARDS === */
+.leave-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+}
+
+.leave-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.leave-kpi-card {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border, #cbd5e1);
+  background: var(--surface, #f8fafc);
+  text-align: center;
+}
+
+.leave-kpi-card strong {
+  display: block;
+  margin-top: 4px;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.45rem;
+  color: #1d63dc;
+}
+
+.leave-kpi-card.is-warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.leave-kpi-card.is-warning strong {
+  color: #b45309;
+}
+
+.leave-kpi-card.is-danger {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.leave-kpi-card.is-danger strong {
+  color: #b91c1c;
+}
+
+/* === RSR WARNINGS & LIVE 6-TYPE BALANCE BAR === */
+.leave-rsr-banner {
+  padding: 11px 14px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  border: 1px solid #f59e0b;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.leave-balance-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-tint, #eff6ff);
+  border: 1px solid #bfdbfe;
+}
+
+.leave-balance-pill {
+  padding: 5px 11px;
+  border-radius: var(--radius-pill, 999px);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.leave-section-card {
+  margin: 12px 0;
+  padding: clamp(12px, 1.3vw, 20px);
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface-raised, #ffffff);
+}
+
+.leave-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.leave-name-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1d63dc;
+  text-decoration: underline;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.leave-cap-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill, 999px);
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.leave-encash-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  align-items: end;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #cbd5e1;
+  background: var(--surface, #f8fafc);
+  margin-bottom: 14px;
+}
+
+.leave-encash-box label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted, #475569);
+}
+
+.leave-encash-box input,
+.leave-encash-box select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  background: var(--surface-raised, #ffffff);
+}
+
+/* === OVERSTAY / ABSENTEE TRACKER PANELS === */
+.leave-tracker-panel {
+  margin-bottom: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #f8fafc);
+}
+
+.leave-tracker-panel.is-overstay {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.leave-tracker-panel.is-overstay h4 {
+  color: #b91c1c;
+}
+
+.leave-tracker-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border, #e2e8f0);
+  margin-top: 8px;
+}
+
+/* === PASSBOOK LEDGER MODAL === */
+.leave-passbook-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1250;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.leave-passbook-modal {
+  width: min(980px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 20px;
+  border-radius: 18px;
+  background: var(--surface-raised, #ffffff);
+  border: 1px solid var(--border, #cbd5e1);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
+}
+
+.leave-credit-cell {
+  color: #15803d;
+  font-weight: 700;
+}
+
+.leave-debit-cell {
+  color: #dc2626;
+  font-weight: 700;
+}

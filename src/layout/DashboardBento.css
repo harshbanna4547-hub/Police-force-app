@@ -39,7 +39,7 @@
   max-width: 100%;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(10px, 1.15vw, 18px);
 }
 
@@ -260,7 +260,7 @@
 /* === DESKTOP / TABLET / MOBILE BENTO GRID BREAKPOINTS === */
 @media (min-width: 1200px) {
   .bento-card-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 

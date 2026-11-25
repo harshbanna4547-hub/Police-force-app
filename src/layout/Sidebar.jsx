@@ -1,10 +1,10 @@
 import { useState } from "react";
 import "./SidebarNav.css";
 
-const DIRECT_SIDEBAR_IDS = new Set(["EMPLOYEES", "STORAGE", "DEV_SERVICES"]);
+const DIRECT_SIDEBAR_IDS = new Set(["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"]);
 
 /**
- * [COMPONENT] Sidebar — फिक्स्ड बायां साइडबार (Home, Employee Management, Storage Vault एवं मॉड्यूल सूची)
+ * [COMPONENT] Sidebar — फिक्स्ड बायां साइडबार (Home, Employee Management, Storage Vault, Reports एवं मॉड्यूल सूची)
  */
 export default function Sidebar({
   className = "",
@@ -22,9 +22,11 @@ export default function Sidebar({
   onOpenDistrictSwitcher
 }) {
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const english = language === "en";
   const employeesModule = modules.find((module) => module.id === "EMPLOYEES" && module.enabled !== false);
   const storageModule = modules.find((module) => module.id === "STORAGE" && module.enabled !== false);
+  const reportsModule = modules.find((module) => module.id === "REPORTS" && module.enabled !== false);
   const visibleModules = modules.filter(
     (module) => module.enabled !== false && !DIRECT_SIDEBAR_IDS.has(module.id)
   );
@@ -94,6 +96,16 @@ export default function Sidebar({
             </button>
           )}
 
+          {reportsModule && (
+            <button
+              type="button"
+              onClick={() => selectView("REPORTS")}
+              className={`sidebar-nav-btn ${activeView === "REPORTS" ? "is-active" : ""}`}
+            >
+              {reportsModule.icon} {english ? reportsModule.title : (reportsModule.hindiTitle || reportsModule.title)}
+            </button>
+          )}
+
           <button
             type="button"
             aria-expanded={modulesOpen}
@@ -151,8 +163,47 @@ export default function Sidebar({
           >
             🛠️ {english ? "Development Services" : "डेवलपमेंट सेवाएँ"}
           </button>
+
+          {/* === ABOUT AUTHOR SECTION (लेखक / विकासकर्ता परिचय) === */}
+          <button
+            type="button"
+            aria-expanded={aboutOpen}
+            aria-controls="sidebar-about-panel"
+            onClick={() => setAboutOpen((open) => !open)}
+            className="sidebar-about-toggle"
+          >
+            <span>ℹ️ {english ? "About Developer" : "परिचय (About)"}</span>
+            <span>{aboutOpen ? "▴" : "▾"}</span>
+          </button>
+
+          {aboutOpen && (
+            <section id="sidebar-about-panel" className="sidebar-about-card" aria-label={english ? "Author details" : "विकासकर्ता विवरण"}>
+              <div className="sidebar-about-name">Harshvardhan Singh Rathore</div>
+              <div className="sidebar-about-row">
+                <strong>{english ? "Role:" : "पद:"}</strong>{" "}
+                {english ? "Govt. Employee — Junior Assistant" : "सरकारी कर्मचारी — कनिष्ठ सहायक"}
+              </div>
+              <div className="sidebar-about-row">
+                <strong>{english ? "Posting:" : "पदस्थापन:"}</strong>{" "}
+                {english ? "SP Office (Force Branch), Chittorgarh" : "पुलिस अधीक्षक कार्यालय (फोर्स शाखा), चित्तौड़गढ़"}
+              </div>
+              <div className="sidebar-about-row">
+                <strong>{english ? "Work Deal:" : "कार्य दायित्व:"}</strong>{" "}
+                {english
+                  ? "Training, Exam Permission, Seniority, Roster & Promotion Exams"
+                  : "प्रशिक्षण, परीक्षा अनुमति, वरिष्ठता, रोस्टर एवं पदोन्नति परीक्षा कार्य"}
+              </div>
+              <div className="sidebar-about-row">
+                <strong>{english ? "Email:" : "ई-मेल:"}</strong>{" "}
+                <a href="mailto:harshbanna4547@gmail.com" className="sidebar-about-mail">
+                  harshbanna4547@gmail.com
+                </a>
+              </div>
+            </section>
+          )}
+
           <footer className="sidebar-footer-caption">
-            {english ? "District Police Portal" : "जिला पुलिस पोर्टल"}
+            Developed by HarshVardhan
           </footer>
         </div>
       </aside>

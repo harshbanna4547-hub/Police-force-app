@@ -175,8 +175,8 @@ export const MODULES_CONFIG = Object.freeze([
   {
     id: "REPORTS",
     title: "Reports",
-    hindiTitle: "रिपोर्ट एवं पदस्थापन",
-    icon: "📑",
+    hindiTitle: "रिपोर्ट्स एवं रिटर्न",
+    icon: "📊",
     color: "#4F46E5",
     description: "पदस्थापन एवं कार्यकाल रिपोर्ट",
     englishDescription: "Posting & Tenure Reports",

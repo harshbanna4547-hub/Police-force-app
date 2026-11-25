@@ -85,7 +85,7 @@ export default function PortalModuleContent({
     },
     BHARTI: { records, setRecords, allSheets, setAllSheets, language },
     TRAINING: { records, allSheets, setAllSheets, activeProfile, language },
-    LEAVE: { records, plLeaveRows, setPlLeaveRows, allSheets, setAllSheets, language },
+    LEAVE: { records, plLeaveRows, setPlLeaveRows, allSheets, setAllSheets, activeProfile, language },
     INCREMENT: { records, allSheets, setAllSheets, language },
     ACP: { records, allSheets, setAllSheets, language },
     PUNISHMENT: { records, allSheets, setAllSheets, language },

@@ -1,11 +1,15 @@
 import "./DashboardBento.css";
 
+const SIDEBAR_EXCLUSIVE_IDS = new Set(["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"]);
+
 /**
  * [COMPONENT] DashboardBento — आधुनिक Bento-Grid मॉड्यूल कार्ड (बिना क्रमांक के 100% द्विभाषी)
  */
 export default function DashboardBento({ modules, onOpenModule, language = "hi" }) {
   const english = language === "en";
-  const enabledModules = modules.filter((module) => module.enabled !== false);
+  const enabledModules = modules.filter(
+    (module) => module.enabled !== false && !SIDEBAR_EXCLUSIVE_IDS.has(module.id)
+  );
 
   return (
     <section aria-label={english ? "All Operational Modules" : "सभी विभागीय मॉड्यूल"} className="bento-dashboard-section">
