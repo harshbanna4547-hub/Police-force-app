@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { isDevlysText } from "./isDevlysText";
 import { devToHindi } from "../utils/devlysConverter";
-import { isDevLysFontAvailable } from "./fontLoader";
+import { isDevLysFontAvailable, loadDevLysFont } from "./fontLoader";
 
 export default function HindiText({ text, style = {} }) {
   const [forceUnicode, setForceUnicode] = useState(() =>
@@ -12,19 +12,23 @@ export default function HindiText({ text, style = {} }) {
 
   useEffect(() => {
     const updateFontMode = () => {
-      setForceUnicode(window.innerWidth <= 1024 || !isDevLysFontAvailable());
+      const isSmallViewport = window.innerWidth <= 1024;
+      setForceUnicode(isSmallViewport || !isDevLysFontAvailable());
+      if (!isSmallViewport) {
+        loadDevLysFont().then((fontAvailable) => {
+          setForceUnicode(window.innerWidth <= 1024 || !fontAvailable);
+        });
+      }
     };
     window.addEventListener("resize", updateFontMode);
-    document.fonts?.addEventListener?.("loadingdone", updateFontMode);
     updateFontMode();
     return () => {
       window.removeEventListener("resize", updateFontMode);
-      document.fonts?.removeEventListener?.("loadingdone", updateFontMode);
     };
   }, []);
 
   if (text === null || text === undefined || text === "") {
-    return <span style={{ fontFamily: "'Times New Roman', Times, serif" }}>-</span>;
+    return <span style={{ fontFamily: "'Noto Sans Devanagari', 'Times New Roman', Times, serif" }}>-</span>;
   }
   const str = String(text);
   const displayText = forceUnicode && isDevlysText(str) ? devToHindi(str) : str;
@@ -51,7 +55,7 @@ export default function HindiText({ text, style = {} }) {
           <span
             key={i}
             style={{
-              fontFamily: "'Times New Roman', Times, serif"
+              fontFamily: "'Noto Sans Devanagari', 'Times New Roman', Times, serif"
             }}
           >
             {part}

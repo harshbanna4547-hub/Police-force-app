@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import ExportBar from "../../core/ExportBar";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
+import HindiText from "../../core/HindiText";
 import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import { CO_PS_MAP, OFFICE_SECTIONS } from "../../data/officeUnits";
 
@@ -73,7 +74,7 @@ function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveE
                         if (action === "SERVICE_SLIP") openEmployeeServiceSlip(selected);
                       }}
                     >
-                      <td>{rank}</td><td>—</td><td>—</td><td>{employee.NAME} ({employee["BELT NO"] || "-"})</td>
+                      <td>{rank}</td><td>—</td><td>—</td><td><HindiText text={employee.NAME} /> ({employee["BELT NO"] || "-"})</td>
                     </EmployeeActionRow>
                   ))
                 ];

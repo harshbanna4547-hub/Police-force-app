@@ -1,7 +1,7 @@
 /* src/index.css - Mobile, Tablet & PC Responsive Styling */
 @font-face {
   font-family: "DevLys 010";
-  src: url("/fonts/DevLys010.ttf") format("truetype");
+  src: local("DevLys 010"), url("/fonts/DevLys010.ttf") format("truetype");
   font-style: normal;
   font-weight: normal;
   font-display: swap;
@@ -134,6 +134,12 @@ table {
   flex-wrap: wrap;
   gap: 8px;
   grid-column: 1 / -1;
+}
+
+@media (min-width: 1025px) {
+  .employee-detail-row {
+    display: none;
+  }
 }
 
 .portal-stat-cards {

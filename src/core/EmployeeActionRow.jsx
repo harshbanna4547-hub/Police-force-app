@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
+import HindiText from "./HindiText";
 
 const ACTIONS = [
   { id: "UPDATE", label: "✏️ Update Details" },
@@ -17,6 +18,12 @@ const RESPONSIVE_DETAIL_FIELDS = [
   ["DOJ", "DATE OF JOINING"],
   ["DOC", "DOC"]
 ];
+
+function displayDetailValue(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  if (value instanceof Date) return value.toLocaleDateString();
+  return String(value);
+}
 
 export default function EmployeeActionRow({
   employee,
@@ -40,7 +47,9 @@ export default function EmployeeActionRow({
             type="button"
             className="employee-name-trigger"
             aria-expanded={detailsOpen}
+            style={{ border: 0, padding: 0, background: "transparent", color: "inherit", font: "inherit", fontWeight: "inherit", textAlign: "inherit", cursor: "inherit" }}
             onClick={(event) => {
+              if (window.innerWidth > 1024) return;
               event.preventDefault();
               event.stopPropagation();
               setDetailsOpen((open) => !open);
@@ -77,12 +86,16 @@ export default function EmployeeActionRow({
               {RESPONSIVE_DETAIL_FIELDS.map(([label, key]) => (
                 <div key={key}>
                   <strong>{label}</strong>
-                  <div>{employee?.[key] || "-"}</div>
+                  <div>
+                    {key === "POSTING"
+                      ? <HindiText text={displayDetailValue(employee?.[key])} />
+                      : displayDetailValue(employee?.[key])}
+                  </div>
                 </div>
               ))}
               <div>
                 <strong>Mobile Number</strong>
-                <div>{mobileNo || "-"}</div>
+                <div>{displayDetailValue(mobileNo)}</div>
               </div>
               <div className="employee-detail-actions">
                 {phoneNumber && <a href={`tel:${phoneNumber}`}>📞 Call</a>}
