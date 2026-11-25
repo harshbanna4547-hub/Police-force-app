@@ -122,6 +122,7 @@ export default function App() {
           {activeView === "HOME" ? (
             <DashboardBento
               modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"].includes(module.id))}
+              portalData={portalData}
               onOpenModule={setActiveView}
               language={language}
             />
