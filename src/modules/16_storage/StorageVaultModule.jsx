@@ -39,6 +39,19 @@ import "./storage.css";
 const WALLPAPER_KEY = "win11_desktop_wallpaper";
 const INSTALLED_APPS_KEY = "win11_installed_apps";
 const PINNED_APPS_KEY = "win11_pinned_apps";
+const DESKX_WIDGET_KEY = "win11_deskx_widget";
+const DESKX_SPEED_KEY = "win11_deskx_speed";
+const DESKX_BLUR_KEY = "win11_deskx_blur";
+
+function readStoredText(key, fallback) {
+  try {
+    const val = localStorage.getItem(key);
+    if (val) return val;
+  } catch {
+    // ignore storage errors
+  }
+  return fallback;
+}
 
 function readStoredList(key, fallback) {
   try {
@@ -123,8 +136,11 @@ export default function StorageVaultModule({
   const [navIndex, setNavIndex] = useState(0);
   const currentFolderId = navHistory[navIndex] || "ROOT";
 
-  // Personalization, Start Menu, Store & Draggable App Windows
+  // Personalization, DeskX Engine, Start Menu, Store & Draggable App Windows
   const [wallpaper, setWallpaper] = useState(readStoredWallpaper);
+  const [deskxWidgetMode, setDeskxWidgetMode] = useState(() => readStoredText(DESKX_WIDGET_KEY, "clock-weather"));
+  const [deskxSpeed, setDeskxSpeed] = useState(() => readStoredText(DESKX_SPEED_KEY, "balanced"));
+  const [deskxBlur, setDeskxBlur] = useState(() => readStoredText(DESKX_BLUR_KEY, "1") !== "0");
   const [installedApps, setInstalledApps] = useState(() =>
     readStoredList(INSTALLED_APPS_KEY, APP_STORE_CATALOG.filter((a) => a.defaultInstalled).map((a) => a.id))
   );
@@ -146,6 +162,8 @@ export default function StorageVaultModule({
 
   const fileInputRef = useRef(null);
   const contextMenuRef = useRef(null);
+  const liveBgCanvasRef = useRef(null);
+  const analogCanvasRef = useRef(null);
 
   const changeWallpaper = (wpId) => {
     setWallpaper(wpId);
@@ -154,6 +172,36 @@ export default function StorageVaultModule({
     } catch {
       // ignore
     }
+  };
+
+  const updateDeskxWidgetMode = (mode) => {
+    setDeskxWidgetMode(mode);
+    try {
+      localStorage.setItem(DESKX_WIDGET_KEY, mode);
+    } catch {
+      // ignore
+    }
+  };
+
+  const updateDeskxSpeed = (speed) => {
+    setDeskxSpeed(speed);
+    try {
+      localStorage.setItem(DESKX_SPEED_KEY, speed);
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleDeskxBlur = () => {
+    setDeskxBlur((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(DESKX_BLUR_KEY, next ? "1" : "0");
+      } catch {
+        // ignore
+      }
+      return next;
+    });
   };
 
   const toggleInstallApp = (appId) => {
@@ -194,6 +242,7 @@ export default function StorageVaultModule({
     const metaMap = {
       "excel-pro": { title: item?.name || "MS Excel Pro", icon: "📊", width: "wide" },
       "word-pro": { title: item?.name || "MS Word Pro", icon: "📝", width: "wide" },
+      "deskx-engine": { title: "DeskX Wallpaper Studio", icon: "⚡", width: "wide" },
       "photo-viewer": { title: item?.name || "Photo Viewer", icon: "🖼️", width: "wide" },
       "media-player": { title: item?.name || "Media Player", icon: "🎬", width: "wide" },
       "vscode-lite": { title: item?.name || "VS Code Lite", icon: "💻", width: "wide" },
@@ -310,6 +359,189 @@ export default function StorageVaultModule({
       window.removeEventListener("police-vault-cloud-updated", refreshItems);
     };
   }, [loadAllItems]);
+
+  // DeskX Live Canvas Wallpaper Renderer (Aurora Silk, Cyber Mesh, Cosmos Starfield)
+  useEffect(() => {
+    const activeWp = WALLPAPER_PRESETS.find((w) => w.id === wallpaper);
+    const canvas = liveBgCanvasRef.current;
+    if (!activeWp?.isLive || !canvas) return undefined;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+
+    const speedFactor = deskxSpeed === "calm" ? 0.55 : deskxSpeed === "vivid" ? 1.65 : 1.0;
+    const nodes = Array.from({ length: 34 }, (_, idx) => ({
+      x: ((idx * 73) % 100) / 100,
+      y: ((idx * 41) % 100) / 100,
+      vx: ((idx % 2 === 0 ? 1 : -1) * (0.00022 + (idx % 5) * 0.00008)),
+      vy: ((idx % 3 === 0 ? 1 : -1) * (0.00018 + (idx % 4) * 0.00007)),
+      r: 1.2 + (idx % 4) * 0.6
+    }));
+    const stars = Array.from({ length: 90 }, (_, idx) => ({
+      x: ((idx * 97) % 1000) / 1000,
+      y: ((idx * 53) % 1000) / 1000,
+      z: 0.35 + (idx % 5) * 0.22,
+      twinkle: idx * 0.7
+    }));
+
+    const syncSize = () => {
+      const w = canvas.clientWidth || 960;
+      const h = canvas.clientHeight || 540;
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    };
+    syncSize();
+    window.addEventListener("resize", syncSize);
+
+    let rafId = 0;
+    let tick = 0;
+
+    const drawFrame = () => {
+      syncSize();
+      const { width: w, height: h } = canvas;
+      ctx.clearRect(0, 0, w, h);
+      tick += 0.014 * speedFactor;
+
+      if (wallpaper === "deskx-aurora") {
+        // Flowing Cyan & Magenta DeskX Ribbons
+        for (let band = 0; band < 3; band += 1) {
+          ctx.beginPath();
+          const baseY = h * (0.34 + band * 0.16);
+          ctx.moveTo(0, h);
+          for (let x = 0; x <= w; x += 28) {
+            const wave =
+              Math.sin(x * 0.0055 + tick + band * 1.4) * 46 +
+              Math.cos(x * 0.003 - tick * 0.7 + band) * 28;
+            ctx.lineTo(x, baseY + wave);
+          }
+          ctx.lineTo(w, h);
+          ctx.closePath();
+          const grad = ctx.createLinearGradient(0, baseY - 80, w, h);
+          if (band === 0) {
+            grad.addColorStop(0, "rgba(34, 211, 238, 0.28)");
+            grad.addColorStop(0.5, "rgba(59, 130, 246, 0.22)");
+            grad.addColorStop(1, "rgba(192, 132, 252, 0.24)");
+          } else if (band === 1) {
+            grad.addColorStop(0, "rgba(168, 85, 247, 0.20)");
+            grad.addColorStop(1, "rgba(56, 189, 248, 0.24)");
+          } else {
+            grad.addColorStop(0, "rgba(14, 165, 233, 0.16)");
+            grad.addColorStop(1, "rgba(217, 70, 239, 0.18)");
+          }
+          ctx.fillStyle = grad;
+          ctx.fill();
+        }
+      } else if (wallpaper === "deskx-matrix") {
+        // DeskX Interactive Cyber Mesh Constellation
+        nodes.forEach((n) => {
+          n.x = (n.x + n.vx * speedFactor + 1) % 1;
+          n.y = (n.y + n.vy * speedFactor + 1) % 1;
+        });
+        for (let i = 0; i < nodes.length; i += 1) {
+          const ax = nodes[i].x * w;
+          const ay = nodes[i].y * h;
+          for (let j = i + 1; j < nodes.length; j += 1) {
+            const bx = nodes[j].x * w;
+            const by = nodes[j].y * h;
+            const dist = Math.hypot(ax - bx, ay - by);
+            if (dist < 145) {
+              ctx.strokeStyle = `rgba(56, 189, 248, ${(1 - dist / 145) * 0.34})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(ax, ay);
+              ctx.lineTo(bx, by);
+              ctx.stroke();
+            }
+          }
+          ctx.fillStyle = i % 3 === 0 ? "rgba(217, 70, 239, 0.85)" : "rgba(56, 189, 248, 0.9)";
+          ctx.beginPath();
+          ctx.arc(ax, ay, nodes[i].r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        // DeskX Cosmos Starfield
+        stars.forEach((s) => {
+          s.x = (s.x + 0.00025 * s.z * speedFactor) % 1;
+          const sx = s.x * w;
+          const sy = s.y * h;
+          const alpha = 0.4 + 0.55 * Math.abs(Math.sin(tick * 1.4 + s.twinkle));
+          ctx.fillStyle = `rgba(224, 242, 254, ${alpha.toFixed(2)})`;
+          ctx.beginPath();
+          ctx.arc(sx, sy, 0.9 + s.z * 1.1, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      rafId = window.requestAnimationFrame(drawFrame);
+    };
+
+    rafId = window.requestAnimationFrame(drawFrame);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", syncSize);
+    };
+  }, [wallpaper, deskxSpeed]);
+
+  // DeskX Analog Minimalist Clock Canvas Renderer (Zero inline styles)
+  useEffect(() => {
+    if (deskxWidgetMode !== "analog-minimalist" || !analogCanvasRef.current) return undefined;
+    const canvas = analogCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+
+    const drawClock = () => {
+      const size = canvas.width;
+      const r = size / 2;
+      ctx.clearRect(0, 0, size, size);
+
+      // Dial ring
+      ctx.strokeStyle = "rgba(186, 230, 253, 0.72)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(r, r, r - 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 12 hour ticks
+      for (let i = 0; i < 12; i += 1) {
+        const ang = (i * Math.PI) / 6;
+        ctx.strokeStyle = i % 3 === 0 ? "#38bdf8" : "rgba(241, 245, 249, 0.48)";
+        ctx.lineWidth = i % 3 === 0 ? 2 : 1;
+        ctx.beginPath();
+        ctx.moveTo(r + Math.cos(ang) * (r - 11), r + Math.sin(ang) * (r - 11));
+        ctx.lineTo(r + Math.cos(ang) * (r - 6), r + Math.sin(ang) * (r - 6));
+        ctx.stroke();
+      }
+
+      const now = new Date();
+      const sec = now.getSeconds();
+      const min = now.getMinutes() + sec / 60;
+      const hr = (now.getHours() % 12) + min / 60;
+
+      const drawHand = (angleRad, len, width, color) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(r, r);
+        ctx.lineTo(r + Math.cos(angleRad - Math.PI / 2) * len, r + Math.sin(angleRad - Math.PI / 2) * len);
+        ctx.stroke();
+      };
+
+      drawHand((hr * Math.PI) / 6, r * 0.48, 3, "#ffffff");
+      drawHand((min * Math.PI) / 30, r * 0.68, 2, "#bae6fd");
+      drawHand((sec * Math.PI) / 30, r * 0.76, 1.3, "#f472b6");
+
+      ctx.fillStyle = "#38bdf8";
+      ctx.beginPath();
+      ctx.arc(r, r, 3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    drawClock();
+    const timer = window.setInterval(drawClock, 1000);
+    return () => window.clearInterval(timer);
+  }, [deskxWidgetMode]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClockLabel(formatIstClockDate()), 15000);
