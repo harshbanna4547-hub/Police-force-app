@@ -1,80 +1,469 @@
+/* ==========================================================================
+   TRAINING MODULE STYLES (प्रशिक्षण एवं नामांकन मॉड्यूल स्टाइल)
+   Zero inline styles; responsive layout with DevLys 010 & Times New Roman support.
+   ========================================================================== */
+
 .training-module {
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background-color: var(--surface-raised, #ffffff);
   border-radius: var(--radius-card, 22px);
-  padding: 22px;
+  padding: clamp(12px, 1.4vw, 24px);
   border: 1px solid var(--border, #e2e8f0);
   box-shadow: var(--shadow-card);
 }
-.training-match-pills {
+
+/* === PRIMARY 2-TAB BAR (मुख्य 2 टैब: Training एवं Nomination) === */
+.training-primary-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--border, #e2e8f0);
 }
-.training-match-pill {
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+
+.training-primary-tab {
+  padding: clamp(9px, 0.85vw, 12px) clamp(14px, 1.4vw, 22px);
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  background: var(--surface-muted, #f1f5f9);
+  color: var(--text-strong, #0b1e3d);
+  font-family: var(--font-ui);
+  font-size: clamp(12px, 0.95vw, 15px);
+  font-weight: 800;
   cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
-.training-tnr-cell {
-  font-family: 'Times New Roman', Times, serif;
+
+.training-primary-tab.is-active {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(30, 58, 138, 0.25);
 }
-.training-section-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.training-module .module-table { min-width: 780px; }
-.training-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
-.training-tabs button,
-.training-module button { border: 1px solid #CBD5E1; border-radius: 7px; padding: 7px 10px; background: #F8FAFC; color: #1E293B; cursor: pointer; }
-.training-tabs button[aria-pressed="true"] { border-color: #1D63DC; background: #1D63DC; color: #fff; font-weight: 700; }
-.training-module section { margin: 12px 0; padding: 14px; border: 1px solid #E2E8F0; border-radius: 10px; }
-.training-employee-data { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
-.training-employee-data > div { padding: 8px; border-radius: 7px; background: #F8FAFC; }
-.training-employee-data dt { color: #64748B; font-size: .8rem; }
-.training-employee-data dd { margin: 3px 0 0; font-weight: 700; }
-.training-generator-form,
-.training-add-form,
-.training-heading,
-.training-status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0; }
+
+/* === 5 SUB-TAB PILLS (5 सब-टैब पिल्स) === */
+.training-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.training-subtab-btn {
+  padding: 7px 14px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  background: var(--surface, #f8fafc);
+  color: var(--text, #1e293b);
+  font-family: var(--font-ui);
+  font-size: clamp(11px, 0.85vw, 14px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.training-subtab-btn.is-active {
+  background-color: #1d63dc;
+  border-color: #1d63dc;
+  color: #ffffff;
+}
+
+/* === MODULE CARDS & SECTIONS === */
+.training-section {
+  margin: 12px 0;
+  padding: clamp(12px, 1.3vw, 20px);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--surface-raised, #ffffff);
+}
+
+.training-section-title {
+  margin: 0 0 12px;
+  color: var(--text-strong, #0b1e3d);
+  font-family: var(--font-ui);
+  font-size: clamp(14px, 1.15vw, 18px);
+  font-weight: 800;
+}
+
+.training-section-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* === FILTER ROW, FORMS & SEARCH PILLS === */
+.training-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 10px 0 14px;
+}
+
+.training-filter-row label,
+.training-women-form label,
+.training-generator-form label {
+  display: grid;
+  gap: 4px;
+  color: var(--muted, #475569);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.training-filter-row select,
+.training-filter-row input,
 .training-generator-form input,
 .training-generator-form select,
 .training-add-form input,
 .training-status-row input,
-.training-women-form input { min-width: 150px; padding: 8px; }
-.training-clash { flex-basis: 100%; color: #B91C1C; }
-.training-filter-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 12px 0; }
-.training-filter-row label,
-.training-women-form label { display: grid; gap: 4px; color: #475569; font-size: .85rem; }
-.training-filter-row select,
-.training-filter-row input { padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; }
-.training-table-scroll { width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
-.training-data-table { width: 100%; min-width: 950px; border-collapse: collapse; }
+.training-women-form input {
+  min-width: 150px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: 8px;
+  background: var(--surface-raised, #ffffff);
+  color: var(--text, #0f172a);
+}
+
+.training-search-box {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.training-search-box input {
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: 10px;
+  max-width: 440px;
+}
+
+.training-match-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 12px;
+}
+
+.training-match-pill {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  background: var(--surface, #f8fafc);
+  color: var(--text, #0f172a);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.training-institute-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.training-institute-chip {
+  padding: 5px 11px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.training-institute-chip.is-active {
+  background: #1d63dc;
+  border-color: #1d63dc;
+  color: #ffffff;
+}
+
+/* === NOMINATION FORMS & WARNINGS === */
+.training-employee-data {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.training-employee-data > div {
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--surface, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.training-employee-data dt {
+  color: var(--muted, #64748b);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.training-employee-data dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.training-generator-form,
+.training-add-form,
+.training-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.training-women-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  align-items: end;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface, #f8fafc);
+  border: 1px solid var(--border, #e2e8f0);
+}
+
+.training-women-form > input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.training-clash {
+  flex-basis: 100%;
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.training-btn-primary {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #1d63dc;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.training-btn-success {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #16a34a;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.training-btn-secondary {
+  padding: 8px 13px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: 9px;
+  background: var(--surface-raised, #ffffff);
+  color: var(--text, #0f172a);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.training-btn-danger-soft {
+  padding: 6px 12px;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* === SUMMARY CARDS & DATA TABLES === */
+.training-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  width: 100%;
+  margin: 8px 0 14px;
+}
+
+.training-summary-cards article {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 14px;
+  background: var(--surface, #f8fafc);
+  text-align: center;
+}
+
+.training-summary-cards strong {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.55rem;
+  color: #1d63dc;
+}
+
+.training-table-scroll {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+.training-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(11px, 0.85vw, 14px);
+}
+
 .training-data-table th,
-.training-data-table td { border: 1px solid #CBD5E1; padding: 7px; text-align: left; vertical-align: middle; }
-.training-data-table th { background: #F1F5F9; white-space: nowrap; }
-.training-data-table input { width: 100%; min-width: 85px; box-sizing: border-box; padding: 6px; }
-.training-name-button { padding: 0 !important; color: #1D63DC !important; background: transparent !important; border: 0 !important; text-decoration: underline; }
-.training-pagination { display: flex; justify-content: center; align-items: center; gap: 14px; padding: 12px; }
-.training-pagination button:disabled { opacity: .5; cursor: not-allowed; }
-.training-summary-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; width: 100%; }
-.training-summary-cards article { display: grid; gap: 5px; padding: 12px; border: 1px solid #CBD5E1; border-radius: 9px; background: #F8FAFC; }
-.training-summary-cards strong { font-size: 1.4rem; }
-.training-women-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); align-items: end; gap: 10px; margin: 12px 0; }
-.training-women-form > input { box-sizing: border-box; width: 100%; }
-.training-modal-backdrop { position: fixed; inset: 0; z-index: 1200; display: grid; place-items: center; padding: 20px; background: rgb(15 23 42 / 55%); }
-.training-detail-modal { width: min(1100px, 100%); max-height: 90vh; overflow: auto; padding: 18px; border: 1px solid #CBD5E1; border-radius: 12px; background: #fff; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
-.training-detail-modal h4 { margin: 16px 0 8px; }
-.training-detail-modal .training-add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); align-items: end; }
-.training-detail-modal .training-add-form input { box-sizing: border-box; width: 100%; }
+.training-data-table td {
+  border: 1px solid var(--border, #cbd5e1);
+  padding: clamp(6px, 0.65vw, 10px) clamp(6px, 0.7vw, 10px);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.training-data-table th {
+  background: #0f172a;
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.training-data-table input,
+.training-data-table select {
+  width: 100%;
+  min-width: 82px;
+  box-sizing: border-box;
+  padding: 6px;
+}
+
+.training-tnr-cell {
+  font-family: "Times New Roman", Times, serif;
+  text-align: center !important;
+}
+
+.training-name-button {
+  padding: 0;
+  color: #1d63dc;
+  background: transparent;
+  border: 0;
+  text-decoration: underline;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.training-drilldown-card {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #bfdbfe;
+  background: var(--surface-tint, #eff6ff);
+}
+
+.training-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.training-nomination-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: var(--surface, #f8fafc);
+}
+
+/* === PAGINATION & DETAIL MODAL === */
+.training-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+}
+
+.training-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.training-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 55%);
+}
+
+.training-detail-modal {
+  width: min(1100px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 20px;
+  border: 1px solid var(--border, #cbd5e1);
+  border-radius: 18px;
+  background: var(--surface-raised, #ffffff);
+  box-shadow: 0 20px 60px rgb(15 23 42 / 25%);
+}
+
+.training-detail-modal h4 {
+  margin: 16px 0 8px;
+}
+
+.training-detail-modal .training-add-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+}
+
+.training-detail-modal .training-add-form input {
+  box-sizing: border-box;
+  width: 100%;
+}
+
 @media print {
-  .training-tabs,
+  .training-primary-tabs,
+  .training-subtabs,
   .training-generator-form,
   .training-add-form,
   .training-filter-row,
   .training-pagination,
-  .training-modal-backdrop button { display: none !important; }
-  .training-module { border: 0 !important; padding: 0 !important; }
-  .training-table-scroll { overflow: visible; }
-  .training-data-table { min-width: 0; }
+  .training-action-bar,
+  .training-modal-backdrop button {
+    display: none !important;
+  }
+
+  .training-module {
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .training-table-scroll {
+    overflow: visible;
+  }
 }
