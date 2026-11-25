@@ -1,0 +1,66 @@
+.posting-module {
+  background: var(--surface-raised, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.posting-tab-bar,
+.posting-section-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.posting-tab-btn,
+.posting-pill-btn {
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #1e293b;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.posting-tab-btn.is-active {
+  background: #0b1e3d;
+  color: #ffd700;
+  border-color: #0b1e3d;
+}
+
+.posting-pill-btn.is-active {
+  background: #1d63dc;
+  color: #fff;
+  border-color: #1d63dc;
+}
+
+.posting-summary-section {
+  margin-bottom: 18px;
+}
+
+.posting-summary-heading {
+  margin: 0 0 10px;
+  color: var(--text, #0b1e3d);
+  font-size: 1.05rem;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  padding-bottom: 6px;
+}
+
+.posting-unit-card {
+  margin: 8px 0;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--surface-raised, #fff);
+}
+
+.posting-footer-summary {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #0b1e3d;
+  font-weight: bold;
+}

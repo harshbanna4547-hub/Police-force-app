@@ -1,0 +1,12 @@
+.employee-management {
+  background: var(--surface-raised, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.employee-management-hint {
+  margin: 0 0 12px;
+  color: var(--muted, #64748b);
+  font-size: 0.9rem;
+}

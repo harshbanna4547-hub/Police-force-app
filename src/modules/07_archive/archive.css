@@ -1,0 +1,62 @@
+.employee-archive {
+  background: var(--surface-raised, #fff);
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 14px;
+  padding: 18px;
+}
+
+.archive-entry-panel {
+  padding: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  margin: 12px 0;
+}
+
+.archive-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.archive-pill-btn {
+  padding: 7px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.archive-pill-btn.is-selected {
+  background: #dbeafe;
+  border-color: #2563eb;
+}
+
+.archive-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.archive-action-row select,
+.archive-action-row input {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.archive-action-row button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #0b1e3d;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}

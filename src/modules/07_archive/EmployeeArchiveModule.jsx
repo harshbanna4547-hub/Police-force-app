@@ -1,42 +1,58 @@
 import { useMemo, useState } from "react";
-import ExportBar from "../../core/ExportBar";
+import HindiText from "../../core/HindiText";
+import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
+import { getBeltNo } from "../../shared/commonFunctions";
+import {
+  ARCHIVE_TYPES,
+  filterArchiveCandidates,
+  filterArchivedRows,
+  formatArchiveDay
+} from "./archiveLogic";
+import "./archive.css";
 
-const ARCHIVE_TYPES = ["Retirement", "Relieve / Other District Transfer", "Death", "Deputation"];
-
-function formatDay(value) {
-  if (!value) return "-";
-  const text = String(value);
-  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return match ? `${match[3]}-${match[2]}-${match[1]}` : text.split(/[T ]/)[0];
-}
-
-export default function EmployeeArchiveModule({ records = [], allSheets = {}, onArchiveEmployee }) {
+export default function EmployeeArchiveModule({
+  records = [],
+  allSheets = {},
+  onArchiveEmployee,
+  language = "hi"
+}) {
   const [query, setQuery] = useState("");
+  const [gender, setGender] = useState("ALL");
   const [selectedUid, setSelectedUid] = useState("");
   const [eventType, setEventType] = useState(ARCHIVE_TYPES[0]);
   const [eventDate, setEventDate] = useState(new Date().toISOString().slice(0, 10));
-  const archiveRows = allSheets.Employee_Archive || [];
-  const filtered = useMemo(() => {
-    const q = query.trim().toLocaleLowerCase();
-    return records.filter((employee) => !q || [
-      employee.NAME,
-      employee["BELT NO"],
-      employee.CADER
-    ].some((value) => String(value || "").toLocaleLowerCase().includes(q))).slice(0, 25);
-  }, [records, query]);
-  const years = [...new Set(archiveRows.map((row) => String(row.YEAR || row.EVENT_DATE || "").slice(0, 4)).filter((year) => /^\d{4}$/.test(year)))].sort().reverse();
   const [year, setYear] = useState("");
-  const visibleRows = archiveRows.filter((row) => !year || String(row.YEAR || row.EVENT_DATE || "").slice(0, 4) === year);
-  const grouped = visibleRows.reduce((groups, row) => {
-    const key = String(row.YEAR || row.EVENT_DATE || "अज्ञात").slice(0, 4);
+  const english = language === "en";
+
+  const archiveRows = useMemo(() => allSheets.Employee_Archive || [], [allSheets]);
+  const filteredCandidates = useMemo(
+    () => filterArchiveCandidates(records, query, gender),
+    [records, query, gender]
+  );
+
+  const years = useMemo(
+    () => [...new Set(archiveRows.map((row) => String(row.YEAR || row.EVENT_DATE || "").slice(0, 4)).filter((y) => /^\d{4}$/.test(y)))].sort().reverse(),
+    [archiveRows]
+  );
+
+  const visibleRows = useMemo(
+    () => filterArchivedRows(archiveRows, year, query, gender),
+    [archiveRows, year, query, gender]
+  );
+
+  const grouped = useMemo(() => visibleRows.reduce((groups, row) => {
+    const key = String(row.YEAR || row.EVENT_DATE || (english ? "Unknown" : "अज्ञात")).slice(0, 4);
     (groups[key] ||= []).push(row);
     return groups;
-  }, {});
+  }, {}), [visibleRows, english]);
+
   const selectedEmployee = records.find((employee) => employee._uid === selectedUid);
 
   const archiveSelected = () => {
     if (!selectedEmployee) return;
-    if (!window.confirm(`${selectedEmployee.NAME || "चयनित कर्मचारी"} को ${eventType} अभिलेख में दर्ज करें?`)) return;
+    if (!window.confirm(english
+      ? `Archive selected employee under ${eventType}?`
+      : `चयनित कर्मचारी को ${eventType} अभिलेख में दर्ज करें?`)) return;
     const saved = onArchiveEmployee?.(selectedEmployee, eventType, eventDate);
     if (saved !== false) {
       setSelectedUid("");
@@ -44,53 +60,116 @@ export default function EmployeeArchiveModule({ records = [], allSheets = {}, on
     }
   };
 
+  const exportRows = useMemo(() => visibleRows.map((row, index) => ({
+    "क्र.सं.": index + 1,
+    NAME: row.NAME || "",
+    "FATHER NAME": row["FATHER NAME"] || "",
+    POST: row.CADER || "",
+    "BELT NO": getBeltNo(row),
+    TYPE: row.EVENT_TYPE || row.REASON || "",
+    DATE: formatArchiveDay(row.EVENT_DATE),
+    POSTING: row.POSTING || ""
+  })), [visibleRows]);
+
+  const yearFilterControl = (
+    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, fontSize: "0.85rem" }}>
+      <span>{english ? "Year" : "वर्ष"}</span>
+      <select value={year} onChange={(event) => setYear(event.target.value)} style={{ minHeight: "38px", padding: "7px 10px", border: "1px solid #cbd5e1", borderRadius: "7px" }}>
+        <option value="">{english ? "All Years" : "सभी वर्ष"}</option>
+        {years.map((item) => <option key={item} value={item}>{item}</option>)}
+      </select>
+    </label>
+  );
+
   return (
-    <div className="employee-archive" style={{ background: "#fff", border: "1px solid #E2E8F0", borderRadius: "14px", padding: "18px" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
-        <h2>Relieve / Retire / Death / Deputation Archive</h2>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <label>वर्ष
-            <select value={year} onChange={(event) => setYear(event.target.value)}>
-              <option value="">सभी वर्ष</option>
-              {years.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </label>
-          <ExportBar title="Employee Archive" rows={visibleRows} fileName="Employee_Archive" />
+    <div className="employee-archive">
+      <ModuleHeaderToolbar
+        title={english ? "🗂️ Relieve / Retire / Death / Deputation Archive" : "🗂️ सेवानिवृत्ति / रिलीव / मृत्यु / प्रतिनियुक्ति अभिलेख"}
+        search={query}
+        onSearchChange={(val) => {
+          setQuery(val);
+          setSelectedUid("");
+        }}
+        gender={gender}
+        onGenderChange={setGender}
+        rows={exportRows}
+        fileName="Employee_Archive"
+        language={language}
+        extraActions={yearFilterControl}
+      />
+
+      <section className="archive-entry-panel">
+        <h3 style={{ marginTop: 0 }}>
+          {english ? "Search Employee & Record Archive Entry" : "कर्मचारी खोजें और अभिलेख दर्ज करें"}
+        </h3>
+        <div className="archive-pill-list">
+          {filteredCandidates.slice(0, 8).map((employee) => (
+            <button
+              type="button"
+              key={employee._uid}
+              onClick={() => setSelectedUid(employee._uid)}
+              className={`archive-pill-btn ${selectedUid === employee._uid ? "is-selected" : ""}`}
+            >
+              <HindiText text={employee.NAME} />
+              <span style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+                · {employee.CADER || "-"} · {getBeltNo(employee)}
+              </span>
+            </button>
+          ))}
         </div>
-      </header>
-      <section style={{ padding: "14px", background: "#F8FAFC", borderRadius: "10px", margin: "12px 0" }}>
-        <h3>कर्मचारी खोजें और अभिलेख दर्ज करें</h3>
-        <input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setSelectedUid(""); }} placeholder="नाम, बेल्ट नं. या पद खोजें" style={{ width: "100%", padding: "9px" }} />
-        {filtered.slice(0, 8).map((employee) => (
-          <button type="button" key={employee._uid} onClick={() => setSelectedUid(employee._uid)} style={{ margin: "6px", padding: "7px 10px", border: "1px solid #CBD5E1", borderRadius: "7px", background: selectedUid === employee._uid ? "#DBEAFE" : "#fff", cursor: "pointer" }}>
-            {employee.NAME} · {employee.CADER} · {employee["BELT NO"] || "-"}
-          </button>
-        ))}
         {selectedEmployee && (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px" }}>
-            <select value={eventType} onChange={(event) => setEventType(event.target.value)}>{ARCHIVE_TYPES.map((type) => <option key={type}>{type}</option>)}</select>
+          <div className="archive-action-row">
+            <select value={eventType} onChange={(event) => setEventType(event.target.value)}>
+              {ARCHIVE_TYPES.map((type) => <option key={type}>{type}</option>)}
+            </select>
             <input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} />
-            <button type="button" onClick={archiveSelected}> दर्ज करें</button>
+            <button type="button" onClick={archiveSelected}>
+              ✅ {english ? "Record Archive" : "दर्ज करें"}
+            </button>
           </div>
         )}
       </section>
+
       {Object.entries(grouped).map(([groupYear, rows]) => (
         <section key={groupYear} style={{ marginTop: "16px" }}>
           <h3>{groupYear}</h3>
           <div className="table-responsive-box" style={{ overflowX: "auto" }}>
-            <table>
-              <thead><tr>{["Name", "Father Name", "Post", "Belt No.", "Type", "Date", "Posting"].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead>
-              <tbody>{rows.map((row, index) => (
-                <tr key={row._uid || `${row.NAME}-${index}`}>
-                  <td>{row.NAME}</td><td>{row["FATHER NAME"] || "-"}</td><td>{row.CADER || "-"}</td><td>{row["BELT NO"] || "-"}</td>
-                  <td>{row.EVENT_TYPE || row.REASON || "-"}</td><td>{formatDay(row.EVENT_DATE)}</td><td>{row.POSTING || "-"}</td>
+            <table className="module-table">
+              <thead>
+                <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+                  {[
+                    english ? "Name" : "नाम",
+                    english ? "Father Name" : "पिता का नाम",
+                    english ? "Post" : "पद",
+                    english ? "Belt No." : "बेल्ट नं.",
+                    english ? "Type" : "प्रकार",
+                    english ? "Date" : "दिनांक",
+                    english ? "Posting" : "पदस्थापन"
+                  ].map((heading) => <th key={heading}>{heading}</th>)}
                 </tr>
-              ))}</tbody>
+              </thead>
+              <tbody>
+                {rows.map((row, index) => (
+                  <tr key={row._uid || `${row.NAME}-${index}`}>
+                    <td><HindiText text={row.NAME} /></td>
+                    <td><HindiText text={row["FATHER NAME"]} /></td>
+                    <td style={{ fontFamily: "'Times New Roman', Times, serif", textAlign: "center" }}>{row.CADER || "-"}</td>
+                    <td style={{ fontFamily: "'Times New Roman', Times, serif", textAlign: "center" }}>{getBeltNo(row)}</td>
+                    <td style={{ textAlign: "center" }}>{row.EVENT_TYPE || row.REASON || "-"}</td>
+                    <td style={{ fontFamily: "'Times New Roman', Times, serif", textAlign: "center" }}>{formatArchiveDay(row.EVENT_DATE)}</td>
+                    <td><HindiText text={row.POSTING} /></td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </section>
       ))}
-      {archiveRows.length === 0 && <p>अभी कोई वर्ष-वार अभिलेख नहीं है।</p>}
+      {archiveRows.length === 0 && (
+        <p style={{ color: "#64748B" }}>
+          {english ? "No year-wise archive records yet." : "अभी कोई वर्ष-वार अभिलेख नहीं है।"}
+        </p>
+      )}
     </div>
   );
 }

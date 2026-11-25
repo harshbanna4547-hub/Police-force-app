@@ -1,79 +1,76 @@
 import { useMemo, useState } from "react";
-import EmployeeActionRow from "../../core/EmployeeActionRow";
+import EmployeeActionMenu from "../../components/shared/EmployeeActionMenu";
+import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
 import HindiText from "../../core/HindiText";
-import { resolveUnitAndChowki } from "../../core/postingResolver";
-import { matchEmployeeToUnit } from "../../forceLogic";
-import { devToHindi } from "../../utils/devlysConverter";
 import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import { CO_PS_MAP, OFFICE_SECTIONS } from "../../data/officeUnits";
+import { getBeltNo } from "../../shared/commonFunctions";
+import { translateSectionTitle, translateUnitName } from "../../utils/i18n";
+import { buildPostingGroups, POST_ORDER, rankOf } from "./postingLogic";
+import "./posting.css";
 
-const POST_ORDER = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
-const OFFICIAL_UNITS = OFFICE_SECTIONS.flatMap((section) => section.units);
-const RANKS = [
-  ["SP", /^SP$/i],
-  ["ASP", /^ASP$/i],
-  ["DySP", /^(DYSP|DSP)$/i],
-  ["CI", /^CI$/i],
-  ["SI", /^SI$/i],
-  ["ASI", /^ASI$/i],
-  ["HC", /^HC$/i],
-  ["FC(DR)", /^FC\s*\(DR\)$/i],
-  ["FC", /^(FC|FC\s*\(GD\)|CONSTABLE)/i]
-];
+function SummaryTable({
+  rows,
+  title,
+  sanctioned = {},
+  onAction,
+  language = "hi",
+  hideTitle = false
+}) {
+  const english = language === "en";
 
-function rankOf(employee) {
-  const cader = String(employee.CADER || "").trim();
-  return RANKS.find(([, pattern]) => pattern.test(cader))?.[0] || "Other";
-}
-
-function placeOf(employee) {
-  const rawPosting = String(employee.POSTING || "").trim();
-  const { unit } = resolveUnitAndChowki(rawPosting, devToHindi);
-  return OFFICIAL_UNITS.find((knownUnit) => matchEmployeeToUnit(unit || rawPosting, knownUnit)) ||
-    unit ||
-    rawPosting ||
-    "अज्ञात पदस्थापन";
-}
-
-function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveEmployee }) {
   return (
-    <section className="posting-summary">
-      <h3>{title}</h3>
+    <section className="posting-summary-section">
+      {!hideTitle && title && <h3 className="posting-summary-heading">{title}</h3>}
       {rows.map(([unit, employees]) => (
-        <details key={unit} style={{ margin: "8px 0", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
-          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>{unit} — {employees.length} कार्यरत</summary>
+        <details key={unit} className="posting-unit-card">
+          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
+            {translateUnitName(unit, language)} — {employees.length} {english ? "Working" : "कार्यरत"}
+          </summary>
           <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: "8px" }}>
-            <table>
-              <thead><tr>{["पद", "स्वीकृत", "कार्यरत", "कर्मचारी"].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead>
-              <tbody>{POST_ORDER.flatMap((rank) => {
-                const list = employees.filter((employee) => rankOf(employee) === rank);
-                return [
-                  <tr key={`${unit}-${rank}-total`}>
-                    <td>{rank}</td>
-                    <td>{Number(sanctioned[unit]?.[rank] || 0)}</td>
-                    <td>{list.length}</td>
-                    <td>{list.length || "—"}</td>
-                  </tr>,
-                  ...list.map((employee, index) => (
-                    <EmployeeActionRow
-                      key={employee._uid || `${rank}-${index}`}
-                      employee={employee}
-                      responsiveDetails
-                      nameCellIndex={3}
-                      onAction={(action, selected) => {
-                        if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(selected);
-                        if (action === "RELIEVE") {
-                          const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
-                          if (reason) onArchiveEmployee?.(selected, reason);
-                        }
-                        if (action === "SERVICE_SLIP") openEmployeeServiceSlip(selected);
-                      }}
-                    >
-                      <td>{rank}</td><td>—</td><td>—</td><td><HindiText text={employee.NAME} /> ({employee["BELT NO"] || "-"})</td>
-                    </EmployeeActionRow>
-                  ))
-                ];
-              })}</tbody>
+            <table className="module-table">
+              <thead>
+                <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+                  <th>{english ? "Post" : "पद"}</th>
+                  <th>{english ? "Sanctioned" : "स्वीकृत"}</th>
+                  <th>{english ? "Working" : "कार्यरत"}</th>
+                  <th>{english ? "Employee" : "कर्मचारी"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {POST_ORDER.flatMap((rank) => {
+                  const list = employees.filter((employee) => rankOf(employee) === rank);
+                  const sancVal = Number(sanctioned[unit]?.[rank] || 0);
+                  return [
+                    <tr key={`${unit}-${rank}-total`} style={{ backgroundColor: "#F8FAFC", fontWeight: "bold" }}>
+                      <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{rank}</td>
+                      <td style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{sancVal}</td>
+                      <td style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif", color: "#15803D" }}>{list.length}</td>
+                      <td style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{list.length || "—"}</td>
+                    </tr>,
+                    ...list.map((employee, index) => (
+                      <EmployeeActionMenu
+                        key={employee._uid || `${rank}-${index}`}
+                        employee={employee}
+                        responsiveDetails
+                        nameCellIndex={3}
+                        language={language}
+                        onAction={onAction}
+                      >
+                        <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{rank}</td>
+                        <td style={{ textAlign: "center" }}>—</td>
+                        <td style={{ textAlign: "center" }}>—</td>
+                        <td>
+                          <HindiText text={employee.NAME} />{" "}
+                          <span style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+                            ({getBeltNo(employee)})
+                          </span>
+                        </td>
+                      </EmployeeActionMenu>
+                    ))
+                  ];
+                })}
+              </tbody>
             </table>
           </div>
         </details>
@@ -82,90 +79,187 @@ function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveE
   );
 }
 
-export default function PostingModule({ records = [], sanctioned = {}, unitRankSanc = {}, onEditEmployee, onArchiveEmployee }) {
+export default function PostingModule({
+  records = [],
+  sanctioned = {},
+  unitRankSanc = {},
+  onEditEmployee,
+  onArchiveEmployee,
+  language = "hi"
+}) {
   const [tab, setTab] = useState("ALL");
+  const [search, setSearch] = useState("");
+  const [gender, setGender] = useState("ALL");
   const [selectedSection, setSelectedSection] = useState(OFFICE_SECTIONS[0]?.id || "SEC_SPO");
   const [selectedCircle, setSelectedCircle] = useState(Object.keys(CO_PS_MAP)[0] || "");
-  const placeMap = useMemo(() => records.reduce((map, employee) => {
-    const place = placeOf(employee);
-    (map[place] ||= []).push(employee);
-    return map;
-  }, {}), [records]);
-  const allWorkingRows = useMemo(() => {
-    const sections = OFFICE_SECTIONS.map((section) => ({
-      id: section.id,
-      title: section.title,
-      units: section.units.map((unit) => [unit, placeMap[unit] || []])
-    }));
-    const assigned = new Set(OFFICE_SECTIONS.flatMap((section) => section.units));
-    const rpl = Object.entries(placeMap).filter(([unit]) => /rpl|police line|पुलिस लाइन/i.test(unit));
-    const other = Object.entries(placeMap).filter(([unit]) => !assigned.has(unit) && !rpl.some(([rplUnit]) => rplUnit === unit));
-    return [...sections, { id: "RPL", title: "RPL / पुलिस लाइन", units: rpl }, { id: "OTHER", title: "अन्य पदस्थापन", units: other }];
-  }, [placeMap]);
-  const postRows = POST_ORDER.map((rank) => [
-    rank,
-    records.filter((employee) => rankOf(employee) === rank)
-  ]);
+  const english = language === "en";
+
+  const { filtered, placeMap, sections } = useMemo(
+    () => buildPostingGroups(records, search, gender),
+    [records, search, gender]
+  );
+
+  const postRows = useMemo(
+    () => POST_ORDER.map((rank) => [rank, filtered.filter((employee) => rankOf(employee) === rank)]),
+    [filtered]
+  );
+
   const section = OFFICE_SECTIONS.find((item) => item.id === selectedSection);
-  const sectionRows = selectedSection === "SEC_CO" && selectedCircle
-    ? [
-      [selectedCircle, placeMap[selectedCircle] || []],
-      ...(CO_PS_MAP[selectedCircle] || []).map((unit) => [unit, placeMap[unit] || []])
-    ]
-    : section?.units.map((unit) => [unit, placeMap[unit] || []]) || [];
-  const totalWorking = records.length;
+  const sectionRows = useMemo(() => {
+    if (selectedSection === "SEC_CO" && selectedCircle) {
+      return [
+        [selectedCircle, placeMap[selectedCircle] || []],
+        ...(CO_PS_MAP[selectedCircle] || []).map((unit) => [unit, placeMap[unit] || []])
+      ];
+    }
+    return section?.units.map((unit) => [unit, placeMap[unit] || []]) || [];
+  }, [selectedSection, selectedCircle, section, placeMap]);
+
+  const exportRows = useMemo(() => {
+    if (tab === "POST") {
+      return postRows.map(([rank, list]) => ({
+        "पद (Post)": rank,
+        "कार्यरत (Working)": list.length
+      }));
+    }
+    const targetRows = tab === "UNIT" ? sectionRows : sections.flatMap((sec) => sec.units);
+    return targetRows.map(([unit, employees], idx) => ({
+      "क्र.सं.": idx + 1,
+      "इकाई का नाम (Unit)": translateUnitName(unit, language),
+      "कार्यरत (Working)": employees.length
+    }));
+  }, [tab, postRows, sectionRows, sections, language]);
+
+  const handleAction = (action, selected) => {
+    if (action === "UPDATE") onEditEmployee?.(selected, "personal");
+    if (action === "TRANSFER") onEditEmployee?.(selected, "posting");
+    if (action === "RELIEVE") {
+      const reason = window.prompt(english
+        ? "Enter reason for Relieve / Retire / Death / Deputation:"
+        : "Relieve / Retire / Death / Deputation का कारण लिखें:");
+      if (reason) onArchiveEmployee?.(selected, reason);
+    }
+    if (action === "SERVICE_SLIP") openEmployeeServiceSlip(selected);
+  };
+
+  const totalWorking = filtered.length;
   const totalSanctioned = Object.values(sanctioned).reduce((sum, value) => sum + Number(value || 0), 0);
 
   return (
-    <div className="posting-module" style={{ padding: "18px", background: "#fff", border: "1px solid #E2E8F0", borderRadius: "14px" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "16px" }}>
+    <div className="posting-module">
+      <ModuleHeaderToolbar
+        title={english ? "📍 Posting & Unit Strength List" : "📍 पदस्थापन एवं इकाई-वार सूची"}
+        search={search}
+        onSearchChange={setSearch}
+        gender={gender}
+        onGenderChange={setGender}
+        rows={exportRows}
+        fileName={`Posting_List_${tab}`}
+        language={language}
+      />
+
+      <div className="posting-tab-bar">
         {[
-          ["ALL", "All Working"],
-          ["POST", "Post-Wise"],
-          ["UNIT", "Office / CO / PS Wise"]
+          ["ALL", english ? "All Working" : "सभी कार्यरत"],
+          ["POST", english ? "Post-Wise" : "पद-वार"],
+          ["UNIT", english ? "Office / CO / PS Wise" : "कार्यालय / वृत्त / थाना-वार"]
         ].map(([id, label]) => (
-          <button type="button" key={id} onClick={() => setTab(id)} aria-pressed={tab === id}>{label}</button>
+          <button
+            type="button"
+            key={id}
+            onClick={() => setTab(id)}
+            aria-pressed={tab === id}
+            className={`posting-tab-btn ${tab === id ? "is-active" : ""}`}
+          >
+            {label}
+          </button>
         ))}
       </div>
-      {tab === "ALL" && allWorkingRows.map((group) => (
-        <section key={group.title}>
-          {group.id === "SEC_CO"
-            ? Object.entries(CO_PS_MAP).map(([circle, stations]) => (
-              <details key={circle} style={{ margin: "8px 0", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
-                <summary style={{ cursor: "pointer", fontWeight: "bold" }}>{circle} — {(placeMap[circle] || []).length} CO कर्मचारी</summary>
-                <SummaryTable
-                  rows={[[circle, placeMap[circle] || []], ...stations.map((station) => [station, placeMap[station] || []])]}
-                  title={`${circle} — CO / PS Summary`}
-                  sanctioned={unitRankSanc}
-                  onEditEmployee={onEditEmployee}
-                  onArchiveEmployee={onArchiveEmployee}
-                />
-              </details>
-            ))
-            : <SummaryTable rows={group.units} title={group.title} sanctioned={unitRankSanc} onEditEmployee={onEditEmployee} onArchiveEmployee={onArchiveEmployee} />}
-        </section>
-      ))}
-      {tab === "POST" && <SummaryTable rows={postRows} title="Post-Wise Working" onEditEmployee={onEditEmployee} onArchiveEmployee={onArchiveEmployee} />}
+
+      {tab === "ALL" && sections.map((group) => {
+        const groupTitle = translateSectionTitle(group.id, group.title, language);
+        if (group.id === "SEC_CO") {
+          return (
+            <section key={group.id} className="posting-summary-section">
+              <h3 className="posting-summary-heading">{groupTitle}</h3>
+              {Object.entries(CO_PS_MAP).map(([circle, stations]) => (
+                <details key={circle} className="posting-unit-card">
+                  <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
+                    {translateUnitName(circle, language)} — {(placeMap[circle] || []).length} {english ? "CO Staff" : "CO कर्मचारी"}
+                  </summary>
+                  <SummaryTable
+                    rows={[[circle, placeMap[circle] || []], ...stations.map((station) => [station, placeMap[station] || []])]}
+                    sanctioned={unitRankSanc}
+                    onAction={handleAction}
+                    language={language}
+                    hideTitle
+                  />
+                </details>
+              ))}
+            </section>
+          );
+        }
+        return (
+          <SummaryTable
+            key={group.id}
+            rows={group.units}
+            title={groupTitle}
+            sanctioned={unitRankSanc}
+            onAction={handleAction}
+            language={language}
+          />
+        );
+      })}
+
+      {tab === "POST" && (
+        <SummaryTable
+          rows={postRows}
+          title={english ? "Post-Wise Working" : "पद-वार कार्यरत नफरी"}
+          onAction={handleAction}
+          language={language}
+        />
+      )}
+
       {tab === "UNIT" && (
         <>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          <div className="posting-section-pills">
             {OFFICE_SECTIONS.map((item) => (
-              <button type="button" key={item.id} onClick={() => setSelectedSection(item.id)} aria-pressed={selectedSection === item.id}>{item.title}</button>
+              <button
+                type="button"
+                key={item.id}
+                onClick={() => setSelectedSection(item.id)}
+                aria-pressed={selectedSection === item.id}
+                className={`posting-pill-btn ${selectedSection === item.id ? "is-active" : ""}`}
+              >
+                {translateSectionTitle(item.id, item.title, language)}
+              </button>
             ))}
           </div>
           {selectedSection === "SEC_CO" && (
-            <label style={{ display: "block", marginTop: "10px" }}>CO Circle
-              <select value={selectedCircle} onChange={(event) => setSelectedCircle(event.target.value)} style={{ marginLeft: "8px" }}>
-                {Object.keys(CO_PS_MAP).map((circle) => <option key={circle} value={circle}>{circle}</option>)}
+            <label style={{ display: "block", marginBottom: "12px", fontWeight: "bold" }}>
+              {english ? "CO Circle" : "वृत्त कार्यालय"}
+              <select value={selectedCircle} onChange={(event) => setSelectedCircle(event.target.value)} style={{ marginLeft: "8px", padding: "6px 10px", borderRadius: "6px" }}>
+                {Object.keys(CO_PS_MAP).map((circle) => (
+                  <option key={circle} value={circle}>{translateUnitName(circle, language)}</option>
+                ))}
               </select>
             </label>
           )}
-          <SummaryTable rows={sectionRows} title={section?.title || "इकाई-वार नफरी"} sanctioned={unitRankSanc} onEditEmployee={onEditEmployee} onArchiveEmployee={onArchiveEmployee} />
+          <SummaryTable
+            rows={sectionRows}
+            title={section ? translateSectionTitle(section.id, section.title, language) : (english ? "Unit-Wise Strength" : "इकाई-वार नफरी")}
+            sanctioned={unitRankSanc}
+            onAction={handleAction}
+            language={language}
+          />
         </>
       )}
-      <footer style={{ marginTop: "18px", padding: "14px", borderRadius: "10px", background: "#EFF6FF", fontWeight: "bold" }}>
-        कुल स्वीकृत: {totalSanctioned} | कुल कार्यरत: {totalWorking} | कुल रिक्त: {Math.max(totalSanctioned - totalWorking, 0)}
-      </footer>
+
+      <div className="posting-footer-summary">
+        {english
+          ? `Total Sanctioned: ${totalSanctioned} | Total Working: ${totalWorking} | Vacant: ${Math.max(totalSanctioned - totalWorking, 0)}`
+          : `कुल स्वीकृत: ${totalSanctioned} | कुल कार्यरत: ${totalWorking} | कुल रिक्त: ${Math.max(totalSanctioned - totalWorking, 0)}`}
+      </div>
     </div>
   );
 }
