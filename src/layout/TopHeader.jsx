@@ -1,18 +1,13 @@
 import "./TopHeader.css";
 
 /**
- * [COMPONENT] TopHeader — गोल शीर्ष नेविगेशन बार (जिले का बैज, केंद्रित शीर्षक, थीम व भाषा स्विच)
+ * [COMPONENT] TopHeader — साफ़ व केंद्रित शीर्ष हेडर (मोबाइल पर ☰ बटन, बाईं ओर जिला बैज और बीच में मुख्य शीर्षक)
  */
 export default function TopHeader({
   sidebarOpen,
   setSidebarOpen,
-  activeView,
-  setActiveView,
   currentDistrict,
-  theme,
-  onThemeChange,
-  language,
-  onLanguageChange
+  language
 }) {
   const english = language === "en";
   const districtLabel = currentDistrict?.id === "CHITTORGARH" || !currentDistrict?.name
@@ -21,13 +16,13 @@ export default function TopHeader({
 
   return (
     <header className="portal-top-header">
-      {/* === LEFT: SIDEBAR TOGGLE, DISTRICT EMBLEM & BACK BUTTON === */}
+      {/* === LEFT: MOBILE SIDEBAR TOGGLE (HIDDEN ON DESKTOP) & DISTRICT BADGE === */}
       <div className="header-left-controls">
         <button
           type="button"
           aria-label={sidebarOpen ? (english ? "Close sidebar" : "साइडबार बंद करें") : (english ? "Open sidebar" : "साइडबार खोलें")}
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="header-menu-button"
+          className="header-menu-button mobile-menu-btn"
         >
           ☰
         </button>
@@ -36,16 +31,6 @@ export default function TopHeader({
           <span className="header-emblem-icon" aria-hidden="true">🛡️</span>
           <span className="header-emblem-text">{districtLabel}</span>
         </div>
-
-        {activeView !== "HOME" && (
-          <button
-            type="button"
-            className="header-back-button"
-            onClick={() => setActiveView("HOME")}
-          >
-            ⬅ <span className="header-back-label">{english ? "Dashboard" : "डैशबोर्ड"}</span>
-          </button>
-        )}
       </div>
 
       {/* === CENTER: PORTAL MAIN TITLE === */}
@@ -53,27 +38,8 @@ export default function TopHeader({
         {english ? "District Police Force & Establishment Portal" : "जिला पुलिस बल एवं स्थापना पोर्टल"}
       </h1>
 
-      {/* === RIGHT: PILL THEME & LANGUAGE TOGGLES === */}
-      <div className="header-right-controls">
-        <button
-          type="button"
-          onClick={onThemeChange}
-          className="header-action-button"
-          aria-label="Toggle light and dark mode"
-        >
-          <span aria-hidden="true">{theme === "light" ? "🌙" : "☀️"}</span>
-          <span className="header-action-label">{theme === "light" ? "Dark" : "Light"}</span>
-        </button>
-        <button
-          type="button"
-          onClick={onLanguageChange}
-          className="header-action-button header-lang-button"
-          aria-label="Toggle Hindi and English"
-        >
-          <span aria-hidden="true">🌐</span>
-          <span className="header-action-label">{language === "hi" ? "हिंदी" : "English"}</span>
-        </button>
-      </div>
+      {/* === RIGHT: BALANCING SPACER FOR TRUE HORIZONTAL CENTERING === */}
+      <div className="header-right-spacer" aria-hidden="true" />
     </header>
   );
 }

@@ -24,6 +24,16 @@
   z-index: 998;
 }
 
+@media (min-width: 769px) {
+  .portal-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  .sidebar-overlay {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .sidebar-overlay {
     display: block;

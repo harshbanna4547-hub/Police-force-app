@@ -106,7 +106,10 @@ export default function App() {
         modules={modules}
         currentDistrict={currentDistrict}
         onDistrictChange={handleDistrictChange}
+        theme={theme}
+        onThemeChange={() => setTheme((value) => value === "light" ? "dark" : "light")}
         language={language}
+        onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
       />
       <div className={`app-main-content ${sidebarOpen ? "has-sidebar" : "is-expanded"}`}>
         <TopHeaderAndStats
@@ -116,10 +119,7 @@ export default function App() {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           currentDistrict={currentDistrict}
-          theme={theme}
-          onThemeChange={() => setTheme((value) => value === "light" ? "dark" : "light")}
           language={language}
-          onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
         />
         <main className="app-main-area">
           {activeView === "HOME" ? (

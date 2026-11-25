@@ -11,7 +11,10 @@ export default function SidebarNav({
   modules,
   currentDistrict,
   onDistrictChange,
-  language
+  theme,
+  onThemeChange,
+  language,
+  onLanguageChange
 }) {
   const [switcherOpen, setSwitcherOpen] = useState(false);
 
@@ -32,7 +35,10 @@ export default function SidebarNav({
         modules={modules}
         activeProfile={portalData.activeProfile}
         currentDistrict={currentDistrict}
+        theme={theme}
+        onThemeChange={onThemeChange}
         language={language}
+        onLanguageChange={onLanguageChange}
         onOpenDistrictSwitcher={() => setSwitcherOpen(true)}
       />
       {switcherOpen && (

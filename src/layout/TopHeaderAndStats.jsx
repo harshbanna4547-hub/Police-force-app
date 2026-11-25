@@ -11,10 +11,7 @@ export default function TopHeaderAndStats({
   sidebarOpen,
   setSidebarOpen,
   currentDistrict,
-  theme,
-  onThemeChange,
-  language,
-  onLanguageChange
+  language
 }) {
   const {
     records,
@@ -28,13 +25,8 @@ export default function TopHeaderAndStats({
       <TopHeader
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        activeView={activeView}
-        setActiveView={setActiveView}
         currentDistrict={currentDistrict}
-        theme={theme}
-        onThemeChange={onThemeChange}
         language={language}
-        onLanguageChange={onLanguageChange}
       />
       {activeView === "HOME" && (
         <StatCards

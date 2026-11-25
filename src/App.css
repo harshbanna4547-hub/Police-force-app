@@ -80,6 +80,20 @@
   pointer-events: auto;
 }
 
+@media (min-width: 769px) {
+  .portal-sidebar-nav,
+  .portal-sidebar-nav.is-closed {
+    transform: translateX(0) !important;
+    pointer-events: auto;
+  }
+
+  .app-main-content,
+  .app-shell.is-sidebar-closed .app-main-content {
+    margin-left: clamp(220px, 16vw, 280px);
+    width: calc(100% - clamp(220px, 16vw, 280px));
+  }
+}
+
 @media (max-width: 768px) {
   .app-main-content,
   .app-main-content.has-sidebar {

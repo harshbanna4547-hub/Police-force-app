@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TOP ROUNDED NAVIGATION BAR (आधुनिक गोल शीर्ष नेविगेशन बार)
+   TOP ROUNDED NAVIGATION BAR (साफ़ एवं केंद्रित शीर्ष हेडर बार)
    ========================================================================== */
 
 .portal-top-header {
@@ -10,7 +10,7 @@
   max-width: 100%;
   margin: 0;
   box-sizing: border-box;
-  padding: clamp(8px, 1vw, 14px) clamp(10px, 1.4vw, 22px);
+  padding: clamp(10px, 1vw, 15px) clamp(12px, 1.4vw, 22px);
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
@@ -21,7 +21,7 @@
   box-shadow: var(--shadow-header);
 }
 
-/* --- Left Controls: Hamburger + District Police Emblem --- */
+/* --- Left Controls: Mobile Hamburger + District Police Badge --- */
 .header-left-controls {
   display: flex;
   align-items: center;
@@ -30,72 +30,47 @@
   min-width: 0;
 }
 
+.mobile-menu-btn,
 .header-menu-button {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
   color: #ffffff;
   border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
+  border-radius: 11px;
+  font-size: 1.05rem;
   font-weight: 700;
   cursor: pointer;
   flex-shrink: 0;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.header-menu-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.28);
 }
 
 .header-emblem-badge {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   padding: 6px 12px;
   border-radius: var(--radius-pill, 999px);
   background: var(--surface-tint, #eff6ff);
   border: 1px solid rgba(30, 58, 138, 0.16);
   color: var(--text-strong, #0b1e3d);
-  font-size: 0.82rem;
+  font-size: clamp(11px, 0.82vw, 13px);
   font-weight: 700;
   white-space: nowrap;
 }
 
 .header-emblem-icon {
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1;
-}
-
-.header-back-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background-color: var(--royal-blue, #1d63dc);
-  color: #ffffff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: var(--radius-pill, 999px);
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s ease;
-}
-
-.header-back-button:hover {
-  background-color: #1e40af;
 }
 
 /* --- Center Title --- */
 .portal-main-title {
   margin: 0;
   font-family: var(--font-ui);
-  font-size: clamp(14px, 1.35vw, 24px);
+  font-size: clamp(14px, 1.45vw, 25px);
   font-weight: 800;
   letter-spacing: -0.015em;
   text-align: center;
@@ -103,75 +78,47 @@
   justify-self: center;
 }
 
-/* --- Right Pill Switches (Dark / Light & Hindi / English) --- */
-.header-right-controls {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.header-right-spacer {
   justify-self: end;
 }
 
-.header-action-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--surface-muted, #f1f5f9);
-  color: var(--text, #0f172a);
-  border: 1px solid var(--border, #e2e8f0);
-  padding: clamp(6px, 0.6vw, 9px) clamp(10px, 1vw, 15px);
-  border-radius: var(--radius-pill, 999px);
-  cursor: pointer;
-  font-weight: 700;
-  font-size: clamp(11px, 0.85vw, 15px);
-  white-space: nowrap;
-  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
-}
-
-.header-action-button:hover {
-  background-color: var(--surface-tint, #eff6ff);
-  border-color: var(--royal-blue, #1d63dc);
-  transform: translateY(-1px);
-}
-
-.header-lang-button {
-  background-color: var(--surface-raised, #ffffff);
-}
-
 /* === RESPONSIVE HEADER BREAKPOINTS === */
-@media (max-width: 1120px) {
-  .header-emblem-badge {
-    display: none;
+@media (min-width: 769px) {
+  .mobile-menu-btn,
+  .header-menu-button {
+    display: none !important;
   }
 }
 
 @media (max-width: 768px) {
+  .mobile-menu-btn,
+  .header-menu-button {
+    display: inline-flex;
+  }
+
   .portal-top-header {
     top: 6px;
     padding: 8px 12px;
     gap: 8px;
     border-radius: 14px;
+    grid-template-columns: auto 1fr;
+  }
+
+  .header-emblem-badge {
+    display: none;
+  }
+
+  .header-right-spacer {
+    display: none;
   }
 
   .portal-main-title {
-    font-size: clamp(0.84rem, 3.2vw, 1.05rem);
+    font-size: clamp(0.84rem, 3.3vw, 1.08rem);
     line-height: 1.2;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 100%;
-  }
-
-  .header-back-label,
-  .header-action-label {
-    display: none;
-  }
-
-  .header-menu-button,
-  .header-action-button,
-  .header-back-button {
-    min-width: 36px;
-    height: 36px;
-    padding: 0 10px;
-    justify-content: center;
+    justify-self: center;
   }
 }
