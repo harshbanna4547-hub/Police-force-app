@@ -116,11 +116,15 @@ test("DeskX live wallpaper presets, overlay widgets & DeskX App Store entry are 
   const liveScenes = WALLPAPER_PRESETS.filter((w) => w.isLive);
   assert.deepEqual(
     liveScenes.map((w) => w.id),
-    ["deskx-aurora", "deskx-matrix", "deskx-cosmos"]
+    ["deskx-aurora", "deskx-matrix", "deskx-cosmos", "geo-poly", "geo-memphis", "geo-lineal", "geo-spheres"]
   );
   assert.ok(DESKX_OVERLAY_WIDGETS.some((w) => w.id === "clock-weather"));
   assert.ok(DESKX_OVERLAY_WIDGETS.some((w) => w.id === "analog-minimalist"));
   const engineApp = APP_STORE_CATALOG.find((a) => a.id === "deskx-engine");
   assert.ok(engineApp);
   assert.equal(engineApp.logoSrc, "/assets/deskx/deskx-logo.png");
+  /* Geo scenes are present in WALLPAPER_PRESETS with correct classNames */
+  assert.ok(WALLPAPER_PRESETS.some((w) => w.id === "geo-poly" && w.className === "wp-geo-poly"));
+  assert.ok(WALLPAPER_PRESETS.some((w) => w.id === "geo-spheres" && w.isLive));
+  assert.equal(WALLPAPER_PRESETS.length, 15);
 });

@@ -460,17 +460,170 @@ export default function StorageVaultModule({
           ctx.fill();
         }
       } else {
-        // DeskX Cosmos Starfield
-        stars.forEach((s) => {
-          s.x = (s.x + 0.00025 * s.z * speedFactor) % 1;
-          const sx = s.x * w;
-          const sy = s.y * h;
-          const alpha = 0.4 + 0.55 * Math.abs(Math.sin(tick * 1.4 + s.twinkle));
-          ctx.fillStyle = `rgba(224, 242, 254, ${alpha.toFixed(2)})`;
-          ctx.beginPath();
-          ctx.arc(sx, sy, 0.9 + s.z * 1.1, 0, Math.PI * 2);
-          ctx.fill();
-        });
+        // DeskX Cosmos Starfield + Geo Geometric Series
+        if (wallpaper === "deskx-cosmos") {
+          // Cosmos Starfield
+          stars.forEach((s) => {
+            s.x = (s.x + 0.00025 * s.z * speedFactor) % 1;
+            const sx = s.x * w;
+            const sy = s.y * h;
+            const alpha = 0.4 + 0.55 * Math.abs(Math.sin(tick * 1.4 + s.twinkle));
+            ctx.fillStyle = `rgba(224, 242, 254, ${alpha.toFixed(2)})`;
+            ctx.beginPath();
+            ctx.arc(sx, sy, 0.9 + s.z * 1.1, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        } else if (wallpaper === "geo-poly") {
+          // Geo Polygon Dark — floating 3D triangles (inspired by Freepik geometric-shapes-landing-page)
+          nodes.forEach((n) => {
+            n.x = (n.x + n.vx * speedFactor * 0.4 + 1) % 1;
+            n.y = (n.y + n.vy * speedFactor * 0.4 + 1) % 1;
+          });
+          const triColors = [
+            "rgba(100, 60, 220, 0.72)", "rgba(60, 40, 180, 0.65)",
+            "rgba(140, 70, 240, 0.60)", "rgba(80, 100, 220, 0.55)"
+          ];
+          for (let i = 0; i < 12; i += 1) {
+            const nx = nodes[i].x * w;
+            const ny = nodes[i].y * h;
+            const sz = 24 + (i % 5) * 18;
+            const angle = tick * 0.5 + i * 0.8;
+            ctx.save();
+            ctx.translate(nx, ny);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, -sz);
+            ctx.lineTo(sz * 0.87, sz * 0.5);
+            ctx.lineTo(-sz * 0.87, sz * 0.5);
+            ctx.closePath();
+            ctx.fillStyle = triColors[i % triColors.length];
+            ctx.shadowColor = "rgba(100, 60, 220, 0.6)";
+            ctx.shadowBlur = 14;
+            ctx.fill();
+            ctx.restore();
+          }
+          // Dot matrix pattern
+          ctx.fillStyle = "rgba(100, 180, 240, 0.18)";
+          for (let gx = 0; gx < w; gx += 22) {
+            for (let gy = 0; gy < h; gy += 22) {
+              ctx.beginPath();
+              ctx.arc(gx, gy, 1.4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        } else if (wallpaper === "geo-memphis") {
+          // Geo Memphis Violet — circles, triangles, dashes (inspired by memphis-gradient-geometric-shapes)
+          nodes.forEach((n) => {
+            n.x = (n.x + n.vx * speedFactor * 0.5 + 1) % 1;
+            n.y = (n.y + n.vy * speedFactor * 0.5 + 1) % 1;
+          });
+          // Circles
+          for (let i = 0; i < 8; i += 1) {
+            const nx = nodes[i].x * w;
+            const ny = nodes[i].y * h;
+            const r = 20 + (i % 4) * 25;
+            const alpha = 0.45 + 0.25 * Math.sin(tick + i);
+            ctx.strokeStyle = i % 2 === 0 ? `rgba(255, 100, 180, ${alpha})` : `rgba(220, 180, 255, ${alpha})`;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(nx, ny, r, 0, Math.PI * 2);
+            ctx.stroke();
+            if (i % 2 === 0) {
+              ctx.fillStyle = `rgba(255, 100, 180, 0.12)`;
+              ctx.fill();
+            }
+          }
+          // Triangles
+          for (let i = 8; i < 16; i += 1) {
+            const nx = nodes[i % nodes.length].x * w;
+            const ny = nodes[i % nodes.length].y * h;
+            const sz = 18 + (i % 3) * 14;
+            const angle = tick * 0.65 + i * 1.2;
+            ctx.save();
+            ctx.translate(nx, ny);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(0, -sz);
+            ctx.lineTo(sz * 0.87, sz * 0.5);
+            ctx.lineTo(-sz * 0.87, sz * 0.5);
+            ctx.closePath();
+            ctx.fillStyle = `rgba(240, 60, 150, 0.55)`;
+            ctx.fill();
+            ctx.restore();
+          }
+          // Dot dashes
+          for (let d = 0; d < 24; d += 1) {
+            const dx = ((d * 97 + tick * 18) % w);
+            const dy = ((d * 53 + tick * 12) % h);
+            ctx.fillStyle = "rgba(255, 200, 100, 0.55)";
+            ctx.beginPath();
+            ctx.arc(dx, dy, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (wallpaper === "geo-lineal") {
+          // Geo Lineal Neon — concentric lineal circles, neon glows (inspired by geometric-gradient-shapes)
+          const cx = w * 0.65;
+          const cy = h * 0.5;
+          for (let ring = 0; ring < 7; ring += 1) {
+            const r = (60 + ring * 52) + Math.sin(tick * 0.8 + ring * 0.5) * 10;
+            const alpha = 0.65 - ring * 0.07;
+            const hue = ring % 2 === 0 ? `rgba(255, 165, 30, ${alpha})` : `rgba(0, 220, 255, ${alpha})`;
+            ctx.strokeStyle = hue;
+            ctx.lineWidth = 2.2 - ring * 0.18;
+            ctx.shadowColor = ring % 2 === 0 ? "rgba(255, 120, 0, 0.6)" : "rgba(0, 200, 255, 0.6)";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          ctx.shadowBlur = 0;
+          // Small triangle markers
+          const triPts = [[cx - 180, cy - 60], [cx - 220, cy + 50], [cx - 140, cy + 100]];
+          triPts.forEach(([tx, ty], ti) => {
+            const sz = 14 + ti * 6;
+            const ang = tick * 0.5 + ti * 1.4;
+            ctx.save();
+            ctx.translate(tx, ty);
+            ctx.rotate(ang);
+            ctx.beginPath();
+            ctx.moveTo(0, -sz);
+            ctx.lineTo(sz * 0.87, sz * 0.5);
+            ctx.lineTo(-sz * 0.87, sz * 0.5);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(100, 80, 200, 0.75)";
+            ctx.fill();
+            ctx.restore();
+          });
+          // Dot grid
+          ctx.fillStyle = "rgba(140, 60, 240, 0.22)";
+          for (let gx = 0; gx < w * 0.5; gx += 20) {
+            for (let gy = 0; gy < h; gy += 20) {
+              ctx.beginPath();
+              ctx.arc(gx + 20, gy + 20, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        } else if (wallpaper === "geo-spheres") {
+          // Geo Amber Spheres — floating gradient balls (inspired by gray-gradient-geometric-shapes)
+          nodes.forEach((n) => {
+            n.x = (n.x + n.vx * speedFactor * 0.3 + 1) % 1;
+            n.y = (n.y + n.vy * speedFactor * 0.3 + 1) % 1;
+          });
+          const sphereSizes = [90, 55, 38, 70, 42, 60, 30, 48, 65, 35];
+          for (let i = 0; i < Math.min(10, nodes.length); i += 1) {
+            const sx = nodes[i].x * w;
+            const sy = nodes[i].y * h;
+            const r = sphereSizes[i] + Math.sin(tick * 0.6 + i) * 6;
+            const grd = ctx.createRadialGradient(sx - r * 0.3, sy - r * 0.3, r * 0.1, sx, sy, r);
+            grd.addColorStop(0, "rgba(220, 150, 60, 0.92)");
+            grd.addColorStop(0.55, "rgba(180, 110, 40, 0.75)");
+            grd.addColorStop(1, "rgba(80, 50, 20, 0.0)");
+            ctx.fillStyle = grd;
+            ctx.beginPath();
+            ctx.arc(sx, sy, r, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
       }
 
       rafId = window.requestAnimationFrame(drawFrame);
