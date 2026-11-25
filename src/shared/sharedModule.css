@@ -11,9 +11,12 @@
 }
 
 .module-panel {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   background-color: var(--surface-raised, #ffffff);
   border-radius: var(--radius-card, 22px);
-  padding: 22px;
+  padding: 20px;
   border: 1px solid var(--border, #e2e8f0);
   box-shadow: var(--shadow-card);
 }

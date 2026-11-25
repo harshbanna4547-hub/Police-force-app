@@ -20,16 +20,19 @@
   color: var(--text);
 }
 
-/* === MAIN WORKSPACE COLUMN (मुख्य कार्यक्षेत्र - साइडबार अनुसार चौड़ाई) === */
+/* === MAIN WORKSPACE COLUMN (मुख्य कार्यक्षेत्र - 100% पूर्ण-चौड़ाई फ्लुइड लेआउट) === */
 .app-main-content {
   min-width: 0;
   width: calc(100% - 260px);
+  max-width: 100%;
   flex: 1;
+  margin: 0;
   margin-left: 260px;
+  padding: 14px 18px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px 24px 28px;
   overflow-x: hidden;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -38,13 +41,15 @@
 .app-shell.is-sidebar-closed .app-main-content {
   margin-left: 0;
   width: 100%;
+  max-width: 100%;
 }
 
 .app-main-area {
   min-width: 0;
   width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
   flex: 1;
   overflow-x: hidden;
 }
@@ -80,6 +85,7 @@
   .app-main-content.has-sidebar {
     margin-left: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
     padding: 10px 12px 22px;
     gap: 12px;
   }

@@ -4,11 +4,12 @@
 
 .portal-top-header {
   position: sticky;
-  top: 12px;
+  top: 10px;
   z-index: 900;
   width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
   padding: 12px 20px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;

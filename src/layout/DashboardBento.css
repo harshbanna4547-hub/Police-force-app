@@ -4,6 +4,9 @@
    ========================================================================== */
 
 .bento-dashboard-section {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   padding: 6px 0 28px;
 }
 
@@ -32,6 +35,9 @@
 
 /* === RESPONSIVE BENTO GRID === */
 .bento-card-grid {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
   gap: 18px;

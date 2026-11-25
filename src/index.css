@@ -139,7 +139,9 @@ table {
 /* === 5. MOBILE & TABLET LAYOUT ADJUSTMENTS (मोबाइल / टैबलेट अनुकूलन) === */
 @media (max-width: 1024px) {
   .app-main-area {
-    padding: clamp(10px, 2vw, 18px) !important;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 !important;
   }
 }
 
@@ -160,7 +162,9 @@ table {
 
   .app-main-area {
     min-width: 0;
-    padding: clamp(10px, 2.5vw, 14px) !important;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 !important;
   }
 
   .app-main-area footer,

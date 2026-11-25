@@ -5,7 +5,8 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
-  max-width: 850px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .bharti-field label {
