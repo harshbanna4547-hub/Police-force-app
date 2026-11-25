@@ -1,10 +1,16 @@
 /* src/index.css - Mobile, Tablet & PC Responsive Styling */
 @font-face {
   font-family: "DevLys 010";
-  src: local("DevLys 010"), url("/fonts/DevLys010.ttf") format("truetype");
+  src: url("/fonts/DevLys010.ttf") format("truetype"), local("DevLys 010");
   font-style: normal;
   font-weight: normal;
   font-display: swap;
+}
+
+.devlys-text {
+  font-family: 'DevLys 010', sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
 }
 
 * {
