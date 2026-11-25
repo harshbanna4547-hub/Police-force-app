@@ -1,8 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../../data/officeUnits";
-import { unicodeToDevlys } from "../../utils/devlysConverter";
 import HindiText from "../../core/HindiText";
-import ExportBar from "../../core/ExportBar";
+import { isDevlysText } from "../../core/isDevlysText";
+import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
+import { filterEmployeesByGender, matchesEmployeeSearch } from "../../forceLogic";
+import { translateUnitName } from "../../utils/i18n";
 import {
   buildTransferPostingOptions,
   createTransferOrderUpdates,
@@ -24,21 +26,11 @@ import "./transfer.css";
 
 const ENGLISH_CELL_STYLE = { fontFamily: "'Times New Roman', Times, serif" };
 
-const ORDER_COLUMNS = [
-  "क्र.सं.",
-  "पद",
-  "बेल्ट नं.",
-  "नाम",
-  "वर्तमान पदस्थापन",
-  "नवीन पदस्थापन",
-  "आदेश नं./दिनांक"
-];
-
 const TAB_ITEMS = [
-  { id: "CREATE", label: "नया स्थानांतरण आदेश" },
-  { id: "TENURE", label: "कार्यकाल / Overstay जाँच" },
-  { id: "ISSUED", label: "जारी आदेश / प्रिंट / Excel" },
-  { id: "DUTY", label: "4. Attachment & Deputation" }
+  { id: "CREATE", hi: "नया स्थानांतरण आदेश", en: "New Transfer Order" },
+  { id: "TENURE", hi: "कार्यकाल / Overstay जाँच", en: "Tenure / Overstay Check" },
+  { id: "ISSUED", hi: "जारी आदेश / प्रिंट / Excel", en: "Issued Orders / Print / Excel" },
+  { id: "DUTY", hi: "Attachment एवं Deputation", en: "Attachment & Deputation" }
 ];
 
 function escapeHtml(value) {
@@ -51,36 +43,43 @@ function escapeHtml(value) {
   })[character]);
 }
 
-function getTransferRows(order, displayText) {
+function formatPrintValue(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  return String(value).split(/(\s+)/).map((part) => {
+    if (!part) return "";
+    if (/^\s+$/.test(part)) return part;
+    const isUni = /[\u0900-\u097F]/.test(part);
+    const cls = isUni ? "unicode-hindi" : isDevlysText(part) ? "devlys" : "english";
+    return `<span class="${cls}">${escapeHtml(part)}</span>`;
+  }).join("");
+}
+
+function getTransferRows(order) {
   return order.rows.map((record, index) => [
     index + 1,
-    getTransferDisplayCader(record, displayText),
-    getTransferDisplayBeltNumber(record, displayText),
-    displayText(record.NAME || ""),
-    displayText(record.OLD_POSTING || ""),
-    displayText(record.POSTING_PLACE || ""),
+    getTransferDisplayCader(record, (v) => v),
+    getTransferDisplayBeltNumber(record, (v) => v),
+    record.NAME || "",
+    record.OLD_POSTING || "",
+    record.POSTING_PLACE || "",
     `${order.orderNo} / ${order.orderDate}`
   ]);
 }
 
-function printTransferOrder(order, displayText) {
+function printTransferOrder(order) {
   if (!order?.rows?.length) {
     alert("प्रिंट के लिए जारी स्थानांतरण आदेश उपलब्ध नहीं है।");
     return;
   }
 
-  const rows = getTransferRows(order, displayText);
-  const printValue = (value) => {
-    const text = String(value ?? "");
-    const hindiText = /[\u0900-\u097F]/.test(text);
-    const printableText = hindiText ? unicodeToDevlys(text) : text;
-    return `<span class="${hindiText ? "hindi" : "english"}">${escapeHtml(printableText)}</span>`;
-  };
-  const headers = ORDER_COLUMNS.map((column) => `<th class="hindi">${escapeHtml(unicodeToDevlys(column))}</th>`).join("");
+  const fontUrl = typeof window !== "undefined" ? `${window.location.origin}/fonts/DevLys010.ttf` : "/fonts/DevLys010.ttf";
+  const columns = ["क्र.सं.", "पद", "बेल्ट नं.", "नाम", "वर्तमान पदस्थापन", "नवीन पदस्थापन", "आदेश नं./दिनांक"];
+  const rows = getTransferRows(order);
+  const headers = columns.map((column) => `<th class="unicode-hindi">${escapeHtml(column)}</th>`).join("");
   const body = rows.map((row) => `<tr>${row.map((value, index) => (
-    index === 1 || index === 2
-      ? `<td class="english-cell">${escapeHtml(value)}</td>`
-      : `<td>${printValue(value)}</td>`
+    index <= 2 || index === 6
+      ? `<td class="english">${escapeHtml(value)}</td>`
+      : `<td>${formatPrintValue(value)}</td>`
   )).join("")}</tr>`).join("");
   const orderNo = escapeHtml(order.orderNo);
   const orderDate = escapeHtml(order.orderDate);
@@ -90,16 +89,18 @@ function printTransferOrder(order, displayText) {
         <meta charset="utf-8" />
         <title>स्थानांतरण आदेश ${orderNo}</title>
         <style>
+          @font-face { font-family: "DevLys 010"; src: url("${fontUrl}") format("truetype"), local("DevLys 010"); }
           @page { size: A4 landscape; margin: 14mm; }
           body { color: #000; font-family: "Times New Roman", serif; font-size: 12pt; }
-          h1, h2, .hindi { font-family: "DevLys 010", "Kruti Dev 010", "Times New Roman", serif; }
+          .unicode-hindi { font-family: "Noto Sans Devanagari", sans-serif; }
+          .devlys { font-family: "DevLys 010", sans-serif; font-size: 17px; line-height: 1.45; }
+          .english { font-family: "Times New Roman", Times, serif; }
           h1, h2 { text-align: center; margin: 0 0 8px; }
           h1 { font-size: 19pt; }
           h2 { font-size: 17pt; }
           .order-meta { display: flex; justify-content: space-between; margin: 16px 0 10px; font-size: 12pt; }
           table { width: 100%; border-collapse: collapse; }
           th, td { border: 1px solid #000; padding: 7px; text-align: center; }
-          td.english-cell { font-family: "Times New Roman", Times, serif !important; }
           th { background: #e2e8f0; font-size: 12pt; }
           td { font-size: 11pt; }
           .signatures { display: flex; justify-content: space-between; margin-top: 52px; }
@@ -107,16 +108,16 @@ function printTransferOrder(order, displayText) {
         </style>
       </head>
       <body>
-        <h1 class="hindi">${escapeHtml(unicodeToDevlys("कार्यालय पुलिस अधीक्षक"))}</h1>
-        <h2 class="hindi">${escapeHtml(unicodeToDevlys("स्थानांतरण आदेश"))}</h2>
+        <h1 class="unicode-hindi">कार्यालय पुलिस अधीक्षक</h1>
+        <h2 class="unicode-hindi">स्थानांतरण आदेश</h2>
         <div class="order-meta">
-          <span><b class="hindi">${escapeHtml(unicodeToDevlys("आदेश क्रमांक"))}:</b> ${orderNo}</span>
-          <span><b class="hindi">${escapeHtml(unicodeToDevlys("दिनांक"))}:</b> ${orderDate}</span>
+          <span><b class="unicode-hindi">आदेश क्रमांक:</b> ${orderNo}</span>
+          <span><b class="unicode-hindi">दिनांक:</b> ${orderDate}</span>
         </div>
         <table><thead><tr>${headers}</tr></thead><tbody>${body}</tbody></table>
         <div class="signatures">
-          <span class="hindi">${escapeHtml(unicodeToDevlys("आदेशानुसार"))}</span>
-          <span class="hindi">${escapeHtml(unicodeToDevlys("पुलिस अधीक्षक"))}</span>
+          <span class="unicode-hindi">आदेशानुसार</span>
+          <span class="unicode-hindi">पुलिस अधीक्षक</span>
         </div>
       </body>
     </html>`;
@@ -136,26 +137,23 @@ function printTransferOrder(order, displayText) {
   }, 400);
 }
 
-function printRelievingJoiningSlip(order, employee, displayText) {
-  const printableValue = (value) => {
-    const text = displayText(value);
-    const hasHindi = /[\u0900-\u097F]/.test(text);
-    return `<span class="${hasHindi ? "hindi" : "english"}">${escapeHtml(hasHindi ? unicodeToDevlys(text) : text)}</span>`;
-  };
-  const title = escapeHtml(unicodeToDevlys("रवानगी एवं आगमन प्रमाण-पत्र"));
+function printRelievingJoiningSlip(order, employee) {
+  const fontUrl = typeof window !== "undefined" ? `${window.location.origin}/fonts/DevLys010.ttf` : "/fonts/DevLys010.ttf";
   const html = `<!doctype html>
     <html lang="hi">
       <head>
         <meta charset="utf-8" />
         <title>Relieving and Joining Certificate</title>
         <style>
+          @font-face { font-family: "DevLys 010"; src: url("${fontUrl}") format("truetype"), local("DevLys 010"); }
           @page { size: A4 portrait; margin: 20mm; }
           body { color: #000; font: 12pt "Times New Roman", serif; line-height: 1.7; }
-          h1, h2, .hindi { font-family: "DevLys 010", "Kruti Dev 010", "Times New Roman", serif; }
+          .unicode-hindi { font-family: "Noto Sans Devanagari", sans-serif; }
+          .devlys { font-family: "DevLys 010", sans-serif; font-size: 17px; line-height: 1.45; }
+          .english { font-family: "Times New Roman", Times, serif; }
           h1, h2 { text-align: center; margin: 0 0 8px; }
           h1 { font-size: 19pt; }
           h2 { font-size: 14pt; }
-          .english { font-family: "Times New Roman", serif; }
           .meta { margin: 20px 0; border: 1px solid #000; padding: 10px 14px; }
           .certificate { margin: 24px 0; text-align: justify; }
           .signatures { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 70px; text-align: center; }
@@ -163,33 +161,33 @@ function printRelievingJoiningSlip(order, employee, displayText) {
         </style>
       </head>
       <body>
-        <h1 class="hindi">${title}</h1>
+        <h1 class="unicode-hindi">रवानगी एवं आगमन प्रमाण-पत्र</h1>
         <h2 class="english">Relieving &amp; Joining Certificate</h2>
         <div class="meta">
-          <div><b class="hindi">${escapeHtml(unicodeToDevlys("आदेश क्रमांक"))}:</b> ${escapeHtml(order.orderNo)}</div>
-          <div><b class="hindi">${escapeHtml(unicodeToDevlys("आदेश दिनांक"))}:</b> ${escapeHtml(order.orderDate)}</div>
+          <div><b class="unicode-hindi">आदेश क्रमांक:</b> ${escapeHtml(order.orderNo)}</div>
+          <div><b class="unicode-hindi">आदेश दिनांक:</b> ${escapeHtml(order.orderDate)}</div>
         </div>
         <p class="certificate">
-          <b class="hindi">${escapeHtml(unicodeToDevlys("रवानगी प्रमाण-पत्र"))}:</b>
-          <span class="hindi">${escapeHtml(unicodeToDevlys("प्रमाणित किया जाता है कि"))}</span>
-          ${printableValue(employee.NAME || "")},
-          <span class="hindi">${escapeHtml(unicodeToDevlys("पद"))}:</span> ${printableValue(employee.CADER || "")},
-          <span class="hindi">${escapeHtml(unicodeToDevlys("बेल्ट नं."))}:</span> ${printableValue(employee["BELT NO"] || "")},
-          को ${printableValue(employee.OLD_POSTING || "")}
-          <span class="hindi">${escapeHtml(unicodeToDevlys("से दिनांक"))}</span> __________________
-          <span class="hindi">${escapeHtml(unicodeToDevlys("को कार्यमुक्त किया गया।"))}</span>
+          <b class="unicode-hindi">रवानगी प्रमाण-पत्र:</b>
+          <span class="unicode-hindi">प्रमाणित किया जाता है कि</span>
+          ${formatPrintValue(employee.NAME || "")},
+          <span class="unicode-hindi">पद:</span> ${formatPrintValue(employee.CADER || "")},
+          <span class="unicode-hindi">बेल्ट नं.:</span> ${formatPrintValue(employee["BELT NO"] || "")},
+          को ${formatPrintValue(employee.OLD_POSTING || "")}
+          <span class="unicode-hindi">से दिनांक</span> __________________
+          <span class="unicode-hindi">को कार्यमुक्त किया गया।</span>
         </p>
         <p class="certificate">
-          <b class="hindi">${escapeHtml(unicodeToDevlys("आगमन / कार्यग्रहण प्रमाण-पत्र"))}:</b>
-          ${printableValue(employee.NAME || "")}
-          <span class="hindi">${escapeHtml(unicodeToDevlys("ने"))}</span>
-          ${printableValue(employee.POSTING_PLACE || "")}
-          <span class="hindi">${escapeHtml(unicodeToDevlys("में दिनांक"))}</span> __________________
-          <span class="hindi">${escapeHtml(unicodeToDevlys("को कार्यभार ग्रहण कर लिया है।"))}</span>
+          <b class="unicode-hindi">आगमन / कार्यग्रहण प्रमाण-पत्र:</b>
+          ${formatPrintValue(employee.NAME || "")}
+          <span class="unicode-hindi">ने</span>
+          ${formatPrintValue(employee.POSTING_PLACE || "")}
+          <span class="unicode-hindi">में दिनांक</span> __________________
+          <span class="unicode-hindi">को कार्यभार ग्रहण कर लिया है।</span>
         </p>
         <div class="signatures">
-          <div class="signature-line"><span class="hindi">${escapeHtml(unicodeToDevlys("रवानगी अधिकारी / कार्यालयाध्यक्ष"))}</span></div>
-          <div class="signature-line"><span class="hindi">${escapeHtml(unicodeToDevlys("आगमन अधिकारी / कार्यालयाध्यक्ष"))}</span></div>
+          <div class="signature-line"><span class="unicode-hindi">रवानगी अधिकारी / कार्यालयाध्यक्ष</span></div>
+          <div class="signature-line"><span class="unicode-hindi">आगमन अधिकारी / कार्यालयाध्यक्ष</span></div>
         </div>
       </body>
     </html>`;
@@ -217,9 +215,10 @@ export default function TransferModule({
   setAttRecords,
   depRecords = [],
   setDepRecords,
-  devToHindi
+  language = "hi"
 }) {
   const [activeTab, setActiveTab] = useState("CREATE");
+  const [genderFilter, setGenderFilter] = useState("ALL");
   const [rankFilter, setRankFilter] = useState("ALL");
   const [stationFilter, setStationFilter] = useState("ALL");
   const [searchText, setSearchText] = useState("");
@@ -239,12 +238,14 @@ export default function TransferModule({
   const [dutyOrderNo, setDutyOrderNo] = useState("");
   const [dutyOrderDate, setDutyOrderDate] = useState(() => formatTransferDate(new Date()));
   const [dutyRemark, setDutyRemark] = useState("");
+  const english = language === "en";
 
-  const displayText = useCallback((value) => {
-    const rawValue = String(value ?? "");
-    if (/[\u0900-\u097F]/.test(rawValue)) return rawValue;
-    return typeof devToHindi === "function" ? devToHindi(rawValue) : rawValue;
-  }, [devToHindi]);
+  const identityText = (value) => String(value ?? "");
+  const genderFilteredRecords = useMemo(
+    () => filterEmployeesByGender(records, genderFilter),
+    [records, genderFilter]
+  );
+
   const postingOptions = useMemo(
     () => buildTransferPostingOptions(OFFICE_CO_PS_LIST, PS_CHOWKI_MAP),
     []
@@ -257,18 +258,18 @@ export default function TransferModule({
     [postingOptions]
   );
   const recordsWithKeys = useMemo(
-    () => records.map((employee, index) => ({
+    () => genderFilteredRecords.map((employee, index) => ({
       employee,
       index,
       key: getTransferEmployeeKey(employee, index),
-      rank: getTransferRank(employee, displayText)
+      rank: getTransferRank(employee, identityText)
     })),
-    [records, displayText]
+    [genderFilteredRecords]
   );
   const stationOptions = useMemo(() => {
     const seen = new Set();
     return recordsWithKeys
-      .map(({ employee }) => displayText(employee.POSTING || "").trim())
+      .map(({ employee }) => String(employee.POSTING || "").trim())
       .filter((station) => {
         const key = station.toLocaleLowerCase();
         if (!key || seen.has(key)) return false;
@@ -276,27 +277,23 @@ export default function TransferModule({
         return true;
       })
       .sort((left, right) => left.localeCompare(right, "hi"));
-  }, [recordsWithKeys, displayText]);
+  }, [recordsWithKeys]);
+
   const visibleEmployees = useMemo(() => {
-    const query = searchText.trim().toLocaleLowerCase();
+    const query = searchText.trim();
     return recordsWithKeys.filter(({ employee, rank }) => {
       if (rankFilter !== "ALL" && rank !== rankFilter) return false;
       if (
         stationFilter !== "ALL" &&
-        displayText(employee.POSTING || "").trim().toLocaleLowerCase() !== stationFilter.toLocaleLowerCase()
+        String(employee.POSTING || "").trim().toLocaleLowerCase() !== stationFilter.toLocaleLowerCase()
       ) {
         return false;
       }
       if (!query) return true;
-      const searchableText = [
-        employee["BELT NO"],
-        employee.NAME,
-        employee.POSTING,
-        employee.CADER
-      ].map(displayText).join(" ").toLocaleLowerCase();
-      return searchableText.includes(query);
+      return matchesEmployeeSearch(employee, query, ["BELT NO", "NAME", "POSTING", "CADER"]);
     });
-  }, [recordsWithKeys, rankFilter, stationFilter, searchText, displayText]);
+  }, [recordsWithKeys, rankFilter, stationFilter, searchText]);
+
   const selectedEmployees = recordsWithKeys.filter(({ key }) => selectedIds.has(key));
   const dutyEmployee = recordsWithKeys.find(({ key }) => key === dutyEmployeeKey)?.employee || null;
   const postingHistory = allSheets["Posting_History"];
@@ -316,12 +313,13 @@ export default function TransferModule({
       years >= Number(tenureYears) &&
       (tenureRankFilter === "ALL" || rank === tenureRankFilter) &&
       (tenureStationFilter === "ALL" ||
-        displayText(employee.POSTING || "").trim().toLocaleLowerCase() === tenureStationFilter.toLocaleLowerCase())
+        String(employee.POSTING || "").trim().toLocaleLowerCase() === tenureStationFilter.toLocaleLowerCase()) &&
+      (!searchText.trim() || matchesEmployeeSearch(employee, searchText, ["BELT NO", "NAME", "POSTING", "CADER"]))
     ))
     .sort((left, right) => {
       const rankDifference = TRANSFER_RANKS.indexOf(left.rank) - TRANSFER_RANKS.indexOf(right.rank);
       return rankDifference || right.years - left.years;
-    }), [recordsWithKeys, tenureYears, tenureRankFilter, tenureStationFilter, displayText]);
+    }), [recordsWithKeys, tenureYears, tenureRankFilter, tenureStationFilter, searchText]);
 
   const toggleSelected = (key, checked) => {
     setSelectedIds((previous) => {
@@ -348,21 +346,21 @@ export default function TransferModule({
   const issueTransferOrder = (event) => {
     event.preventDefault();
     if (!selectedEmployees.length) {
-      alert("आदेश जारी करने से पहले कम से कम एक कर्मचारी चुनें।");
+      alert(english ? "Select at least one employee." : "आदेश जारी करने से पहले कम से कम एक कर्मचारी चुनें।");
       return;
     }
     if (!orderNo.trim()) {
-      alert("आदेश क्रमांक भरें।");
+      alert(english ? "Enter Order Number." : "आदेश क्रमांक भरें।");
       return;
     }
     const normalizedDate = normalizeTransferDateInput(orderDate);
     if (!normalizedDate) {
-      alert("आदेश दिनांक DD-MM-YYYY में सही रूप से भरें।");
+      alert(english ? "Enter Order Date in DD-MM-YYYY format." : "आदेश दिनांक DD-MM-YYYY में सही रूप से भरें।");
       return;
     }
     const incompleteEmployee = selectedEmployees.find(({ key }) => !assignments[key]?.destination);
     if (incompleteEmployee) {
-      alert(`कृपया ${displayText(incompleteEmployee.employee.NAME)} के लिए नया पदस्थापन स्थान चुनें।`);
+      alert(english ? "Select destination posting for all employees." : "कृपया सभी चयनित कर्मचारियों के लिए नया पदस्थापन स्थान चुनें।");
       return;
     }
 
@@ -454,8 +452,8 @@ export default function TransferModule({
       alert("नया थाना / कार्यालय / ड्यूटी स्थान चुनें या लिखें।");
       return;
     }
-    const orderNo = dutyOrderNo.trim();
-    const orderNoDate = `${orderNo} / ${normalizedDate}`;
+    const cleanDutyOrderNo = dutyOrderNo.trim();
+    const orderNoDate = `${cleanDutyOrderNo} / ${normalizedDate}`;
     let updatedEmployee = employee;
     let updatedRecords;
     if (dutyType === "ATTACHMENT") {
@@ -472,7 +470,7 @@ export default function TransferModule({
 
     const dutyEntry = createTemporaryDutyEntry(updatedEmployee, dutyType, {
       place,
-      orderNo,
+      orderNo: cleanDutyOrderNo,
       orderDate: normalizedDate,
       remark: dutyRemark.trim(),
       issuedAt: new Date().toISOString()
@@ -503,25 +501,49 @@ export default function TransferModule({
     );
   };
 
+  const toolbarExportRows = useMemo(() => {
+    if (activeTab === "ISSUED" && currentOrder) {
+      const cols = ["क्र.सं.", "पद", "बेल्ट नं.", "नाम", "वर्तमान पदस्थापन", "नवीन पदस्थापन", "आदेश नं./दिनांक"];
+      return getTransferRows(currentOrder).map((row) => Object.fromEntries(cols.map((col, idx) => [col, row[idx]])));
+    }
+    if (activeTab === "TENURE") {
+      return tenureEmployees.map(({ employee, rank, years }, idx) => ({
+        "क्र.सं.": idx + 1,
+        "पद": getTransferDisplayCader(employee, identityText) || rank,
+        "बेल्ट नं.": getTransferDisplayBeltNumber(employee, identityText),
+        "नाम": employee.NAME || "",
+        "वर्तमान पदस्थापन": employee.POSTING || "",
+        "पदस्थापन आदेश": employee["POSTING DOB NO"] || "",
+        "पूर्ण वर्ष": years
+      }));
+    }
+    return visibleEmployees.map(({ employee, rank }, idx) => ({
+      "क्र.सं.": idx + 1,
+      "पद": getTransferDisplayCader(employee, identityText) || rank,
+      "बेल्ट नं.": getTransferDisplayBeltNumber(employee, identityText),
+      "नाम": employee.NAME || "",
+      "वर्तमान पदस्थापन": employee.POSTING || ""
+    }));
+  }, [activeTab, currentOrder, tenureEmployees, visibleEmployees]);
+
   const renderRankOptions = () => TRANSFER_RANKS.map((rank) => (
-    <option key={rank} value={rank}>{rank === "ALL" ? "सभी पद" : rank}</option>
+    <option key={rank} value={rank}>{rank === "ALL" ? (english ? "All Posts" : "सभी पद") : rank}</option>
   ));
 
   return (
     <section className="transfer-module">
-      <header className="transfer-header">
-        <div>
-          <p className="transfer-eyebrow">MODULE 02</p>
-          <h2>⇄ स्थानांतरण / आदेश प्रबंधन</h2>
-          <p>कर्मचारी चयन, कार्यकाल समीक्षा और जारी आदेशों का सुरक्षित रिकॉर्ड।</p>
-        </div>
-        <div className="transfer-header-count">
-          <strong>{records.length}</strong>
-          <span>कार्यरत रिकॉर्ड</span>
-        </div>
-      </header>
+      <ModuleHeaderToolbar
+        title={english ? "⇄ Transfer & Order Management" : "⇄ स्थानांतरण / आदेश प्रबंधन"}
+        search={searchText}
+        onSearchChange={setSearchText}
+        gender={genderFilter}
+        onGenderChange={setGenderFilter}
+        rows={toolbarExportRows}
+        fileName={activeTab === "ISSUED" && currentOrder ? `Transfer_Order_${currentOrder.orderNo}` : `Transfer_${activeTab}`}
+        language={language}
+      />
 
-      <nav className="transfer-tabs" role="tablist" aria-label="स्थानांतरण मॉड्यूल टैब">
+      <nav className="transfer-tabs" role="tablist" aria-label={english ? "Transfer module tabs" : "स्थानांतरण मॉड्यूल टैब"}>
         {TAB_ITEMS.map((tab) => (
           <button
             key={tab.id}
@@ -533,7 +555,7 @@ export default function TransferModule({
             className={activeTab === tab.id ? "transfer-tab is-active" : "transfer-tab"}
             onClick={() => setActiveTab(tab.id)}
           >
-            {tab.label}
+            {english ? tab.en : tab.hi}
           </button>
         ))}
       </nav>
@@ -549,13 +571,13 @@ export default function TransferModule({
             <section className="transfer-card">
               <div className="transfer-section-heading">
                 <div>
-                  <h3>1. आदेश विवरण</h3>
-                  <p>आदेश क्रमांक और जारी दिनांक भरें।</p>
+                  <h3>{english ? "Order Details" : "आदेश विवरण"}</h3>
+                  <p>{english ? "Enter order number and issue date." : "आदेश क्रमांक और जारी दिनांक भरें।"}</p>
                 </div>
               </div>
               <div className="transfer-form-grid">
                 <label className="transfer-field">
-                  <span>आदेश क्रमांक (DOB No.)</span>
+                  <span>{english ? "Order Number (DOB No.)" : "आदेश क्रमांक (DOB No.)"}</span>
                   <input
                     type="text"
                     value={orderNo}
@@ -565,7 +587,7 @@ export default function TransferModule({
                   />
                 </label>
                 <label className="transfer-field">
-                  <span>आदेश दिनांक (DD-MM-YYYY)</span>
+                  <span>{english ? "Order Date (DD-MM-YYYY)" : "आदेश दिनांक (DD-MM-YYYY)"}</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -586,33 +608,32 @@ export default function TransferModule({
             <section className="transfer-card">
               <div className="transfer-section-heading">
                 <div>
-                  <h3>2. कर्मचारी खोजें और चुनें</h3>
-                  <p>पद, वर्तमान थाना/कार्यालय और नाम/बेल्ट से सूची फ़िल्टर करें।</p>
+                  <h3>{english ? "Search & Select Employees" : "कर्मचारी खोजें और चुनें"}</h3>
+                  <p>{english ? "Filter by post, current posting, or name/belt." : "पद, वर्तमान थाना/कार्यालय और नाम/बेल्ट से सूची फ़िल्टर करें।"}</p>
                 </div>
-                <span className="transfer-selection-badge">{selectedEmployees.length} चयनित</span>
+                <span className="transfer-selection-badge">{selectedEmployees.length} {english ? "Selected" : "चयनित"}</span>
               </div>
               <div className="transfer-filter-grid">
                 <label className="transfer-field">
-                  <span>पद</span>
+                  <span>{english ? "Post" : "पद"}</span>
                   <select value={rankFilter} onChange={(event) => setRankFilter(event.target.value)}>
                     {renderRankOptions()}
                   </select>
                 </label>
                 <label className="transfer-field">
-                  <span>वर्तमान थाना / कार्यालय</span>
+                  <span>{english ? "Current Station / Office" : "वर्तमान थाना / कार्यालय"}</span>
                   <select value={stationFilter} onChange={(event) => setStationFilter(event.target.value)}>
-                    <option value="ALL">सभी स्थान</option>
-                    {stationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
+                    <option value="ALL">{english ? "All Locations" : "सभी स्थान"}</option>
+                    {stationOptions.map((station) => (
+                      <option
+                        key={station}
+                        value={station}
+                        style={isDevlysText(station) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                      >
+                        {station}
+                      </option>
+                    ))}
                   </select>
-                </label>
-                <label className="transfer-field transfer-search-field">
-                  <span>नाम / बेल्ट नं. खोजें</span>
-                  <input
-                    type="search"
-                    value={searchText}
-                    onChange={(event) => setSearchText(event.target.value)}
-                    placeholder="नाम, बेल्ट या पदस्थापन"
-                  />
                 </label>
               </div>
 
@@ -620,11 +641,11 @@ export default function TransferModule({
                 <table className="transfer-table">
                   <thead>
                     <tr>
-                      <th>चुनें</th>
-                      <th>पद</th>
-                      <th>बेल्ट नं.</th>
-                      <th>नाम</th>
-                      <th>वर्तमान थाना / कार्यालय</th>
+                      <th>{english ? "Select" : "चुनें"}</th>
+                      <th>{english ? "Post" : "पद"}</th>
+                      <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+                      <th>{english ? "Name" : "नाम"}</th>
+                      <th>{english ? "Current Posting" : "वर्तमान थाना / कार्यालय"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -633,19 +654,19 @@ export default function TransferModule({
                         <td>
                           <input
                             type="checkbox"
-                            aria-label={`${displayText(employee.NAME)} को चुनें`}
+                            aria-label={`Select ${employee.NAME || ""}`}
                             checked={selectedIds.has(key)}
                             onChange={(event) => toggleSelected(key, event.target.checked)}
                           />
                         </td>
-                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, displayText) || rank}</td>
-                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, displayText)}</td>
+                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, identityText) || rank}</td>
+                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, identityText)}</td>
                         <td><HindiText text={employee.NAME || ""} /></td>
                         <td><HindiText text={employee.POSTING || "—"} /></td>
                       </tr>
                     ))}
                     {!visibleEmployees.length && (
-                      <tr><td className="transfer-empty" colSpan="5">दिए गए फ़िल्टर में कर्मचारी नहीं मिले।</td></tr>
+                      <tr><td className="transfer-empty" colSpan="5">{english ? "No employees found for the selected filter." : "दिए गए फ़िल्टर में कर्मचारी नहीं मिले।"}</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -656,19 +677,19 @@ export default function TransferModule({
               <section className="transfer-card">
                 <div className="transfer-section-heading">
                   <div>
-                    <h3>3. नया पदस्थापन और रिमार्क</h3>
-                    <p>हर चयनित कर्मचारी के लिए स्थान और आदेश का आधार चुनें।</p>
+                    <h3>{english ? "New Posting & Remark" : "नया पदस्थापन और रिमार्क"}</h3>
+                    <p>{english ? "Select destination posting and remark for each selected employee." : "हर चयनित कर्मचारी के लिए स्थान और आदेश का आधार चुनें।"}</p>
                   </div>
                 </div>
                 <div className="transfer-table-wrap table-responsive-box">
                   <table className="transfer-table assignment-table">
                     <thead>
                       <tr>
-                        <th>कर्मचारी</th>
-                        <th>वर्तमान पदस्थापन</th>
-                        <th>नया पदस्थापन स्थान</th>
-                        <th>रिमार्क</th>
-                        <th>हटाएँ</th>
+                        <th>{english ? "Employee" : "कर्मचारी"}</th>
+                        <th>{english ? "Current Posting" : "वर्तमान पदस्थापन"}</th>
+                        <th>{english ? "New Posting" : "नया पदस्थापन स्थान"}</th>
+                        <th>{english ? "Remark" : "रिमार्क"}</th>
+                        <th>{english ? "Remove" : "हटाएँ"}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -677,7 +698,7 @@ export default function TransferModule({
                           <td>
                             <strong><HindiText text={employee.NAME || ""} /></strong>
                             <small style={ENGLISH_CELL_STYLE}>
-                              {getTransferDisplayBeltNumber(employee, displayText)} · {getTransferDisplayCader(employee, displayText)}
+                              {getTransferDisplayBeltNumber(employee, identityText)} · {getTransferDisplayCader(employee, identityText)}
                             </small>
                           </td>
                           <td><HindiText text={employee.POSTING || "—"} /></td>
@@ -687,19 +708,19 @@ export default function TransferModule({
                               onChange={(event) => updateAssignment(key, "destination", event.target.value)}
                               required
                             >
-                              <option value="">नया स्थान चुनें</option>
+                              <option value="">{english ? "Select Destination" : "नया स्थान चुनें"}</option>
                               {postingOptions.map((place) => (
-                                <option key={place} value={place}>{displayText(place)}</option>
+                                <option key={place} value={place}>{translateUnitName(place, language)}</option>
                               ))}
                             </select>
                             {isHomePoliceStation(
                               assignments[key]?.destination,
                               employee,
-                              displayText,
+                              identityText,
                               PS_CHOWKI_MAP
                             ) && (
                               <p className="transfer-home-ps-warning" role="alert">
-                                ⚠️ सावधान: यह कर्मचारी का गृह थाना (Home PS) है!
+                                ⚠️ {english ? "Warning: This is the employee's Home Police Station!" : "सावधान: यह कर्मचारी का गृह थाना (Home PS) है!"}
                               </p>
                             )}
                           </td>
@@ -717,7 +738,7 @@ export default function TransferModule({
                               className="transfer-remove-button"
                               onClick={() => toggleSelected(key, false)}
                             >
-                              हटाएँ
+                              {english ? "Remove" : "हटाएँ"}
                             </button>
                           </td>
                         </tr>
@@ -726,12 +747,11 @@ export default function TransferModule({
                   </table>
                 </div>
                 <button type="submit" className="transfer-primary-button">
-                  ✅ आदेश जारी करें एवं डेटा अपडेट करें
+                  ✅ {english ? "Issue Transfer Order & Update Data" : "आदेश जारी करें एवं डेटा अपडेट करें"}
                 </button>
               </section>
             )}
           </form>
-
         </div>
       )}
 
@@ -745,29 +765,37 @@ export default function TransferModule({
           <section className="transfer-card">
             <div className="transfer-section-heading">
               <div>
-                <h3>एक ही स्थान पर कार्यकाल अवधि</h3>
-                <p>POSTING DOB NO में दर्ज दिनांक से आज तक पूर्ण वर्ष गणना की गई है।</p>
+                <h3>{english ? "Tenure Duration at Current Posting" : "एक ही स्थान पर कार्यकाल अवधि"}</h3>
+                <p>{english ? "Calculated from POSTING DOB NO date up to today." : "POSTING DOB NO में दर्ज दिनांक से आज तक पूर्ण वर्ष गणना की गई है।"}</p>
               </div>
-              <span className="transfer-selection-badge">{tenureEmployees.length} कर्मचारी</span>
+              <span className="transfer-selection-badge">{tenureEmployees.length} {english ? "Employees" : "कर्मचारी"}</span>
             </div>
             <div className="transfer-filter-grid tenure-filter-grid">
               <label className="transfer-field">
-                <span>कार्यकाल</span>
+                <span>{english ? "Tenure" : "कार्यकाल"}</span>
                 <select value={tenureYears} onChange={(event) => setTenureYears(Number(event.target.value))}>
-                  {[2, 3, 4, 5].map((years) => <option key={years} value={years}>{years}+ वर्ष</option>)}
+                  {[2, 3, 4, 5].map((years) => <option key={years} value={years}>{years}+ {english ? "Years" : "वर्ष"}</option>)}
                 </select>
               </label>
               <label className="transfer-field">
-                <span>पद</span>
+                <span>{english ? "Post" : "पद"}</span>
                 <select value={tenureRankFilter} onChange={(event) => setTenureRankFilter(event.target.value)}>
                   {renderRankOptions()}
                 </select>
               </label>
               <label className="transfer-field">
-                <span>थाना / कार्यालय</span>
+                <span>{english ? "Station / Office" : "थाना / कार्यालय"}</span>
                 <select value={tenureStationFilter} onChange={(event) => setTenureStationFilter(event.target.value)}>
-                  <option value="ALL">सभी स्थान</option>
-                  {stationOptions.map((station) => <option key={station} value={station}>{station}</option>)}
+                  <option value="ALL">{english ? "All Locations" : "सभी स्थान"}</option>
+                  {stationOptions.map((station) => (
+                    <option
+                      key={station}
+                      value={station}
+                      style={isDevlysText(station) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                    >
+                      {station}
+                    </option>
+                  ))}
                 </select>
               </label>
             </div>
@@ -775,13 +803,13 @@ export default function TransferModule({
               <table className="transfer-table">
                 <thead>
                   <tr>
-                    <th>चुनें</th>
-                    <th>पद</th>
-                    <th>बेल्ट नं.</th>
-                    <th>नाम</th>
-                    <th>वर्तमान पदस्थापन</th>
-                    <th>पदस्थापन आदेश / दिनांक</th>
-                    <th>पूर्ण अवधि</th>
+                    <th>{english ? "Select" : "चुनें"}</th>
+                    <th>{english ? "Post" : "पद"}</th>
+                    <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+                    <th>{english ? "Name" : "नाम"}</th>
+                    <th>{english ? "Current Posting" : "वर्तमान पदस्थापन"}</th>
+                    <th>{english ? "Posting Order / Date" : "पदस्थापन आदेश / दिनांक"}</th>
+                    <th>{english ? "Completed Tenure" : "पूर्ण अवधि"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -790,7 +818,7 @@ export default function TransferModule({
                       <td>
                         <input
                           type="checkbox"
-                          aria-label={`${displayText(employee.NAME)} को स्थानांतरण सूची में चुनें`}
+                          aria-label={`Select ${employee.NAME || ""}`}
                           checked={tenureSelectedIds.has(key)}
                           onChange={(event) => setTenureSelectedIds((previous) => {
                             const next = new Set(previous);
@@ -800,16 +828,16 @@ export default function TransferModule({
                           })}
                         />
                       </td>
-                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, displayText) || rank}</td>
-                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, displayText)}</td>
+                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, identityText) || rank}</td>
+                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, identityText)}</td>
                       <td><HindiText text={employee.NAME || ""} /></td>
                       <td><HindiText text={employee.POSTING || ""} /></td>
-                      <td>{displayText(employee["POSTING DOB NO"] || "")}</td>
-                      <td><strong>{years} वर्ष</strong></td>
+                      <td style={ENGLISH_CELL_STYLE}><HindiText text={employee["POSTING DOB NO"] || ""} /></td>
+                      <td><strong>{years} {english ? "Yrs" : "वर्ष"}</strong></td>
                     </tr>
                   ))}
                   {!tenureEmployees.length && (
-                    <tr><td className="transfer-empty" colSpan="7">इस अवधि और फ़िल्टर के लिए रिकॉर्ड नहीं मिला।</td></tr>
+                    <tr><td className="transfer-empty" colSpan="7">{english ? "No records match this duration and filter." : "इस अवधि और फ़िल्टर के लिए रिकॉर्ड नहीं मिला।"}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -820,7 +848,7 @@ export default function TransferModule({
               disabled={!tenureSelectedIds.size}
               onClick={sendTenureSelectionToOrder}
             >
-              चयनित कर्मचारियों को स्थानांतरण सूची में भेजें ({tenureSelectedIds.size})
+              {english ? `Send Selected to Transfer Order (${tenureSelectedIds.size})` : `चयनित कर्मचारियों को स्थानांतरण सूची में भेजें (${tenureSelectedIds.size})`}
             </button>
           </section>
         </div>
@@ -836,21 +864,21 @@ export default function TransferModule({
           <section className="transfer-card">
             <div className="transfer-section-heading">
               <div>
-                <h3>जारी स्थानांतरण आदेश</h3>
-                <p>आदेश इस जिले की Posting_History में सुरक्षित हैं और यहाँ से दोबारा प्रिंट किए जा सकते हैं।</p>
+                <h3>{english ? "Issued Transfer Orders" : "जारी स्थानांतरण आदेश"}</h3>
+                <p>{english ? "Orders are saved in Posting_History and can be reprinted anytime." : "आदेश इस जिले की Posting_History में सुरक्षित हैं और यहाँ से दोबारा प्रिंट किए जा सकते हैं।"}</p>
               </div>
-              <span className="transfer-selection-badge">{issuedOrders.length} आदेश</span>
+              <span className="transfer-selection-badge">{issuedOrders.length} {english ? "Orders" : "आदेश"}</span>
             </div>
             {!issuedOrders.length ? (
-              <p className="transfer-empty-message">अभी कोई स्थानांतरण आदेश जारी नहीं हुआ है।</p>
+              <p className="transfer-empty-message">{english ? "No transfer order issued yet." : "अभी कोई स्थानांतरण आदेश जारी नहीं हुआ है।"}</p>
             ) : (
               <>
                 <label className="transfer-field transfer-order-picker">
-                  <span>आदेश चुनें</span>
+                  <span>{english ? "Select Order" : "आदेश चुनें"}</span>
                   <select value={currentOrder?.id || ""} onChange={(event) => setSelectedOrderId(event.target.value)}>
                     {issuedOrders.map((order) => (
                       <option key={order.id} value={order.id}>
-                        आदेश {order.orderNo} · {order.orderDate} · {order.rows.length} कर्मचारी
+                        {english ? "Order" : "आदेश"} {order.orderNo} · {order.orderDate} · {order.rows.length} {english ? "Employees" : "कर्मचारी"}
                       </option>
                     ))}
                   </select>
@@ -858,36 +886,44 @@ export default function TransferModule({
                 {currentOrder && (
                   <>
                     <div className="transfer-order-summary">
-                      <strong>आदेश क्रमांक: {currentOrder.orderNo}</strong>
-                      <span>दिनांक: {currentOrder.orderDate}</span>
-                      <span>कर्मचारी: {currentOrder.rows.length}</span>
+                      <strong>{english ? "Order No." : "आदेश क्रमांक"}: {currentOrder.orderNo}</strong>
+                      <span>{english ? "Date" : "दिनांक"}: {currentOrder.orderDate}</span>
+                      <span>{english ? "Employees" : "कर्मचारी"}: {currentOrder.rows.length}</span>
                     </div>
                     <div className="transfer-table-wrap table-responsive-box">
                       <table className="transfer-table">
                         <thead>
-                          <tr>{ORDER_COLUMNS.map((column) => <th key={column}>{column}</th>)}</tr>
+                          <tr>
+                            <th>{english ? "S.N." : "क्र.सं."}</th>
+                            <th>{english ? "Post" : "पद"}</th>
+                            <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+                            <th>{english ? "Name" : "नाम"}</th>
+                            <th>{english ? "Current Posting" : "वर्तमान पदस्थापन"}</th>
+                            <th>{english ? "New Posting" : "नवीन पदस्थापन"}</th>
+                            <th>{english ? "Order No. / Date" : "आदेश नं./दिनांक"}</th>
+                            <th>{english ? "Slip" : "पर्ची"}</th>
+                          </tr>
                         </thead>
                         <tbody>
                           {currentOrder.rows.map((employee, index) => (
                             <tr key={`${currentOrder.id}-${employee["BELT NO"] || employee.NAME}-${index}`}>
-                              <td>{index + 1}</td>
-                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, displayText)}</td>
-                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, displayText)}</td>
+                              <td style={ENGLISH_CELL_STYLE}>{index + 1}</td>
+                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, identityText)}</td>
+                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, identityText)}</td>
                               <td><HindiText text={employee.NAME || ""} /></td>
                               <td><HindiText text={employee.OLD_POSTING || "—"} /></td>
-                              <td>{displayText(employee.POSTING_PLACE || "")}</td>
-                              <td>{`${currentOrder.orderNo} / ${currentOrder.orderDate}`}</td>
+                              <td><HindiText text={employee.POSTING_PLACE || ""} /></td>
+                              <td style={ENGLISH_CELL_STYLE}>{`${currentOrder.orderNo} / ${currentOrder.orderDate}`}</td>
                               <td>
                                 <button
                                   type="button"
                                   className="transfer-slip-button"
                                   onClick={() => printRelievingJoiningSlip(
                                     currentOrder,
-                                    currentOrder.rows[index],
-                                    displayText
+                                    currentOrder.rows[index]
                                   )}
                                 >
-                                  📄 रिलीविंग पर्ची
+                                  📄 {english ? "Relieving Slip" : "रिलीविंग पर्ची"}
                                 </button>
                               </td>
                             </tr>
@@ -896,17 +932,9 @@ export default function TransferModule({
                       </table>
                     </div>
                     <div className="transfer-action-row">
-                      <button type="button" className="transfer-primary-button" onClick={() => printTransferOrder(currentOrder, displayText)}>
-                        🖨️ आदेश प्रिंट करें
+                      <button type="button" className="transfer-primary-button" onClick={() => printTransferOrder(currentOrder)}>
+                        🖨️ {english ? "Print Official Order" : "आदेश प्रिंट करें"}
                       </button>
-                      <ExportBar
-                        title={`स्थानांतरण आदेश ${currentOrder.orderNo}`}
-                        rows={getTransferRows(currentOrder, displayText).map((row) => (
-                          Object.fromEntries(ORDER_COLUMNS.map((column, index) => [column, row[index]]))
-                        ))}
-                        fileName={`Transfer_Order_${currentOrder.orderNo}`}
-                        actions={["excel", "word", "pdf"]}
-                      />
                     </div>
                   </>
                 )}
@@ -926,8 +954,8 @@ export default function TransferModule({
           <section className="transfer-card">
             <div className="transfer-section-heading">
               <div>
-                <h3>संलग्नीकरण एवं प्रतिनियुक्ति</h3>
-                <p>कार्यालय, थाना, चुनाव/मेला ड्यूटी में अस्थायी तैनाती दर्ज करें।</p>
+                <h3>{english ? "Attachment & Deputation" : "संलग्नीकरण एवं प्रतिनियुक्ति"}</h3>
+                <p>{english ? "Record temporary duty in office, PS, election, or fair." : "कार्यालय, थाना, चुनाव/मेला ड्यूटी में अस्थायी तैनाती दर्ज करें।"}</p>
               </div>
             </div>
             <div className="transfer-duty-counts">
@@ -937,47 +965,51 @@ export default function TransferModule({
             <form onSubmit={applyDutyAction}>
               <div className="transfer-filter-grid">
                 <label className="transfer-field">
-                  <span>कर्मचारी</span>
+                  <span>{english ? "Employee" : "कर्मचारी"}</span>
                   <select
                     value={dutyEmployeeKey}
                     onChange={(event) => setDutyEmployeeKey(event.target.value)}
                     required
                   >
-                    <option value="">कर्मचारी चुनें</option>
+                    <option value="">{english ? "Select Employee" : "कर्मचारी चुनें"}</option>
                     {recordsWithKeys.map(({ employee, key }) => (
-                      <option key={key} value={key}>
-                        {displayText(employee["BELT NO"] || "")} · {displayText(employee.NAME || "")}
+                      <option
+                        key={key}
+                        value={key}
+                        style={isDevlysText(employee.NAME) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                      >
+                        {employee["BELT NO"] || "-"} · {employee.NAME || ""}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label className="transfer-field">
-                  <span>कार्यवाही</span>
+                  <span>{english ? "Action" : "कार्यवाही"}</span>
                   <select value={dutyType} onChange={(event) => setDutyType(event.target.value)}>
-                    <option value="ATTACHMENT">संलग्नीकरण (Attachment)</option>
-                    <option value="DEPUTATION">प्रतिनियुक्ति (Deputation)</option>
-                    <option value="RELIEVE">कार्य-मुक्त (Relieve)</option>
-                    <option value="RETIRE">सेवानिवृत्ति / मृत्यु</option>
+                    <option value="ATTACHMENT">{english ? "Attachment" : "संलग्नीकरण (Attachment)"}</option>
+                    <option value="DEPUTATION">{english ? "Deputation" : "प्रतिनियुक्ति (Deputation)"}</option>
+                    <option value="RELIEVE">{english ? "Relieve" : "कार्य-मुक्त (Relieve)"}</option>
+                    <option value="RETIRE">{english ? "Retirement / Death" : "सेवानिवृत्ति / मृत्यु"}</option>
                   </select>
                 </label>
                 {["ATTACHMENT", "DEPUTATION"].includes(dutyType) && (
                   <>
                     <label className="transfer-field">
-                      <span>नया कार्यालय / थाना / ड्यूटी</span>
+                      <span>{english ? "New Office / PS / Duty" : "नया कार्यालय / थाना / ड्यूटी"}</span>
                       <select
                         value={dutyPlace}
                         onChange={(event) => setDutyPlace(event.target.value)}
                         required
                       >
-                        <option value="">स्थान चुनें</option>
+                        <option value="">{english ? "Select Location" : "स्थान चुनें"}</option>
                         {temporaryDutyOptions.map((place) => (
-                          <option key={place} value={place}>{displayText(place)}</option>
+                          <option key={place} value={place}>{translateUnitName(place, language)}</option>
                         ))}
                       </select>
                     </label>
                     {dutyPlace === "अन्य स्थान" && (
                       <label className="transfer-field">
-                        <span>अन्य ड्यूटी / स्थान का नाम</span>
+                        <span>{english ? "Other Duty / Location Name" : "अन्य ड्यूटी / स्थान का नाम"}</span>
                         <input
                           value={dutyCustomPlace}
                           onChange={(event) => setDutyCustomPlace(event.target.value)}
@@ -988,7 +1020,7 @@ export default function TransferModule({
                   </>
                 )}
                 <label className="transfer-field">
-                  <span>आदेश क्रमांक</span>
+                  <span>{english ? "Order Number" : "आदेश क्रमांक"}</span>
                   <input
                     value={dutyOrderNo}
                     onChange={(event) => setDutyOrderNo(event.target.value)}
@@ -997,7 +1029,7 @@ export default function TransferModule({
                   />
                 </label>
                 <label className="transfer-field">
-                  <span>आदेश दिनांक (DD-MM-YYYY)</span>
+                  <span>{english ? "Order Date (DD-MM-YYYY)" : "आदेश दिनांक (DD-MM-YYYY)"}</span>
                   <input
                     inputMode="numeric"
                     value={dutyOrderDate}
@@ -1013,25 +1045,24 @@ export default function TransferModule({
                 </label>
                 {["ATTACHMENT", "DEPUTATION"].includes(dutyType) && (
                   <label className="transfer-field">
-                    <span>ड्यूटी / कार्यवाही का विवरण</span>
+                    <span>{english ? "Remark / Details" : "ड्यूटी / कार्यवाही का विवरण"}</span>
                     <input
                       value={dutyRemark}
                       onChange={(event) => setDutyRemark(event.target.value)}
-                      placeholder="वैकल्पिक विवरण"
+                      placeholder={english ? "Optional details" : "वैकल्पिक विवरण"}
                     />
                   </label>
                 )}
               </div>
               {dutyEmployee && (
                 <p className="transfer-duty-employee">
-                  चयनित कर्मचारी: <strong>{displayText(dutyEmployee.NAME || "")}</strong>
-                  {" · "}{displayText(dutyEmployee["BELT NO"] || "")}
-                  {" · वर्तमान पदस्थापन: "}{displayText(dutyEmployee.POSTING || "—")}
+                  {english ? "Selected Employee" : "चयनित कर्मचारी"}: <strong><HindiText text={dutyEmployee.NAME || ""} /></strong>
+                  {" · "}<span style={ENGLISH_CELL_STYLE}>{dutyEmployee["BELT NO"] || "-"}</span>
+                  {" · "}{english ? "Current Posting" : "वर्तमान पदस्थापन"}: <HindiText text={dutyEmployee.POSTING || "—"} />
                 </p>
               )}
               <button type="submit" className="transfer-primary-button">
-                {dutyType === "ATTACHMENT" ? "✅ संलग्नीकरण सुरक्षित करें" :
-                  dutyType === "DEPUTATION" ? "✅ प्रतिनियुक्ति सुरक्षित करें" : "✅ कार्यवाही लागू करें"}
+                ✅ {english ? "Save Action" : (dutyType === "ATTACHMENT" ? "संलग्नीकरण सुरक्षित करें" : dutyType === "DEPUTATION" ? "प्रतिनियुक्ति सुरक्षित करें" : "कार्यवाही लागू करें")}
               </button>
             </form>
           </section>
