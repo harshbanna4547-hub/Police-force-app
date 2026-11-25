@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
-import { devToHindi } from "../utils/devlysConverter";
 import { isDevlysText } from "./isDevlysText";
+import HindiText from "./HindiText";
 
 const POSTING_OPTIONS = [
   ...new Set([...OFFICE_CO_PS_LIST, ...Object.values(PS_CHOWKI_MAP).flat()])
@@ -94,8 +94,7 @@ function getStoredValue(employee, key) {
 }
 
 function displayValue(value) {
-  const text = value === null || value === undefined ? "" : String(value);
-  return isDevlysText(text) ? devToHindi(text) : text;
+  return value === null || value === undefined ? "" : String(value);
 }
 
 function dateInputValue(value) {
@@ -160,10 +159,10 @@ const inputStyle = {
   fontSize: "0.95rem"
 };
 
-export default function EmployeeEditModal({ employee, isNew = false, onSave, onClose }) {
+export default function EmployeeEditModal({ employee, isNew = false, initialTab = FIELD_GROUPS[0].id, onSave, onClose }) {
   const [form, setForm] = useState(() => createForm(employee));
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState(FIELD_GROUPS[0].id);
+  const [activeTab, setActiveTab] = useState(initialTab || FIELD_GROUPS[0].id);
 
   if (!employee) return null;
 
@@ -208,7 +207,7 @@ export default function EmployeeEditModal({ employee, isNew = false, onSave, onC
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
           <div>
             <h2 style={{ margin: 0, color: "#0B1E3D", fontSize: "1.2rem" }}>{isNew ? "➕ नया कर्मचारी जोड़ें" : "✏️ कर्मचारी विवरण संपादित करें"}</h2>
-            <div style={{ marginTop: "4px", color: "#475569", fontSize: "0.9rem" }}>{displayValue(getStoredValue(employee, "NAME"))}</div>
+            <div style={{ marginTop: "4px", color: "#475569", fontSize: "0.9rem" }}><HindiText text={getStoredValue(employee, "NAME")} /></div>
           </div>
           <button type="button" onClick={onClose} aria-label="बंद करें" style={{ border: 0, background: "transparent", fontSize: "1.4rem", cursor: "pointer", color: "#475569" }}>✕</button>
         </div>
@@ -227,8 +226,10 @@ export default function EmployeeEditModal({ employee, isNew = false, onSave, onC
               {group.fields.map(({ key, label, type }) => {
                 const currentValue = form[key] ?? "";
                 const options = type === "office" ? [...new Set([...POSTING_OPTIONS, String(currentValue).trim()].filter(Boolean))] : [];
-                const fontFamily = type === "legacy-text"
-                  ? (/[\u0900-\u097F]/.test(String(currentValue)) ? "inherit" : "'DevLys 010', 'Kruti Dev 010', sans-serif")
+                const rawVal = String(currentValue ?? "");
+                const isLegacyDevlys = type === "legacy-text" || (key === "POSTING" && isDevlysText(rawVal)) || isDevlysText(rawVal);
+                const fontFamily = type === "legacy-text" || (key === "POSTING" && isLegacyDevlys)
+                  ? (/[\u0900-\u097F]/.test(rawVal) ? "'Noto Sans Devanagari', sans-serif" : "'DevLys 010', sans-serif")
                   : "'Times New Roman', Times, serif";
                 const textStyle = { ...inputStyle, marginTop: "5px", fontFamily, fontSize: type === "legacy-text" ? "1.15rem" : inputStyle.fontSize };
                 return (

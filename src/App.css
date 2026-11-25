@@ -6,10 +6,17 @@
 
 .app-main-content {
   min-width: 0;
-  width: calc(100% - 260px) !important;
+  width: calc(100% - 260px);
   flex: 1;
   margin-left: 260px;
   overflow-x: hidden;
+  transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.app-main-content.is-expanded,
+.app-shell.is-sidebar-closed .app-main-content {
+  margin-left: 0;
+  width: 100%;
 }
 
 .portal-sidebar-nav {
@@ -22,7 +29,19 @@
   height: 100vh !important;
   min-height: 100vh !important;
   overflow-y: auto !important;
-  z-index: 100 !important;
+  z-index: 1000 !important;
+  transform: translateX(0);
+  transition: transform 0.3s ease !important;
+}
+
+.portal-sidebar-nav.is-closed {
+  transform: translateX(-100%) !important;
+  pointer-events: none;
+}
+
+.portal-sidebar-nav.is-open {
+  transform: translateX(0) !important;
+  pointer-events: auto;
 }
 
 .strength-summary-table {
@@ -51,15 +70,10 @@
   text-align: center;
 }
 
-@media (min-width: 769px) {
-  .portal-sidebar-nav {
-    transform: none !important;
-  }
-}
-
 @media (max-width: 768px) {
-  .app-main-content {
-    margin-left: 0;
+  .app-main-content,
+  .app-main-content.has-sidebar {
+    margin-left: 0 !important;
     width: 100% !important;
   }
 

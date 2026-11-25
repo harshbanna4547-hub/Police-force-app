@@ -13,7 +13,6 @@ export default function TopHeaderAndStats({
   onLanguageChange
 }) {
   const {
-    fileName,
     records,
     attRecords,
     depRecords,
@@ -27,20 +26,21 @@ export default function TopHeaderAndStats({
         setSidebarOpen={setSidebarOpen}
         activeView={activeView}
         setActiveView={setActiveView}
-        fileName={fileName}
         theme={theme}
         onThemeChange={onThemeChange}
         language={language}
         onLanguageChange={onLanguageChange}
       />
-      <StatCards
-        totalSanc={totalSanc}
-        activeCount={records.length}
-        attCount={attRecords.length}
-        depCount={depRecords.length}
-        activeView={activeView}
-        setActiveView={setActiveView}
-      />
+      {activeView === "HOME" && (
+        <StatCards
+          totalSanc={totalSanc}
+          activeCount={records.length}
+          attCount={attRecords.length}
+          depCount={depRecords.length}
+          setActiveView={setActiveView}
+          language={language}
+        />
+      )}
     </>
   );
 }

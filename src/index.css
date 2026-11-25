@@ -187,26 +187,7 @@ table {
 
   .portal-top-header {
     padding: 6px clamp(8px, 2vw, 14px) !important;
-    flex-wrap: nowrap !important;
     gap: 6px !important;
-  }
-
-  .portal-top-header > div:first-child {
-    min-width: 0;
-    flex: 1 1 auto;
-    align-items: center !important;
-    gap: 8px !important;
-  }
-
-  .portal-top-header > div:first-child > div {
-    min-width: 0;
-    overflow: hidden;
-  }
-
-  .portal-top-header > div:last-child {
-    width: auto;
-    flex: 0 0 auto;
-    gap: 4px !important;
   }
 
   .portal-top-header h1 {
@@ -215,9 +196,9 @@ table {
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
+    max-width: 100%;
   }
 
-  .portal-top-header small,
   .portal-top-header .header-back-button,
   .portal-top-header .header-action-label {
     display: none !important;

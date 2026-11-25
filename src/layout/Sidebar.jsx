@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+const DIRECT_SIDEBAR_IDS = new Set(["EMPLOYEES", "STORAGE", "DEV_SERVICES"]);
+
 export default function Sidebar({
   className = "",
   sidebarOpen,
@@ -13,11 +15,33 @@ export default function Sidebar({
   onOpenDistrictSwitcher
 }) {
   const [modulesOpen, setModulesOpen] = useState(false);
-  const visibleModules = modules.filter((module) => module.enabled !== false && module.id !== "DEV_SERVICES");
+  const english = language === "en";
+  const employeesModule = modules.find((module) => module.id === "EMPLOYEES" && module.enabled !== false);
+  const storageModule = modules.find((module) => module.id === "STORAGE" && module.enabled !== false);
+  const visibleModules = modules.filter(
+    (module) => module.enabled !== false && !DIRECT_SIDEBAR_IDS.has(module.id)
+  );
+
   const selectView = (view) => {
     setActiveView(view);
     if (window.matchMedia("(max-width: 768px)").matches) setSidebarOpen(false);
   };
+
+  const navButtonStyle = (isActive) => ({
+    width: "100%",
+    padding: "11px 12px",
+    marginBottom: "6px",
+    border: "none",
+    borderRadius: "8px",
+    textAlign: "left",
+    background: isActive ? "#1D63DC" : "transparent",
+    color: "white",
+    fontWeight: isActive ? "bold" : "normal",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
+  });
 
   return (
     <>
@@ -30,138 +54,140 @@ export default function Sidebar({
       )}
       <aside
         className={`portal-sidebar ${className} ${sidebarOpen ? "is-open" : "is-closed"}`}
+        aria-hidden={!sidebarOpen}
         style={{
-          width: sidebarOpen ? "280px" : "0px",
-          minWidth: sidebarOpen ? "280px" : "0px",
-          height: "100vh",
-          minHeight: "100vh",
-          position: "sticky",
-          top: 0,
-          alignSelf: "flex-start",
           backgroundColor: "#0B1E3D",
           color: "white",
-          transition: "all 0.3s ease",
           overflowY: "auto",
           overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          zIndex: 999,
           flexShrink: 0
         }}
       >
-        {sidebarOpen && (
-          <>
-            <section style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
-              <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", textAlign: "center" }}>
-                <strong style={{ display: "block", fontSize: "0.95rem" }}>👮‍♂️ {activeProfile}</strong>
-                <span style={{ display: "block", marginTop: "5px", color: "#BFDBFE", fontSize: "0.8rem" }}>
-                  📍 {currentDistrict?.name || activeProfile}
-                </span>
+        <section style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+          <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", textAlign: "center" }}>
+            <strong style={{ display: "block", fontSize: "0.95rem" }}>👮‍♂️ {activeProfile}</strong>
+            <span style={{ display: "block", marginTop: "5px", color: "#BFDBFE", fontSize: "0.8rem" }}>
+              📍 {currentDistrict?.name || activeProfile}
+            </span>
+            <button
+              type="button"
+              onClick={onOpenDistrictSwitcher}
+              style={{
+                marginTop: "9px",
+                padding: "6px 10px",
+                border: "1px solid rgba(255,255,255,0.35)",
+                borderRadius: "7px",
+                background: "transparent",
+                color: "white",
+                fontSize: "0.78rem",
+                cursor: "pointer"
+              }}
+            >
+              🔄 {english ? "Switch District" : "जिला बदलें"}
+            </button>
+          </div>
+        </section>
+
+        <nav aria-label={english ? "Main navigation" : "मुख्य नेविगेशन"} style={{ flex: 1, padding: "12px 10px" }}>
+          <button
+            type="button"
+            onClick={() => selectView("HOME")}
+            style={navButtonStyle(activeView === "HOME")}
+          >
+            🏠 {english ? "Home (Dashboard)" : "होम (डैशबोर्ड)"}
+          </button>
+
+          {employeesModule && (
+            <button
+              type="button"
+              onClick={() => selectView("EMPLOYEES")}
+              style={navButtonStyle(activeView === "EMPLOYEES")}
+            >
+              {employeesModule.icon} {english ? employeesModule.title : (employeesModule.hindiTitle || employeesModule.title)}
+            </button>
+          )}
+
+          {storageModule && (
+            <button
+              type="button"
+              onClick={() => selectView("STORAGE")}
+              style={navButtonStyle(activeView === "STORAGE")}
+            >
+              {storageModule.icon} {english ? storageModule.title : (storageModule.hindiTitle || storageModule.title)}
+            </button>
+          )}
+
+          <button
+            type="button"
+            aria-expanded={modulesOpen}
+            aria-controls="sidebar-modules-list"
+            onClick={() => setModulesOpen((open) => !open)}
+            style={{
+              ...navButtonStyle(false),
+              fontWeight: "bold",
+              marginTop: "4px"
+            }}
+          >
+            📂 {english ? "Modules" : "मॉड्यूल"} {modulesOpen ? "▴" : "▾"}
+          </button>
+
+          {modulesOpen && (
+            <div id="sidebar-modules-list">
+              {visibleModules.map((module) => (
                 <button
+                  key={module.id}
                   type="button"
-                  onClick={onOpenDistrictSwitcher}
-                  style={{ marginTop: "9px", padding: "6px 10px", border: "1px solid rgba(255,255,255,0.35)", borderRadius: "7px", background: "transparent", color: "white", fontSize: "0.78rem", cursor: "pointer" }}
+                  title={english ? module.title : (module.hindiTitle || module.title)}
+                  onClick={() => selectView(module.id)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 12px",
+                    marginBottom: "4px",
+                    border: "none",
+                    borderRadius: "8px",
+                    textAlign: "left",
+                    background: activeView === module.id ? "rgba(255,255,255,0.18)" : "transparent",
+                    color: "white",
+                    fontWeight: activeView === module.id ? "bold" : "normal",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis"
+                  }}
                 >
-                  🔄 Switch User
+                  {module.icon} {english ? module.title : (module.hindiTitle || module.title)}
                 </button>
-              </div>
-            </section>
-
-            <nav aria-label="मुख्य नेविगेशन" style={{ flex: 1, padding: "12px 10px" }}>
-              <button
-                type="button"
-                onClick={() => selectView("HOME")}
-                style={{
-                  width: "100%",
-                  padding: "11px 12px",
-                  marginBottom: "8px",
-                  border: "none",
-                  borderRadius: "8px",
-                  textAlign: "left",
-                  background: activeView === "HOME" ? "#1D63DC" : "transparent",
-                  color: "white",
-                  fontWeight: activeView === "HOME" ? "bold" : "normal",
-                  cursor: "pointer"
-                }}
-              >
-                🏠 {language === "en" ? "Home (Dashboard)" : "होम (डैशबोर्ड)"}
-              </button>
-
-              <button
-                type="button"
-                aria-expanded={modulesOpen}
-                aria-controls="sidebar-modules-list"
-                onClick={() => setModulesOpen((open) => !open)}
-                style={{
-                  width: "100%",
-                  padding: "11px 12px",
-                  marginBottom: "8px",
-                  border: "none",
-                  borderRadius: "8px",
-                  textAlign: "left",
-                  background: "transparent",
-                  color: "white",
-                  fontWeight: "bold",
-                  cursor: "pointer"
-                }}
-              >
-                📂 {language === "en" ? "Modules" : "मॉड्यूल"} {modulesOpen ? "▴" : "▾"}
-              </button>
-              {modulesOpen && (
-                <div id="sidebar-modules-list">
-                  {visibleModules.map((module) => (
-                    <button
-                      key={module.id}
-                      type="button"
-                      title={module.title}
-                      onClick={() => selectView(module.id)}
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        marginBottom: "4px",
-                        border: "none",
-                        borderRadius: "8px",
-                        textAlign: "left",
-                        background: activeView === module.id ? "rgba(255,255,255,0.18)" : "transparent",
-                        color: "white",
-                        fontWeight: activeView === module.id ? "bold" : "normal",
-                        cursor: "pointer",
-                        whiteSpace: "nowrap"
-                      }}
-                    >
-                      {module.icon} {language === "en" ? module.title : (module.hindiTitle || module.title)}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </nav>
-
-            <div style={{ marginTop: "auto" }}>
-              <button
-                type="button"
-                onClick={() => selectView("DEV_SERVICES")}
-                style={{
-                  width: "calc(100% - 20px)",
-                  padding: "11px 12px",
-                  margin: "8px 10px",
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  borderRadius: "8px",
-                  textAlign: "left",
-                  background: activeView === "DEV_SERVICES" ? "#1D63DC" : "rgba(255,255,255,0.06)",
-                  color: "white",
-                  fontWeight: activeView === "DEV_SERVICES" ? "bold" : "normal",
-                  cursor: "pointer"
-                }}
-              >
-                🛠️ Development Services
-              </button>
-              <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.78rem", textAlign: "center" }}>
-                District Police Portal
-              </footer>
+              ))}
             </div>
-          </>
-        )}
+          )}
+        </nav>
+
+        <div style={{ marginTop: "auto" }}>
+          <button
+            type="button"
+            onClick={() => selectView("DEV_SERVICES")}
+            style={{
+              width: "calc(100% - 20px)",
+              padding: "11px 12px",
+              margin: "8px 10px",
+              border: "1px solid rgba(255,255,255,0.2)",
+              borderRadius: "8px",
+              textAlign: "left",
+              background: activeView === "DEV_SERVICES" ? "#1D63DC" : "rgba(255,255,255,0.06)",
+              color: "white",
+              fontWeight: activeView === "DEV_SERVICES" ? "bold" : "normal",
+              cursor: "pointer"
+            }}
+          >
+            🛠️ {english ? "Development Services" : "डेवलपमेंट सेवाएँ"}
+          </button>
+          <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.78rem", textAlign: "center" }}>
+            {english ? "District Police Portal" : "जिला पुलिस पोर्टल"}
+          </footer>
+        </div>
       </aside>
       <style>{`
         @media (max-width: 768px) {

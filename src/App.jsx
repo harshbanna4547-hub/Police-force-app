@@ -96,7 +96,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell" data-theme={theme} style={{ display: "flex", minHeight: "100vh", maxWidth: "100%", overflowX: "hidden", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
+    <div className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"}`} data-theme={theme} style={{ display: "flex", minHeight: "100vh", maxWidth: "100%", overflowX: "hidden", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
       <SidebarNav
         portalData={portalData}
         sidebarOpen={sidebarOpen}
@@ -108,7 +108,7 @@ export default function App() {
         onDistrictChange={handleDistrictChange}
         language={language}
       />
-      <div className="app-main-content" style={{ minWidth: 0, flex: 1, width: "100%", display: "flex", flexDirection: "column", overflowX: "hidden" }}>
+      <div className={`app-main-content ${sidebarOpen ? "has-sidebar" : "is-expanded"}`} style={{ minWidth: 0, flex: 1, width: "100%", display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats
           portalData={portalData}
           activeView={activeView}
@@ -123,8 +123,9 @@ export default function App() {
         <main className="app-main-area" style={{ minWidth: 0, width: "100%", padding: "12px 24px 24px", flex: 1, overflowX: "hidden" }}>
           {activeView === "HOME" ? (
             <ModuleCardGrid
-              modules={modules.filter((module) => module.id !== "DEV_SERVICES")}
+              modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "DEV_SERVICES"].includes(module.id))}
               onOpenModule={setActiveView}
+              language={language}
             />
           ) : (
             <PortalModuleContent
@@ -132,6 +133,7 @@ export default function App() {
               portalData={portalData}
               districtId={currentDistrict.id}
               modules={modules}
+              language={language}
             />
           )}
         </main>
