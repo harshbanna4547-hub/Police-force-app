@@ -1,4 +1,5 @@
 // src/forceLogic.js
+import { devToHindi } from "./utils/devlysConverter.js";
 
 export const CADRE_GROUPS = [
   {
@@ -138,8 +139,67 @@ export const DEFAULT_SANCTIONED = {
   KENNEL_BOY: 0, TAILOR: 1
 };
 
+const normalizeUnitText = (value) => String(value || "")
+  .toLocaleLowerCase()
+  .replace(/चितौडगढ़|चितौड़गढ़|चित्तौडगढ|चित्तौडगढ़/g, "चित्तौड़गढ़")
+  .replace(/निंबाहेड़ा|निम्बाहेडा|निंबाहेडा/g, "निम्बाहेड़ा")
+  .replace(/बेगूँ|बेगू|बेगूं/g, "बेगूं")
+  .replace(/पुलिस लाईन/g, "पुलिस लाइन")
+  .replace(/[().,/]+/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const unitVariants = (value) => [
+  normalizeUnitText(value),
+  normalizeUnitText(devToHindi(value))
+].filter(Boolean);
+
+const UNIT_ALIASES = new Map([
+  ["थाना कोतवाली चित्तौड़गढ़", ["Fkkuk dksrokyh fprkSMx<+", "PS Kotwali Chittorgarh", "Thana Kotwali Chittorgarh"]],
+  ["थाना सदर निम्बाहेड़ा", ["Fkkuk lnj fuEckgsM+k", "PS Sadar Nimbahera", "Thana Sadar Nimbahera"]],
+  ["पुलिस लाईन चित्तौड़गढ़ (RPL)", ["iqfyl ykbZu", "Police Line", "RPL"]],
+  ["कार्यालय पुलिस अधीक्षक चित्तौड़गढ़ (SPO)", ["dk;kZy; iqfyl v/kh{kd", "SP Office", "SPO"]]
+]);
+
+export function matchEmployeeToUnit(posting, unit) {
+  const postingVariants = unitVariants(posting);
+  if (!postingVariants.length) return false;
+  const unitText = String(unit || "").trim();
+  const aliases = UNIT_ALIASES.get(unitText) || [];
+  const candidates = [...new Set([unitText, ...aliases].flatMap(unitVariants))];
+
+  return postingVariants.some((postingText) => candidates.some((variant) => (
+    postingText === variant ||
+    (variant.length >= 4 && postingText.includes(variant)) ||
+    (postingText.length >= 8 && variant.includes(postingText))
+  )
+  ));
+}
+
+export function getEmployeeGender(employee) {
+  const genderValue = [
+    employee?.GENDER,
+    employee?.Gender,
+    employee?.SEX,
+    employee?.Sex,
+    employee?.लिंग,
+    employee?.["GENDER (M/F)"]
+  ].find((value) => String(value || "").trim());
+  const gender = String(genderValue || "").trim().toLocaleLowerCase();
+  if (/^(f|female|woman|women|महिला|स्त्री)$/.test(gender) || /\b(mhc|mfc)\b/i.test(String(employee?.CADER || ""))) {
+    return "FEMALE";
+  }
+  if (/^(m|male|man|men|पुरुष)$/.test(gender)) return "MALE";
+  return "UNKNOWN";
+}
+
+export function filterEmployeesByGender(records = [], filter = "ALL") {
+  if (filter === "ALL") return records;
+  return records.filter((employee) => getEmployeeGender(employee) === filter);
+}
+
 export function mapRankToCode(rankRaw = "", beltRaw = "") {
-  const r = `${rankRaw} {beltRaw}`.toUpperCase();
+  const r = `${rankRaw} ${beltRaw}`.toUpperCase();
   if (r.includes("SP") && !r.includes("ASP") && !r.includes("DY")) return "SP";
   if (r.includes("ASP") || r.includes("ADDL")) return "ASP";
   if (r.includes("DYSP") || r.includes("DSP") || r.includes("CO ")) return "DYSP";

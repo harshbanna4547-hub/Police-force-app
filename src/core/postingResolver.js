@@ -1,4 +1,5 @@
 // src/core/postingResolver.js
+import { matchEmployeeToUnit } from "../forceLogic";
 
 const UNIT_RULES = [
   // 1. SP Office Branches
@@ -130,7 +131,7 @@ export function resolveUnitAndChowki(rawPosting, devToHindi) {
     .replace(/वृत्त्वा|वृत|वृत्त/g, "वृत्त");
 
   for (const [keywords, unit, chowki = ""] of UNIT_RULES) {
-    if (keywords.some((kw) => norm.includes(kw))) {
+    if (keywords.some((kw) => matchEmployeeToUnit(norm, kw))) {
       return { unit, chowki };
     }
   }

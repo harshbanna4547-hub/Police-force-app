@@ -1,21 +1,21 @@
 import "../shared/sharedModule.css";
 import StrengthModule from "./01_strength/StrengthModule";
-import TransferModule from "./02_transfer/TransferModule";
-import LeaveModule from "./03_leave/LeaveModule";
-import AcpModule from "./04_acp/AcpModule";
-import PromotionExamModule from "./05_promotion/PromotionExamModule";
-import SeniorityModule from "./06_seniority/SeniorityModule";
-import BhartiModule from "./07_bharti/BhartiModule";
-import IncrementModule from "./08_increment/IncrementModule";
-import TrainingModule from "./09_training/TrainingModule";
-import PunishmentModule from "./10_punishment/PunishmentModule";
-import RosterModule from "./11_roster/RosterModule";
-import ReportsModule from "./12_reports/ReportsModule";
-import StorageVaultModule from "./13_storage/StorageVaultModule";
+import TransferModule from "./03_transfer/TransferModule";
+import LeaveModule from "./05_leave/LeaveModule";
+import AcpModule from "./06_acp/AcpModule";
+import PromotionExamModule from "./08_promotion/PromotionExamModule";
+import SeniorityModule from "./09_seniority/SeniorityModule";
+import BhartiModule from "./10_bharti/BhartiModule";
+import IncrementModule from "./11_increment/IncrementModule";
+import TrainingModule from "./12_training/TrainingModule";
+import PunishmentModule from "./13_punishment/PunishmentModule";
+import RosterModule from "./14_roster/RosterModule";
+import ReportsModule from "./15_reports/ReportsModule";
+import StorageVaultModule from "./16_storage/StorageVaultModule";
 import PostingModule from "./02_posting/PostingModule";
-import EmployeeManagementModule from "./03_employee/EmployeeManagementModule";
-import EmployeeArchiveModule from "./04_archive/EmployeeArchiveModule";
-import DevServicesModule from "./14_dev_services/DevServicesModule";
+import EmployeeManagementModule from "./04_employee/EmployeeManagementModule";
+import EmployeeArchiveModule from "./07_archive/EmployeeArchiveModule";
+import DevServicesModule from "./17_dev_services/DevServicesModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {

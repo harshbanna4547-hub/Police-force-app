@@ -1,11 +1,14 @@
 import { useMemo, useState } from "react";
-import ExportBar from "../../core/ExportBar";
 import EmployeeActionRow from "../../core/EmployeeActionRow";
 import HindiText from "../../core/HindiText";
+import { resolveUnitAndChowki } from "../../core/postingResolver";
+import { matchEmployeeToUnit } from "../../forceLogic";
+import { devToHindi } from "../../utils/devlysConverter";
 import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import { CO_PS_MAP, OFFICE_SECTIONS } from "../../data/officeUnits";
 
 const POST_ORDER = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)"];
+const OFFICIAL_UNITS = OFFICE_SECTIONS.flatMap((section) => section.units);
 const RANKS = [
   ["SP", /^SP$/i],
   ["ASP", /^ASP$/i],
@@ -24,26 +27,18 @@ function rankOf(employee) {
 }
 
 function placeOf(employee) {
-  return String(employee.POSTING || "अज्ञात पदस्थापन").trim() || "अज्ञात पदस्थापन";
+  const rawPosting = String(employee.POSTING || "").trim();
+  const { unit } = resolveUnitAndChowki(rawPosting, devToHindi);
+  return OFFICIAL_UNITS.find((knownUnit) => matchEmployeeToUnit(unit || rawPosting, knownUnit)) ||
+    unit ||
+    rawPosting ||
+    "अज्ञात पदस्थापन";
 }
 
 function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveEmployee }) {
-  const rankValues = (employees, rank) => employees.filter((employee) => rankOf(employee) === rank).length;
-  const exportRows = rows.map(([unit, employees]) => {
-    const result = { "इकाई": unit };
-    POST_ORDER.forEach((rank) => {
-      result[`${rank} कार्यरत`] = rankValues(employees, rank);
-      result[`${rank} स्वीकृत`] = Number(sanctioned[unit]?.[rank] || 0);
-    });
-    result["कुल कार्यरत"] = employees.length;
-    return result;
-  });
   return (
     <section className="posting-summary">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-        <h3>{title}</h3>
-        <ExportBar title={title} rows={exportRows} fileName="Posting_Summary" />
-      </div>
+      <h3>{title}</h3>
       {rows.map(([unit, employees]) => (
         <details key={unit} style={{ margin: "8px 0", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
           <summary style={{ cursor: "pointer", fontWeight: "bold" }}>{unit} — {employees.length} कार्यरत</summary>
@@ -134,7 +129,6 @@ export default function PostingModule({ records = [], sanctioned = {}, unitRankS
       </div>
       {tab === "ALL" && allWorkingRows.map((group) => (
         <section key={group.title}>
-          <h3>{group.title}</h3>
           {group.id === "SEC_CO"
             ? Object.entries(CO_PS_MAP).map(([circle, stations]) => (
               <details key={circle} style={{ margin: "8px 0", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
