@@ -245,7 +245,7 @@ export default function StrengthModule({
             </div>
           </div>
 
-          <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+          <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
               <thead>
                 <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
@@ -311,7 +311,7 @@ export default function StrengthModule({
                   : `👥 ${selectedPostTab} पद पर कार्यरत कर्मचारियों की विस्तृत सूची (कुल: ${employeeSearchResults.length})`}
               </h4>
               {employeeSearchResults.length > 0 ? (
-              <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", maxHeight: "420px" }}>
+              <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", maxHeight: "420px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem", whiteSpace: "nowrap" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>

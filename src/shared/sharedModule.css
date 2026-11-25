@@ -1,7 +1,10 @@
-.module-table-wrap {
+.module-table-wrap,
+.table-responsive-box {
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
 }
 

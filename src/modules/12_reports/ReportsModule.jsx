@@ -61,7 +61,7 @@ export default function ReportsModule({ records, devToHindi }) {
         </select>
       </div>
 
-      <div className="module-table-wrap">
+      <div className="module-table-wrap table-responsive-box">
         <table className="module-table">
           <thead>
             <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>

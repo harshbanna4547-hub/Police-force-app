@@ -86,7 +86,7 @@ export default function AcpModule({ records, allSheets = {}, setAllSheets, devTo
         <input required value={orderDate} onChange={(event) => setOrderDate(event.target.value)} placeholder="आदेश दिनांक (DD-MM-YYYY)" style={{ padding: "8px" }} />
         <button type="submit" disabled={!selectedEmployee} style={{ padding: "8px 14px", border: 0, borderRadius: "6px", color: "#fff", background: "#16A34A", fontWeight: "bold" }}>✅ ACP आदेश दर्ज करें</button>
       </form>
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead>
             <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>

@@ -7,7 +7,7 @@ export default function StatCards({ totalSanc, activeCount, attCount, depCount, 
   ];
 
   return (
-    <section style={{ padding: "8px 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "14px" }}>
+    <section className="portal-stat-cards" style={{ padding: "8px 24px", display: "grid", gap: "14px" }}>
       {cards.map((c, i) => (
         <div key={i} onClick={() => setActiveView(c.view)} style={{ backgroundColor: "#fff", borderRadius: "16px", padding: "16px", display: "flex", alignItems: "center", gap: "14px", border: "1px solid #E2E8F0", cursor: "pointer" }}>
           <div style={{ width: "48px", height: "48px", borderRadius: "50%", backgroundColor: c.bg, color: c.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem" }}>{c.icon}</div>

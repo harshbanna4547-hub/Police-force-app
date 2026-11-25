@@ -151,7 +151,8 @@ export default function BhartiModule({ records, setRecords, allSheets = {}, setA
       ) : subTab === "RT_LIST" ? (
         <>
         <ExportBar title="वर्षवार भर्ती एवं परिवीक्षा सूची" rows={recruitExportRows} fileName="Recruit_Probation_List" />
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+        <div className="table-responsive-box">
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead>
             <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
               <th style={{ padding: "8px" }}>JOINING YEAR</th><th style={{ padding: "8px" }}>बेल्ट नं.</th><th style={{ padding: "8px" }}>पद</th><th style={{ padding: "8px", textAlign: "left" }}>नाम</th><th style={{ padding: "8px", textAlign: "left" }}>पिता का नाम</th><th style={{ padding: "8px" }}>नियुक्ति तिथि</th><th style={{ padding: "8px" }}>परिवीक्षा पूर्ण</th><th style={{ padding: "8px" }}>स्थिति</th>
@@ -171,7 +172,8 @@ export default function BhartiModule({ records, setRecords, allSheets = {}, setA
               </tr>
             ))}
           </tbody>
-        </table>
+            </table>
+        </div>
         </>
       ) : (
         <>

@@ -27,7 +27,7 @@ export default function SeniorityModule({ seniorityList, devToHindi }) {
         </select>
       </div>
 
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem" }}>
           <thead>
             <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>

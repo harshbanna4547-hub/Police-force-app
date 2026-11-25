@@ -81,7 +81,7 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
       </form>
 
       <h3>1 जुलाई के लिए कर्मचारी एवं सेवा रिकॉर्ड समीक्षा ({candidates.length})</h3>
-      <div style={{ overflowX: "auto", marginBottom: "18px" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto", marginBottom: "18px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "पद", "नाम", "वर्तमान थाना / कार्यालय", "सेवा वर्ष", "LWP रिकॉर्ड", "सजा रिकॉर्ड"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
           <tbody>{candidates.map(({ record, belt: employeeBelt, name, cader, posting, serviceYears, lwpReview, punishmentReview }) => <tr key={record._uid || employeeBelt} style={{ borderBottom: "1px solid #E2E8F0" }}>
@@ -97,7 +97,7 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
       </div>
       <h3>दर्ज वृद्धि आदेश ({rows.length})</h3>
       <ExportBar title="दर्ज वेतन वृद्धि आदेश" rows={rows} fileName="Increment_Orders" />
-      <div style={{ overflowX: "auto", marginTop: "10px" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto", marginTop: "10px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "विवरण", "दिनांक", "आदेश नं."].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
           <tbody>{rows.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>

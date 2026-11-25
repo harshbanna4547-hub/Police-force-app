@@ -78,7 +78,7 @@ export default function EmployeeArchiveModule({ records = [], allSheets = {}, on
       {Object.entries(grouped).map(([groupYear, rows]) => (
         <section key={groupYear} style={{ marginTop: "16px" }}>
           <h3>{groupYear}</h3>
-          <div style={{ overflowX: "auto" }}>
+          <div className="table-responsive-box" style={{ overflowX: "auto" }}>
             <table>
               <thead><tr>{["Name", "Father Name", "Post", "Belt No.", "Type", "Date", "Posting"].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead>
               <tbody>{rows.map((row, index) => (

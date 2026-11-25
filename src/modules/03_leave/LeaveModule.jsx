@@ -101,7 +101,7 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
         </p>
       )}
       <h3>PL खाता ({plAccount.length})</h3>
-      <div style={{ overflowX: "auto", marginBottom: "18px" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto", marginBottom: "18px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "पद", "कुल अर्जित PL", "कुल ली गई PL", "शेष PL (अधिकतम 300)"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
           <tbody>{plAccount.map((row, index) => (
@@ -117,7 +117,7 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
         </table>
       </div>
       <h3>अवकाश स्वीकृति / प्रविष्टि आदेश ({ledger.length})</h3>
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "प्रकार", "वर्ष", "अवधि", "दिन", "आदेश नं."].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
           <tbody>{leaveRows.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>

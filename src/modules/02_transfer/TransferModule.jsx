@@ -692,7 +692,7 @@ export default function TransferModule({
                 </label>
               </div>
 
-              <div className="transfer-table-wrap">
+              <div className="transfer-table-wrap table-responsive-box">
                 <table className="transfer-table">
                   <thead>
                     <tr>
@@ -736,7 +736,7 @@ export default function TransferModule({
                     <p>हर चयनित कर्मचारी के लिए स्थान और आदेश का आधार चुनें।</p>
                   </div>
                 </div>
-                <div className="transfer-table-wrap">
+                <div className="transfer-table-wrap table-responsive-box">
                   <table className="transfer-table assignment-table">
                     <thead>
                       <tr>
@@ -847,7 +847,7 @@ export default function TransferModule({
                 </select>
               </label>
             </div>
-            <div className="transfer-table-wrap">
+            <div className="transfer-table-wrap table-responsive-box">
               <table className="transfer-table">
                 <thead>
                   <tr>
@@ -938,7 +938,7 @@ export default function TransferModule({
                       <span>दिनांक: {currentOrder.orderDate}</span>
                       <span>कर्मचारी: {currentOrder.rows.length}</span>
                     </div>
-                    <div className="transfer-table-wrap">
+                    <div className="transfer-table-wrap table-responsive-box">
                       <table className="transfer-table">
                         <thead>
                           <tr>{ORDER_COLUMNS.map((column) => <th key={column}>{column}</th>)}</tr>

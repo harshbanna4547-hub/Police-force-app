@@ -4,8 +4,10 @@
 }
 
 html,
-body {
-  max-width: 100vw;
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
   overflow-x: hidden;
 }
 
@@ -44,23 +46,6 @@ body {
 .app-shell[data-theme="dark"] {
   background-color: var(--page) !important;
   color: var(--text);
-}
-
-.app-shell {
-  width: 100%;
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-.app-main-content {
-  min-width: 0;
-  flex: 1;
-  overflow-x: hidden;
-}
-
-.app-main-area {
-  min-width: 0;
-  width: 100%;
 }
 
 .app-shell[data-theme="dark"] > div {
@@ -116,37 +101,44 @@ body {
   background-color: #0B1220 !important;
 }
 
-/* टेबल्स के लिए स्मूद टच स्क्रॉल (मोबाइल और टैबलेट पर) */
 table {
   width: 100%;
   border-collapse: collapse;
 }
 
-div[style*="overflowX"] {
-  -webkit-overflow-scrolling: touch;
+.portal-stat-cards {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.module-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
 }
 
 /* टैबलेट स्क्रीन (1024px से कम) */
 @media (max-width: 1024px) {
-  header h1 {
+  .portal-top-header h1 {
     font-size: 1.2rem !important;
   }
 }
 
 /* मोबाइल स्क्रीन (768px से कम) */
 @media (max-width: 768px) {
-  /* मोबाइल पर Sidebar ऊपर फ्लोटिंग ड्रॉअर की तरह खुलेगा */
-  aside {
+  .portal-sidebar {
     position: fixed !important;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    z-index: 1000;
+    inset: 0 auto 0 0;
+    width: 280px !important;
+    min-width: 280px !important;
+    transform: translateX(0);
+    transition: transform 0.3s ease !important;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.35);
   }
 
+  .portal-sidebar.is-closed {
+    transform: translateX(-100%);
+  }
+
   /* हेडर और पैडिंग को मोबाइल के अनुकूल बनाना */
-  header {
+  .portal-top-header {
     padding: 12px 14px 6px !important;
   }
 
@@ -165,26 +157,32 @@ div[style*="overflowX"] {
     width: 100%;
   }
 
-  header h1 {
+  .portal-top-header h1 {
     font-size: 1.05rem !important;
   }
 
-  section {
-    padding: 6px 14px !important;
-    grid-template-columns: repeat(2, 1fr) !important; /* मोबाइल पर 2x2 स्टैट कार्ड्स */
-    gap: 10px !important;
+  .portal-stat-cards,
+  .module-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
-  main {
+  .portal-stat-cards {
+    padding: 6px 14px !important;
+  }
+
+  .app-main-area {
     min-width: 0;
     padding: 10px 14px 20px !important;
   }
 
-  .app-main-content footer,
-  .app-main-content [role="group"],
+  .app-main-area footer,
+  .app-main-area [class*="footer"],
+  .app-main-area [role="group"],
   .app-main-content .module-filter-bar,
-  .app-main-content .training-filter-row {
-    flex-wrap: wrap;
+  .app-main-content .training-filter-row,
+  .app-main-area [style*="display: flex"],
+  .app-main-area [style*="display:flex"] {
+    flex-wrap: wrap !important;
   }
 
   .app-main-content footer {
@@ -192,7 +190,7 @@ div[style*="overflowX"] {
     margin-right: 0 !important;
   }
 
-  .strength-footer-bar {
+  .app-main-area .strength-footer-bar {
     margin-left: -14px;
     margin-right: -14px;
   }
@@ -206,7 +204,8 @@ div[style*="overflowX"] {
 
 /* बहुत छोटे मोबाइल फोन (420px से कम) */
 @media (max-width: 420px) {
-  section {
-    grid-template-columns: 1fr !important; /* 1 कॉलम स्टैट कार्ड्स */
+  .portal-stat-cards,
+  .module-card-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }

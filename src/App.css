@@ -1,3 +1,23 @@
+.app-shell {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-main-content {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  overflow-x: hidden;
+}
+
+.app-main-area {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

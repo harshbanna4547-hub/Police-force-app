@@ -46,7 +46,7 @@ function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveE
       {rows.map(([unit, employees]) => (
         <details key={unit} style={{ margin: "8px 0", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
           <summary style={{ cursor: "pointer", fontWeight: "bold" }}>{unit} — {employees.length} कार्यरत</summary>
-          <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: "8px" }}>
+          <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: "8px" }}>
             <table>
               <thead><tr>{["पद", "स्वीकृत", "कार्यरत", "कर्मचारी"].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead>
               <tbody>{POST_ORDER.flatMap((rank) => {

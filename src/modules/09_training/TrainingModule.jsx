@@ -562,7 +562,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
             <button type="button" onClick={exportIgotExcel}>📊 MDO Admin Excel (English)</button>
             <button type="button" onClick={() => window.print()}>🖨 Print</button>
           </div>
-          <div className="training-table-scroll">
+          <div className="training-table-scroll table-responsive-box">
             <table className="training-data-table">
               <thead><tr>{["S.N.", "Post", "Belt No.", "Name", "Posting", "SSO ID", "Mobile", "Registered", "AI Courses", "Other Courses"].map((item) => <th key={item}>{item}</th>)}</tr></thead>
               <tbody>{igotData.map((row) => (
@@ -594,7 +594,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
             <h4>मासिक सूचना प्रपत्र — {womenMonth}</h4>
             <ExportBar title="महिला शक्ति मासिक सूचना" rows={currentWomenRows} fileName={`Women_Shakti_${womenMonth}`} />
           </div>
-          <div className="training-table-scroll">
+          <div className="training-table-scroll table-responsive-box">
             <table className="training-data-table">
               <thead><tr><th>संस्थान</th><th>कब से</th><th>कब तक</th><th>मास्टर ट्रेनर</th><th>13–18</th><th>18–35</th><th>35+</th><th>कुल</th></tr></thead>
               <tbody>{currentWomenRows.map((row, index) => <tr key={`${row.INSTITUTION}-${index}`}><td>{devToHindi(row.INSTITUTION)}</td><td>{formatDateOnly(row.FROM_DATE)}</td><td>{formatDateOnly(row.TO_DATE)}</td><td>{devToHindi(row.MASTER_TRAINER)}</td><td>{row.AGE_13_18}</td><td>{row.AGE_18_35}</td><td>{row.AGE_35_PLUS}</td><td>{row.TOTAL}</td></tr>)}</tbody>
@@ -659,7 +659,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
                 <h4>मासिक रिपोर्ट — {womenMonth}</h4>
                 <ExportBar title="DTC मासिक प्रशिक्षण रिपोर्ट" rows={currentDtcRows} fileName={`DTC_Monthly_${womenMonth}`} />
               </div>
-              <div className="training-table-scroll">
+              <div className="training-table-scroll table-responsive-box">
                 <table className="training-data-table">
                   <thead><tr><th>थाना</th><th>कब से</th><th>कब तक</th><th>विषय</th><th>प्रशिक्षक</th><th>प्रशिक्षणार्थी</th></tr></thead>
                   <tbody>{currentDtcRows.map((row, index) => <tr key={`${row.POLICE_STATION}-${index}`}><td>{devToHindi(row.POLICE_STATION)}</td><td>{formatDateOnly(row.WEEK_FROM)}</td><td>{formatDateOnly(row.WEEK_TO)}</td><td>{devToHindi(row.COURSE_NAME)}</td><td>{devToHindi(row.INSTRUCTOR)}</td><td>{row.TRAINEES}</td></tr>)}</tbody>
@@ -693,7 +693,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
               "लंबित आवश्यक प्रशिक्षण": row["अपूर्ण कोर्स"].join(", ")
             }))} fileName="Training_Missing_Courses" />
           </div>
-          <div className="training-table-scroll">
+          <div className="training-table-scroll table-responsive-box">
             <table className="training-data-table training-summary-table">
               <thead><tr><th>क्र.सं.</th><th>पद (Post)</th><th>बेल्ट नं.</th><th>नाम</th><th>वर्तमान पदस्थापन</th><th>पूर्ण प्रशिक्षण संख्या</th><th>लंबित आवश्यक प्रशिक्षण</th></tr></thead>
               <tbody>{pagedMissingRows.map((row, index) => (
@@ -732,7 +732,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
               <button type="button" onClick={() => setDetailEmployee(null)} aria-label="Close training details">✕</button>
             </div>
             <h4>पूर्ण प्रशिक्षण ({detailHistory.length})</h4>
-            <div className="training-table-scroll">
+            <div className="training-table-scroll table-responsive-box">
               <table className="training-data-table">
                 <thead><tr><th>क्र.सं.</th><th>पद</th><th>बेल्ट नं.</th><th>नाम</th><th>कोर्स का नाम</th><th>कब से</th><th>कब तक</th><th>संस्थान</th><th>आदेश नं.</th></tr></thead>
                 <tbody>{detailHistory.map((row, index) => <tr key={`${row.COURSE_NAME}-${index}`}>

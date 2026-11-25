@@ -44,7 +44,7 @@ export default function EmployeeManagementModule({
         fileName={fileName}
       />
       <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="नाम, बेल्ट नं., पद या पदस्थापन खोजें" style={{ width: "100%", padding: "10px", marginBottom: "12px" }} />
-      <div style={{ maxHeight: "68vh", overflow: "auto" }}>
+      <div className="table-responsive-box" style={{ maxHeight: "68vh", overflow: "auto" }}>
         <table>
           <thead><tr>{["S.N.", "Name", "Father Name", "Post", "Belt No.", "Posting Place"].map((label) => <th key={label}>{label}</th>)}</tr></thead>
           <tbody>{employees.map((employee, index) => (

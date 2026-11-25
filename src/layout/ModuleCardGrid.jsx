@@ -7,7 +7,7 @@ export default function ModuleCardGrid({ modules, onOpenModule }) {
         <h2 style={{ margin: "0 0 4px", color: "#0B1E3D", fontSize: "1.25rem" }}>सभी मॉड्यूल</h2>
         <p style={{ margin: 0, color: "#64748B", fontSize: "0.9rem" }}>किसी कार्ड को चुनकर संबंधित मॉड्यूल खोलें।</p>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "14px" }}>
+      <div className="module-card-grid" style={{ display: "grid", gap: "14px" }}>
         {enabledModules.map((module) => (
           <button
             key={module.id}

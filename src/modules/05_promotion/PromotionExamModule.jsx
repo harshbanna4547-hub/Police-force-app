@@ -111,7 +111,7 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
           {educationOptions.map((education) => <option key={education} value={education}>{education}</option>)}
         </select>
       </div>
-      <div style={{ overflowX: "auto", marginBottom: "16px" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto", marginBottom: "16px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "पद", "नाम", "शिक्षा", "नियुक्ति तिथि", "सेवा वर्ष", "सजा रिकॉर्ड", "चयन"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
           <tbody>{candidates.map((row) => <tr key={row.record._uid || row.belt} style={{ borderBottom: "1px solid #E2E8F0" }}>
@@ -134,7 +134,8 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
       </form>
       <h3>दर्ज पदोन्नति आदेश ({history.length})</h3>
       <ExportBar title="दर्ज पदोन्नति आदेश" rows={history} fileName="Promotion_Orders" />
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", marginTop: "10px" }}>
+      <div className="table-responsive-box">
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", marginTop: "10px" }}>
         <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["बेल्ट नं.", "नाम", "परीक्षा / पदोन्नति", "आदेश नं.", "दिनांक"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
         <tbody>{history.map((row, index) => <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
           <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
@@ -143,7 +144,8 @@ export default function PromotionExamModule({ records, setRecords, allSheets, se
           <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_NO_DATE}</td>
           <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row.ORDER_DATE)}</td>
         </tr>)}</tbody>
-      </table>
+          </table>
+      </div>
     </div>
   );
 }

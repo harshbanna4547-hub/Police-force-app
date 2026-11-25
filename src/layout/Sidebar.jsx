@@ -25,6 +25,10 @@ export default function Sidebar({
     }
   });
   const visibleModules = modules.filter((module) => module.enabled !== false);
+  const selectView = (view) => {
+    setActiveView(view);
+    if (window.matchMedia("(max-width: 768px)").matches) setSidebarOpen(false);
+  };
   const saveOfficeKey = (event) => {
     event.preventDefault();
     try {
@@ -48,6 +52,7 @@ export default function Sidebar({
         />
       )}
       <aside
+        className={`portal-sidebar ${sidebarOpen ? "is-open" : "is-closed"}`}
         style={{
           width: sidebarOpen ? "280px" : "0px",
           minWidth: sidebarOpen ? "280px" : "0px",
@@ -87,7 +92,7 @@ export default function Sidebar({
             <nav aria-label="मुख्य नेविगेशन" style={{ flex: 1, padding: "12px 10px" }}>
               <button
                 type="button"
-                onClick={() => setActiveView("HOME")}
+                onClick={() => selectView("HOME")}
                 style={{
                   width: "100%",
                   padding: "11px 12px",
@@ -131,7 +136,7 @@ export default function Sidebar({
                       key={module.id}
                       type="button"
                       title={module.title}
-                      onClick={() => setActiveView(module.id)}
+                      onClick={() => selectView(module.id)}
                       style={{
                         width: "100%",
                         padding: "10px 12px",

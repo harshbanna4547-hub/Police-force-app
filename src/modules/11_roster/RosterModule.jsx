@@ -62,7 +62,7 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
         <button type="submit" style={{ background: "#16A34A", color: "#fff", border: 0, borderRadius: "6px", padding: "8px 14px", fontWeight: "bold", cursor: "pointer" }}>ड्यूटी जोड़ें</button>
       </form>
 
-      <div style={{ overflowX: "auto" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead>
             <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
@@ -96,7 +96,7 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
       </div>
       <h3>दैनिक / साप्ताहिक ड्यूटी ({dutyRows.length})</h3>
       <ExportBar title="दैनिक साप्ताहिक ड्यूटी रोस्टर" rows={dutyExportRows} fileName="Duty_Roster" />
-      <div style={{ overflowX: "auto", marginTop: "10px" }}>
+      <div className="table-responsive-box" style={{ overflowX: "auto", marginTop: "10px" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
           <thead><tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>{["दिनांक", "अवधि", "थाना / कार्यालय", "बेल्ट नं.", "नाम", "ड्यूटी"].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}</tr></thead>
           <tbody>{dutyExportRows.map((row, index) => <tr key={`${row["BELT NO"]}-${row["दिनांक"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>

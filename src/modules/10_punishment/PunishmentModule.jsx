@@ -61,7 +61,8 @@ export default function PunishmentModule({ records = [], allSheets, setAllSheets
         <button type="button" onClick={() => setCleanOnly(false)} style={{ padding: "8px 12px", border: 0, borderRadius: "6px", cursor: "pointer", background: cleanOnly ? "#E2E8F0" : "#0B1E3D", color: cleanOnly ? "#1E293B" : "#fff" }}>सजा रिकॉर्ड ({rows.length})</button>
         <button type="button" onClick={() => setCleanOnly(true)} style={{ padding: "8px 12px", border: 0, borderRadius: "6px", cursor: "pointer", background: cleanOnly ? "#0B1E3D" : "#E2E8F0", color: cleanOnly ? "#fff" : "#1E293B" }}>स्वच्छ छवि ({cleanRows.length})</button>
       </div>
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box">
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
         <thead>
           <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
             <th style={{ padding: "8px" }}>BELT NO</th>
@@ -84,7 +85,8 @@ export default function PunishmentModule({ records = [], allSheets, setAllSheets
             </tr>
           ))}
         </tbody>
-      </table>
+          </table>
+      </div>
     </div>
   );
 }
