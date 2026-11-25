@@ -1,101 +1,55 @@
 // src/modules/01_strength/StrengthModule.jsx
 import React, { useState, useMemo } from "react";
 import { CADRE_GROUPS, DEFAULT_SANCTIONED, mapRankToCode } from "../../data/cadreConfig";
-import ExportBar from "../../core/ExportBar";
-import OfficePsStrength from "./OfficePsStrength";
-import HindiText from "../../core/HindiText";
+import { filterEmployeesByGender } from "../../forceLogic";
 import { getBeltNo } from "../../shared/commonFunctions";
-import { getStrengthEmployeeIdentity } from "./strengthLogic";
-import EmployeeActionRow from "../../core/EmployeeActionRow";
 import { openEmployeeServiceSlip } from "../../core/serviceSlip";
+import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
+import SmartEmployeeTable from "../../components/shared/SmartEmployeeTable";
+import OfficePsStrength from "./OfficePsStrength";
+import { filterStrengthRecords, formatVacancy, POST_FILTER_TABS } from "./strengthLogic";
+import { translateCadreGroup, translateRankLabel } from "../../utils/i18n";
 import "./strength.css";
 
-const POST_FILTER_TABS = [
-  { id: "ALL", label: "सभी पद (ALL)", groupIds: null },
-  { id: "SP", label: "SP", groupIds: ["IPS_OFFICERS"] },
-  { id: "ASP", label: "ASP", groupIds: ["RPS_OFFICERS"], rankFilter: ["ASP"] },
-  { id: "DYSP", label: "DySP", groupIds: ["RPS_OFFICERS"], rankFilter: ["DYSP"] },
-  { id: "CI", label: "CI / MTO", groupIds: ["CI_GROUP"] },
-  { id: "SI", label: "SI", groupIds: ["SI_GROUP"] },
-  { id: "ASI", label: "ASI", groupIds: ["ASI_GROUP"] },
-  { id: "HC", label: "HC", groupIds: ["HC_GROUP"] },
-  { id: "FC", label: "FC", groupIds: ["FC_GROUP"] },
-  { id: "OTHER", label: "अन्य संवर्ग (Min/Acct/IT/IV)", groupIds: ["MINISTERIAL_CADRE", "ACCOUNTS_CADRE", "IT_CADRE", "CLASS_4_CADRE"] }
-];
-
-function formatVacancy(sanc, work) {
-  const diff = Number(sanc || 0) - Number(work || 0);
-  if (diff < 0) return `+${Math.abs(diff)}`;
-  return diff;
-}
-
-function getMobileNo(emp) {
-  const value = emp?.["MOBILE NO 1"] || emp?.["MOBILE NO"] || emp?.MOBILE || emp?.CONTACT || "";
-  return ["_", "-"].includes(String(value).trim()) ? "-" : (value || "-");
-}
-
-function parseDateSafe(val) {
-  if (!val) return null;
-  if (val instanceof Date && !isNaN(val)) {
-    return new Date(val.getTime() + 6 * 3600 * 1000);
-  }
-  if (typeof val === "number" && val > 1000) {
-    return new Date(Math.round((val - 25569) * 86400 * 1000));
-  }
-  const s = String(val).trim();
-  if (/^\d{4}-\d{2}-\d{2}T/.test(s)) {
-    const d = new Date(s);
-    return isNaN(d) ? null : new Date(d.getTime() + 6 * 3600 * 1000);
-  }
-  const m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
-  if (m) {
-    let yr = Number(m.at(3));
-    if (yr < 100) yr += yr > 40 ? 1900 : 2000;
-    const dt = new Date(yr, Number(m.at(2)) - 1, Number(m.at(1)));
-    return isNaN(dt) ? null : dt;
-  }
-  return null;
-}
-
-function formatDateClean(val) {
-  const dt = parseDateSafe(val);
-  if (!dt) return val ? String(val).split("T").at(0) : "-";
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  return `${dd}-${mm}-${dt.getFullYear()}`;
-}
-
 export default function StrengthModule({
-  records,
-  sanctioned,
+  records = [],
+  sanctioned = {},
   setSanctioned,
-  unitRankSanc,
+  unitRankSanc = {},
   setUnitRankSanc,
   onSaveSanctioned,
   onSaveUnitRankSanc,
-  devToHindi,
   onEditEmployee,
-  onArchiveEmployee
+  onArchiveEmployee,
+  language = "hi"
 }) {
   const [subTab, setSubTab] = useState("POST_WISE");
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
   const [employeeSearch, setEmployeeSearch] = useState("");
+  const [genderFilter, setGenderFilter] = useState("ALL");
   const [expanded, setExpanded] = useState({});
   const [editing, setEditing] = useState(false);
+  const [officeExportRows, setOfficeExportRows] = useState([]);
+  const english = language === "en";
+
+  const genderFilteredRecords = useMemo(
+    () => filterEmployeesByGender(records, genderFilter),
+    [records, genderFilter]
+  );
 
   const workStats = useMemo(() => {
     const stats = {};
     Object.keys(DEFAULT_SANCTIONED).forEach((k) => {
       stats[k] = { working: 0, empList: [] };
     });
-    records.forEach((row) => {
+    genderFilteredRecords.forEach((row) => {
       const code = mapRankToCode(row["CADER"] || "", getBeltNo(row));
       if (!stats[code]) return;
       stats[code].working += 1;
       stats[code].empList.push(row);
     });
     return stats;
-  }, [records]);
+  }, [genderFilteredRecords]);
 
   const visibleGroups = useMemo(() => {
     const tabSpec = POST_FILTER_TABS.find((t) => t.id === selectedPostTab);
@@ -109,7 +63,7 @@ export default function StrengthModule({
   }, [selectedPostTab]);
 
   const selectedPostEmployees = useMemo(() => {
-    if (selectedPostTab === "ALL") return [];
+    if (selectedPostTab === "ALL") return genderFilteredRecords;
     const list = [];
     visibleGroups.forEach((g) => {
       g.ranks.forEach((rk) => {
@@ -117,19 +71,26 @@ export default function StrengthModule({
       });
     });
     return list;
-  }, [selectedPostTab, visibleGroups, workStats]);
+  }, [selectedPostTab, genderFilteredRecords, visibleGroups, workStats]);
 
-  const employeeSearchResults = useMemo(() => {
-    const query = employeeSearch.trim().toLocaleLowerCase();
-    const candidates = selectedPostTab === "ALL" ? records : selectedPostEmployees;
-    if (!query) return candidates;
-    return candidates.filter((employee) => [
-      devToHindi(employee.NAME) || employee.NAME,
-      getStrengthEmployeeIdentity(employee).beltNo,
-      devToHindi(employee.POSTING) || employee.POSTING,
-      employee.CADER
-    ].some((value) => String(value || "").toLocaleLowerCase().includes(query)));
-  }, [devToHindi, employeeSearch, records, selectedPostEmployees, selectedPostTab]);
+  const employeeSearchResults = useMemo(
+    () => filterStrengthRecords(selectedPostEmployees, employeeSearch, "ALL"),
+    [selectedPostEmployees, employeeSearch]
+  );
+
+  const grandTotals = useMemo(() => {
+    let totalSanctioned = 0;
+    let totalWorking = 0;
+    visibleGroups.forEach((grp) => {
+      totalSanctioned += grp.ranks.reduce((s, r) => s + Number(sanctioned[r.code] || 0), 0);
+      totalWorking += grp.ranks.reduce((s, r) => s + (workStats[r.code]?.working || 0), 0);
+    });
+    return {
+      sanctioned: totalSanctioned,
+      working: totalWorking,
+      vacancy: formatVacancy(totalSanctioned, totalWorking)
+    };
+  }, [visibleGroups, sanctioned, workStats]);
 
   const postExportRows = useMemo(() => {
     const rows = [];
@@ -137,7 +98,7 @@ export default function StrengthModule({
       const gSanc = grp.ranks.reduce((s, r) => s + Number(sanctioned[r.code] || 0), 0);
       const gWork = grp.ranks.reduce((s, r) => s + (workStats[r.code]?.working || 0), 0);
       rows.push({
-        "संवर्ग / पद का नाम": grp.title,
+        "संवर्ग / पद का नाम": translateCadreGroup(grp, language),
         "स्वीकृत (Sanc.)": gSanc,
         "कार्यरत (Work.)": gWork,
         "रिक्त / अधिक": formatVacancy(gSanc, gWork)
@@ -146,35 +107,106 @@ export default function StrengthModule({
         const sVal = Number(sanctioned[rk.code] || 0);
         const wVal = workStats[rk.code]?.working || 0;
         rows.push({
-          "संवर्ग / पद का नाम": `    ${rk.label}`,
+          "संवर्ग / पद का नाम": `    ${translateRankLabel(rk, language)}`,
           "स्वीकृत (Sanc.)": sVal,
           "कार्यरत (Work.)": wVal,
           "रिक्त / अधिक": formatVacancy(sVal, wVal)
         });
       });
     });
+    rows.push({
+      "संवर्ग / पद का नाम": english ? "GRAND TOTAL" : "महायोग (GRAND TOTAL)",
+      "स्वीकृत (Sanc.)": grandTotals.sanctioned,
+      "कार्यरत (Work.)": grandTotals.working,
+      "रिक्त / अधिक": grandTotals.vacancy
+    });
     return rows;
-  }, [visibleGroups, sanctioned, workStats]);
+  }, [visibleGroups, sanctioned, workStats, grandTotals, language, english]);
 
   const savePostSanctioned = async () => {
     try {
       await onSaveSanctioned(sanctioned);
       setEditing(false);
-      alert("पद-वार स्वीकृत नफरी IndexedDB में सुरक्षित हो गई है!");
+      alert(english
+        ? "Post-wise sanctioned strength saved to IndexedDB."
+        : "पद-वार स्वीकृत नफरी IndexedDB में सुरक्षित हो गई है!");
     } catch (error) {
       console.error("Post-wise sanctioned strength could not be saved:", error);
       alert(`स्वीकृत नफरी सेव नहीं हो सकी: ${error.message}`);
     }
   };
+
+  const handleEmployeeAction = (action, employee) => {
+    if (action === "UPDATE") onEditEmployee?.(employee, "personal");
+    if (action === "TRANSFER") onEditEmployee?.(employee, "posting");
+    if (action === "RELIEVE") {
+      const reason = window.prompt(english
+        ? "Enter reason for Relieve / Retire / Death / Deputation:"
+        : "Relieve / Retire / Death / Deputation का कारण लिखें:");
+      if (reason) onArchiveEmployee?.(employee, reason);
+    }
+    if (action === "SERVICE_SLIP") openEmployeeServiceSlip(employee);
+  };
+
+  const toolbarTitle = subTab === "OFFICE_PS_WISE"
+    ? (english ? "Office / CO / PS-Wise Strength" : "कार्यालय, वृत्त एवं थाना-वार नफरी")
+    : subTab === "VACANCY_SUMMARY"
+      ? (english ? "Vacancy & Recruitment Summary" : "संवर्ग-वार रिक्त पदों का संक्षिप्त सारांश")
+      : (english ? "Sanctioned & Working Strength" : "स्वीकृत एवं कार्यरत नफरी");
+
+  const toolbarRows = subTab === "OFFICE_PS_WISE" ? officeExportRows : postExportRows;
+  const toolbarFileName = subTab === "OFFICE_PS_WISE"
+    ? "Office_CO_PS_Strength"
+    : subTab === "VACANCY_SUMMARY"
+      ? "Vacancy_Summary"
+      : `Strength_${selectedPostTab}`;
+
+  const toolbarExtraActions = subTab === "POST_WISE" ? (
+    !editing ? (
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "7px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "0.82rem", cursor: "pointer" }}
+      >
+        ✏️ {english ? "Edit Sanctioned" : "स्वीकृत नफरी बदलें"}
+      </button>
+    ) : (
+      <div style={{ display: "flex", gap: "6px" }}>
+        <button type="button" onClick={savePostSanctioned} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "7px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "0.82rem", cursor: "pointer" }}>
+          ✅ {english ? "Save" : "सेव करें"}
+        </button>
+        <button type="button" onClick={() => setEditing(false)} style={{ backgroundColor: "#64748B", color: "#fff", border: "none", padding: "7px 12px", borderRadius: "6px", fontSize: "0.82rem", cursor: "pointer" }}>
+          {english ? "Cancel" : "रद्द करें"}
+        </button>
+      </div>
+    )
+  ) : null;
+
   return (
-    <div className="strength-module" style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0" }}>
-      <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid #E2E8F0", paddingBottom: "12px", marginBottom: "14px", flexWrap: "wrap" }}>
+    <div className="strength-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "14px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+      <ModuleHeaderToolbar
+        title={`🛡️ ${toolbarTitle}`}
+        search={employeeSearch}
+        onSearchChange={setEmployeeSearch}
+        gender={genderFilter}
+        onGenderChange={setGenderFilter}
+        rows={toolbarRows}
+        fileName={toolbarFileName}
+        language={language}
+        extraActions={toolbarExtraActions}
+        searchPlaceholder={subTab === "OFFICE_PS_WISE"
+          ? (english ? "🔍 Search office, CO, PS..." : "🔍 कार्यालय, वृत्त या थाना खोजें...")
+          : (english ? "🔍 Search name, belt no., post, unit..." : "🔍 नाम, बेल्ट नं., पद या पदस्थापन खोजें...")}
+      />
+
+      <div style={{ display: "flex", gap: "8px", borderBottom: "2px solid var(--border, #E2E8F0)", paddingBottom: "12px", marginBottom: "14px", flexWrap: "wrap" }}>
         {[
-          { id: "POST_WISE", label: "1. Post-Wise Sanctioned Strength" },
-          { id: "OFFICE_PS_WISE", label: "2. Office / CO / PS-Wise Sanctioned Strength" },
-          { id: "VACANCY_SUMMARY", label: "3. Vacancy & Recruitment Summary" }
+          { id: "POST_WISE", hi: "पद-वार स्वीकृत नफरी", en: "Post-Wise Sanctioned Strength" },
+          { id: "OFFICE_PS_WISE", hi: "कार्यालय / वृत्त / थाना-वार नफरी", en: "Office / CO / PS-Wise Strength" },
+          { id: "VACANCY_SUMMARY", hi: "रिक्त पद सारांश", en: "Vacancy & Recruitment Summary" }
         ].map((t) => (
           <button
+            type="button"
             key={t.id}
             onClick={() => setSubTab(t.id)}
             style={{
@@ -188,26 +220,19 @@ export default function StrengthModule({
               color: subTab === t.id ? "#FFD700" : "#334155"
             }}
           >
-            {t.label}
+            {english ? t.en : t.hi}
           </button>
         ))}
       </div>
 
       {subTab === "POST_WISE" && (
         <div>
-          <input
-            type="search"
-            aria-label="कर्मचारी का नाम, बेल्ट नं. या पदस्थापन खोजें"
-            value={employeeSearch}
-            onChange={(event) => setEmployeeSearch(event.target.value)}
-            placeholder="🔍 कर्मचारी का नाम, बेल्ट नं. या पदस्थापन खोजें..."
-            style={{ width: "100%", padding: "10px 12px", marginBottom: "12px", border: "1px solid #CBD5E1", borderRadius: "8px" }}
-          />
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", backgroundColor: "#F8FAFC", padding: "10px", borderRadius: "10px", border: "1px solid #CBD5E1", marginBottom: "14px" }}>
             {POST_FILTER_TABS.map((pt) => {
               const active = selectedPostTab === pt.id;
               return (
                 <button
+                  type="button"
                   key={pt.id}
                   onClick={() => setSelectedPostTab(pt.id)}
                   style={{
@@ -221,28 +246,10 @@ export default function StrengthModule({
                     color: active ? "#FFFFFF" : "#1E293B"
                   }}
                 >
-                  {pt.label}
+                  {english ? pt.enLabel : pt.label}
                 </button>
               );
             })}
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "10px" }}>
-            <h3 style={{ margin: 0, color: "#0B1E3D" }}>
-              {POST_FILTER_TABS.find((p) => p.id === selectedPostTab)?.label} — स्वीकृत एवं कार्यरत नफरी
-            </h3>
-            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              {!editing ? (
-                <button onClick={() => setEditing(true)} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "7px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
-                  ✏️ स्वीकृत नफरी बदलें
-                </button>
-              ) : (
-                <div style={{ display: "flex", gap: "6px" }}>
-                  <button onClick={savePostSanctioned} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "7px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>✅ Save</button>
-                  <button onClick={() => setEditing(false)} style={{ backgroundColor: "#64748B", color: "#fff", border: "none", padding: "7px 12px", borderRadius: "6px", cursor: "pointer" }}>Cancel</button>
-                </div>
-              )}
-            </div>
           </div>
 
           <div style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
@@ -255,10 +262,18 @@ export default function StrengthModule({
               </colgroup>
               <thead>
                 <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-                  <th style={{ padding: "10px", textAlign: "left", border: "1px solid #CBD5E1" }}>संवर्ग / पद का नाम</th>
-                  <th style={{ padding: "10px", border: "1px solid #CBD5E1" }}>स्वीकृत (Sanc.)</th>
-                  <th style={{ padding: "10px", border: "1px solid #CBD5E1" }}>कार्यरत (Work.)</th>
-                  <th style={{ padding: "10px", border: "1px solid #CBD5E1" }}>रिक्त / अधिक</th>
+                  <th style={{ padding: "10px", textAlign: "left", border: "1px solid #CBD5E1" }}>
+                    {english ? "Cadre / Post Name" : "संवर्ग / पद का नाम"}
+                  </th>
+                  <th style={{ padding: "10px", border: "1px solid #CBD5E1" }}>
+                    {english ? "Sanctioned" : "स्वीकृत (Sanc.)"}
+                  </th>
+                  <th style={{ padding: "10px", border: "1px solid #CBD5E1" }}>
+                    {english ? "Working" : "कार्यरत (Work.)"}
+                  </th>
+                  <th style={{ padding: "10px", border: "1px solid #CBD5E1" }}>
+                    {english ? "Vacant / Surplus" : "रिक्त / अधिक"}
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -270,7 +285,9 @@ export default function StrengthModule({
                   return (
                     <React.Fragment key={grp.id}>
                       <tr onClick={() => setExpanded((p) => ({ ...p, [grp.id]: !p[grp.id] }))} style={{ backgroundColor: "#D8E4F0", fontWeight: "bold", cursor: "pointer" }}>
-                        <td style={{ padding: "8px 10px", border: "1px solid #CBD5E1" }}>{grp.title}</td>
+                        <td style={{ padding: "8px 10px", border: "1px solid #CBD5E1" }}>
+                          {translateCadreGroup(grp, language)}
+                        </td>
                         <td style={{ padding: "8px", textAlign: "center", border: "1px solid #CBD5E1" }}>{gSanc}</td>
                         <td style={{ padding: "8px", textAlign: "center", border: "1px solid #CBD5E1" }}>{gWork}</td>
                         <td style={{ padding: "8px", textAlign: "center", border: "1px solid #CBD5E1", color: gVac > 0 ? "#B91C1C" : "#15803D" }}>
@@ -283,7 +300,9 @@ export default function StrengthModule({
                         const diff = sVal - wVal;
                         return (
                           <tr key={rk.code}>
-                            <td style={{ padding: "7px 10px 7px 28px", border: "1px solid #E2E8F0" }}>{rk.label}</td>
+                            <td style={{ padding: "7px 10px 7px 28px", border: "1px solid #E2E8F0" }}>
+                              {translateRankLabel(rk, language)}
+                            </td>
                             <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>
                               {editing ? (
                                 <input type="number" min="0" value={sVal} onChange={(e) => setSanctioned({ ...sanctioned, [rk.code]: Number(e.target.value) })} style={{ width: "65px", textAlign: "center" }} />
@@ -294,9 +313,11 @@ export default function StrengthModule({
                                 tab.rankFilter?.includes(rk.code) ||
                                 tab.groupIds?.some((groupId) => CADRE_GROUPS.some((group) => group.id === groupId && group.ranks.some((rank) => rank.code === rk.code)))
                               )?.id || selectedPostTab)}
-                              title="कार्यरत कर्मचारियों की सूची खोलें"
-                              style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold", cursor: "pointer", textDecoration: "none" }}
-                            >{wVal}</td>
+                              title={english ? "Open working employees list" : "कार्यरत कर्मचारियों की सूची खोलें"}
+                              style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold", cursor: "pointer" }}
+                            >
+                              {wVal}
+                            </td>
                             <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", color: diff > 0 ? "#DC2626" : "#15803D", fontWeight: "bold" }}>
                               {formatVacancy(sVal, wVal)}
                             </td>
@@ -306,117 +327,52 @@ export default function StrengthModule({
                     </React.Fragment>
                   );
                 })}
+                <tr className="strength-grand-total-row">
+                  <td style={{ padding: "10px", border: "1px solid #334155" }}>
+                    {english ? "GRAND TOTAL" : "महायोग (GRAND TOTAL)"}
+                  </td>
+                  <td style={{ padding: "10px", textAlign: "center", border: "1px solid #334155" }}>{grandTotals.sanctioned}</td>
+                  <td style={{ padding: "10px", textAlign: "center", border: "1px solid #334155" }}>{grandTotals.working}</td>
+                  <td style={{ padding: "10px", textAlign: "center", border: "1px solid #334155" }}>{grandTotals.vacancy}</td>
+                </tr>
               </tbody>
             </table>
           </div>
+
           {(employeeSearch.trim() || (selectedPostTab !== "ALL" && selectedPostEmployees.length > 0)) && (
             <div style={{ marginTop: "20px", borderTop: "2px solid #CBD5E1", paddingTop: "14px" }}>
               <h4 style={{ margin: "0 0 10px", color: "#1D63DC" }}>
                 {employeeSearch.trim()
-                  ? `🔍 कर्मचारी खोज परिणाम (कुल: ${employeeSearchResults.length})`
-                  : `👥 ${selectedPostTab} पद पर कार्यरत कर्मचारियों की विस्तृत सूची (कुल: ${employeeSearchResults.length})`}
+                  ? `${english ? "Search Results" : "कर्मचारी खोज परिणाम"} (${employeeSearchResults.length})`
+                  : `${selectedPostTab} — ${english ? "Working Employees" : "कार्यरत कर्मचारी सूची"} (${employeeSearchResults.length})`}
               </h4>
-              {employeeSearchResults.length > 0 ? (
-              <div className="table-responsive-box" style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", border: "1px solid #e2e8f0", borderRadius: "8px", maxHeight: "420px" }}>
-                <table className="strength-drilldown-table employee-responsive-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
-                      <th className="drilldown-sticky-first" style={{ padding: "8px", border: "1px solid #475569" }}>S.N.</th>
-                      <th className="drilldown-sticky-second" style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Name</th>
-                      <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Father Name</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Post</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Belt No.</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Posting DOB</th>
-                      <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Posting Place</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Without DOB</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Education</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Date of Birth</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>DOJ</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>DOC</th>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>Mobile Number</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {employeeSearchResults.map((emp, idx) => (
-                      <EmployeeActionRow
-                        key={emp._uid || idx}
-                        employee={emp}
-                        responsiveDetails
-                        onAction={(action, employee) => {
-                          if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
-                          if (action === "RELIEVE") {
-                            const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");
-                            if (reason) onArchiveEmployee?.(employee, reason);
-                          }
-                          if (action === "SERVICE_SLIP") openEmployeeServiceSlip(employee);
-                        }}
-                        style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
-                      >
-                        <td className="drilldown-sticky-first" style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>{idx + 1}</td>
-                        <td className="drilldown-sticky-second" style={{ padding: "6px 8px", border: "1px solid #E2E8F0", fontWeight: "bold" }}>
-                          <HindiText text={emp["NAME"]} />
-                        </td>
-                        <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0" }}>
-                          <HindiText text={emp["FATHER NAME"]} />
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {emp["CADER"]}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", fontWeight: "bold", color: "#0369A1" }}>
-                          {getStrengthEmployeeIdentity(emp).beltNo}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {formatDateClean(emp["POSTING DOB NO"])}
-                        </td>
-                        <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0" }}>
-                          <HindiText text={emp["POSTING"]} />
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {emp["WITHOUT DOB"] || "-"}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {emp["EDUCATION"] || "-"}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {formatDateClean(emp["DATE OF BIRTH"])}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>
-                          {formatDateClean(emp["DATE OF JOINING"])}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold" }}>
-                          {formatDateClean(emp.DOC || emp["DATE OF CONFIRMATION"])}
-                        </td>
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>
-                          {getMobileNo(emp)}
-                        </td>
-                      </EmployeeActionRow>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              ) : <p style={{ margin: 0, color: "#64748B" }}>कोई कर्मचारी नहीं मिला।</p>}
+              <SmartEmployeeTable
+                employees={employeeSearchResults}
+                onAction={handleEmployeeAction}
+                caption={english ? "Working employees list" : "कार्यरत कर्मचारी सूची"}
+                language={language}
+              />
             </div>
           )}
         </div>
       )}
+
       {subTab === "OFFICE_PS_WISE" && (
         <OfficePsStrength
-          records={records}
-          devToHindi={devToHindi}
+          records={genderFilteredRecords}
+          search={employeeSearch}
           onEditEmployee={onEditEmployee}
           onArchiveEmployee={onArchiveEmployee}
           unitRankSanc={unitRankSanc}
           setUnitRankSanc={setUnitRankSanc}
           onSaveUnitRankSanc={onSaveUnitRankSanc}
+          onExportRowsChange={setOfficeExportRows}
+          language={language}
         />
       )}
 
       {subTab === "VACANCY_SUMMARY" && (
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
-            <h3 style={{ margin: 0, color: "#0B1E3D" }}>संवर्ग-वार रिक्त पदों का संक्षिप्त सारांश</h3>
-            <ExportBar title="संवर्ग-वार रिक्त पद सारांश" rows={postExportRows} fileName="Vacancy_Summary" />
-          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
             {CADRE_GROUPS.map((grp) => {
               const gSanc = grp.ranks.reduce((s, r) => s + Number(sanctioned[r.code] || 0), 0);
@@ -424,11 +380,13 @@ export default function StrengthModule({
               const gVac = gSanc - gWork;
               return (
                 <div key={grp.id} style={{ backgroundColor: "#F8FAFC", border: "1px solid #CBD5E1", borderRadius: "10px", padding: "14px" }}>
-                  <div style={{ fontWeight: "bold", color: "#0B1E3D", fontSize: "0.9rem", marginBottom: "8px" }}>{grp.title}</div>
+                  <div style={{ fontWeight: "bold", color: "#0B1E3D", fontSize: "0.9rem", marginBottom: "8px" }}>
+                    {translateCadreGroup(grp, language)}
+                  </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem" }}>
-                    <span>स्वीकृत: <b>{gSanc}</b></span>
-                    <span style={{ color: "#15803D" }}>कार्यरत: <b>{gWork}</b></span>
-                    <span style={{ color: gVac > 0 ? "#DC2626" : "#15803D" }}>रिक्त/अधिक: <b>{formatVacancy(gSanc, gWork)}</b></span>
+                    <span>{english ? "Sanc." : "स्वीकृत"}: <b>{gSanc}</b></span>
+                    <span style={{ color: "#15803D" }}>{english ? "Work." : "कार्यरत"}: <b>{gWork}</b></span>
+                    <span style={{ color: gVac > 0 ? "#DC2626" : "#15803D" }}>{english ? "Vac." : "रिक्त/अधिक"}: <b>{formatVacancy(gSanc, gWork)}</b></span>
                   </div>
                 </div>
               );
@@ -436,9 +394,6 @@ export default function StrengthModule({
           </div>
         </div>
       )}
-      <footer className="strength-footer-bar">
-        <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} />
-      </footer>
     </div>
   );
 }
