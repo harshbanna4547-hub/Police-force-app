@@ -259,8 +259,7 @@ export function matchEmployeeToUnit(posting, unit) {
 
   return postingVariants.some((postingText) => candidates.some((variant) => (
     postingText === variant ||
-    (variant.length >= 4 && postingText.includes(variant)) ||
-    (postingText.length >= 6 && variant.includes(postingText))
+    (variant.length >= 4 && postingText.includes(variant))
   )));
 }
 

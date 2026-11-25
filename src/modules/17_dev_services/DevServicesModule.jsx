@@ -22,8 +22,7 @@ function formatDate(value) {
 function statusLabel(state) {
   if (state === "synced") return { icon: "🟢", label: "Synced" };
   if (state === "syncing" || state === "checking") return { icon: "🟡", label: "Syncing" };
-  if (state === "offline") return { icon: "🔴", label: "Offline" };
-  return { icon: "⚪", label: "Not available" };
+  return { icon: "⚪", label: "Background Sync" };
 }
 
 function getDeviceStatus(device) {
@@ -334,7 +333,7 @@ export default function DevServicesModule({ districtId, portalData }) {
           <h2>▲ Vercel Deployment Info</h2>
           <div className="dev-services-detail-grid">
             <div><strong>Project URL</strong><p>{deploymentUrl || "VITE_PORTAL_URL सेट नहीं है और वर्तमान host vercel.app नहीं है।"}</p></div>
-            <div><strong>Live reachability</strong><p>{health === "active" ? "🟢 Active / Live" : health === "checking" ? "🟡 Checking…" : "🔴 Offline / Unreachable"}</p></div>
+            <div><strong>Live reachability</strong><p>{health === "active" ? "🟢 Active / Live" : health === "checking" ? "🟡 Checking…" : "⚪ Standby"}</p></div>
             <div><strong>Sync endpoint</strong><p>/api/onedrive-sync</p></div>
           </div>
           <button className="dev-services-primary-button" type="button" onClick={() => void refreshStatus()}>↻ Refresh Status</button>

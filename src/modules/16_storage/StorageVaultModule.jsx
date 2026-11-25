@@ -1,7 +1,7 @@
-// src/modules/13_storage/StorageVaultModule.jsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
+import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
 import {
   getDistrictStorageBackupFolderId,
   openDriveVaultDB,
@@ -48,8 +48,10 @@ export default function StorageVaultModule({
   onSaveToExcel,
   onExportMasterFile,
   isExportingMaster,
-  onRemoveDistrictData
+  onRemoveDistrictData,
+  language = "hi"
 }) {
+  const english = language === "en";
   const [items, setItems] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState("ROOT");
   const [search, setSearch] = useState("");
@@ -334,8 +336,34 @@ export default function StorageVaultModule({
     if (n.match(/\.(jpg|jpeg|png|webp)$/)) return "🖼️";
     return "📄";
   };
+  const storageExportRows = useMemo(() => visibleItems.map((item, idx) => ({
+    "S.N.": idx + 1,
+    Name: item.name,
+    Kind: item.kind,
+    Size: item.kind === "FOLDER" ? "-" : `${item.sizeKB} KB`,
+    Updated: dateOnly(item.updatedAt)
+  })), [visibleItems]);
+
   return (
-    <div className="storage-vault-module" style={{ backgroundColor: "#fff", borderRadius: "14px", padding: "18px", border: "1px solid #E2E8F0", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" }}>
+    <div className="storage-vault-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "14px", padding: "18px", border: "1px solid var(--border, #E2E8F0)", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" }}>
+      <ModuleHeaderToolbar
+        title={english ? "🗄️ Storage Vault" : "🗄️ स्टोरेज वॉल्ट"}
+        search={search}
+        onSearchChange={setSearch}
+        rows={storageExportRows}
+        fileName="Storage_Vault_Index"
+        language={language}
+        searchPlaceholder={english ? "🔍 Search files or folders..." : "🔍 Drive में फ़ाइल/फोल्डर खोजें..."}
+        extraActions={(
+          <button
+            type="button"
+            onClick={() => setViewMode(viewMode === "GRID" ? "LIST" : "GRID")}
+            style={{ backgroundColor: "#F1F5F9", border: "1px solid #CBD5E1", padding: "7px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+          >
+            {viewMode === "GRID" ? "☰ List" : "⊞ Grid"}
+          </button>
+        )}
+      />
       {/* ऊपरी Action Toolbar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px", marginBottom: "12px" }}>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -383,22 +411,6 @@ export default function StorageVaultModule({
 
           <button onClick={handleSaveLivePortalBackup} style={{ backgroundColor: "#7C3AED", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
             💾 Save Live Data Here
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-          <input
-            type="text"
-            placeholder="🔍 Drive में फ़ाइल/फोल्डर खोजें..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ padding: "7px 12px", borderRadius: "8px", border: "1px solid #94A3B8", minWidth: "200px" }}
-          />
-          <button
-            onClick={() => setViewMode(viewMode === "GRID" ? "LIST" : "GRID")}
-            style={{ backgroundColor: "#F1F5F9", border: "1px solid #CBD5E1", padding: "7px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
-          >
-            {viewMode === "GRID" ? "☰ List" : "⊞ Grid"}
           </button>
         </div>
       </div>

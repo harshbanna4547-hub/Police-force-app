@@ -224,6 +224,31 @@ export default function BhartiModule({ records = [], setRecords, allSheets = {},
               ✅ {english ? "Save Confirmation" : "स्थायीकरण दर्ज करें"}
             </button>
           </form>
+          <h3>{english ? "Recorded Confirmation Orders" : "दर्ज स्थायीकरण आदेश"}</h3>
+          <div className="table-responsive-box">
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+                  <th style={{ padding: "8px" }}>{english ? "Belt No." : "बेल्ट नं."}</th>
+                  <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "नाम"}</th>
+                  <th style={{ padding: "8px" }}>{english ? "Order No." : "आदेश नं."}</th>
+                  <th style={{ padding: "8px" }}>{english ? "Date" : "दिनांक"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(allSheets.Posting_History || [])
+                  .filter((row) => String(row.POSTING_PLACE || "").includes("[Confirmation]"))
+                  .map((row, index) => (
+                    <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
+                      <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
+                      <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.NAME} /></td>
+                      <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_NO_DATE}</td>
+                      <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row.ORDER_DATE)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
     </div>
