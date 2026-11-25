@@ -18,6 +18,10 @@ export default function TopHeaderAndStats({
     attRecords,
     depRecords,
     totalSanc,
+    isOneDriveConnected,
+    isCloudSyncing,
+    cloudSyncStatus,
+    onConnectOneDriveDb
   } = portalData;
 
   return (
@@ -32,6 +36,10 @@ export default function TopHeaderAndStats({
         onThemeChange={onThemeChange}
         language={language}
         onLanguageChange={onLanguageChange}
+        isOneDriveConnected={isOneDriveConnected}
+        isCloudSyncing={isCloudSyncing}
+        cloudSyncStatus={cloudSyncStatus}
+        onConnectOneDriveDb={onConnectOneDriveDb}
       />
       <StatCards
         totalSanc={totalSanc}

@@ -8,7 +8,11 @@ export default function TopHeader({
   theme,
   onThemeChange,
   language,
-  onLanguageChange
+  onLanguageChange,
+  isOneDriveConnected,
+  isCloudSyncing,
+  cloudSyncStatus,
+  onConnectOneDriveDb
 }) {
   return (
     <header className="portal-top-header" style={{ position: "sticky", top: 0, zIndex: 900, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", background: "var(--surface, #F4F7FB)", borderBottom: "1px solid var(--border, #E2E8F0)" }}>
@@ -37,6 +41,16 @@ export default function TopHeader({
       </div>
 
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <button
+          type="button"
+          onClick={onConnectOneDriveDb}
+          disabled={isCloudSyncing}
+          title={cloudSyncStatus}
+          aria-label={isOneDriveConnected ? "OneDrive Live Synced" : "Connect OneDrive DB"}
+          style={{ backgroundColor: isOneDriveConnected ? "#DCFCE7" : "#DBEAFE", color: isOneDriveConnected ? "#166534" : "#1D4ED8", border: "1px solid currentColor", padding: "8px 12px", borderRadius: "20px", cursor: isCloudSyncing ? "wait" : "pointer", fontWeight: "bold", fontSize: "0.82rem", opacity: isCloudSyncing ? 0.75 : 1 }}
+        >
+          {isOneDriveConnected ? "🟢 OneDrive Live Synced" : "☁️ Connect OneDrive DB"}
+        </button>
         <button
           type="button"
           onClick={onThemeChange}

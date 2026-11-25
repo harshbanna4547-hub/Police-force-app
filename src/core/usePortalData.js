@@ -17,12 +17,15 @@ import {
 } from "./lanSyncClient.js";
 import {
   OneDriveSyncError,
+  connectOneDriveAccount,
+  getOneDriveAccount,
   synchronizeOneDriveStorage,
   synchronizeOneDriveVault
 } from "./oneDriveDbEngine.js";
 
 const OFFICE_DISTRICT_ID = "CHITTORGARH";
 const LAN_SYNC_INTERVAL_MS = 15000;
+const ONEDRIVE_SYNC_INTERVAL_MS = 25000;
 
 function readDistrictSetting(key, districtId, fallback) {
   try {
@@ -238,7 +241,8 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
   const [unitRankSanc, setUnitRankSanc] = useState({});
   const [loadedDistrictId, setLoadedDistrictId] = useState("");
   const [persistenceError, setPersistenceError] = useState("");
-  const [cloudSyncStatus, setCloudSyncStatus] = useState("OneDrive sync शुरू हो रहा है…");
+  const [cloudSyncStatus, setCloudSyncStatus] = useState("OneDrive से कनेक्ट करें");
+  const [isOneDriveConnected, setIsOneDriveConnected] = useState(false);
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [lanSyncStatus, setLanSyncStatus] = useState("offline");
 
@@ -266,7 +270,11 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     const mainSheetName = savedData.allSheets?.["Master_All_Data"]
       ? "Master_All_Data"
       : Object.keys(savedData.allSheets || {})[0] || "Master_All_Data";
-    const hydrated = hydrateEmployeeData(savedData.allSheets || {}, sourceRecords, mainSheetName);
+    const sourceSheets = { ...(savedData.allSheets || {}) };
+    if (savedData.trainingNominations && !sourceSheets.Training_Nominations) {
+      sourceSheets.Training_Nominations = savedData.trainingNominations;
+    }
+    const hydrated = hydrateEmployeeData(sourceSheets, sourceRecords, mainSheetName);
     const nextSanctioned = savedData.sanctioned
       || readDistrictSetting("police_sanctioned_data", districtId, DEFAULT_SANCTIONED);
     const nextUnitRankSanc = savedData.unitRankSanc
@@ -386,16 +394,19 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
         await replaceDistrictStorageItems(activeProfile, storageItems);
         window.dispatchEvent(new Event("police-vault-cloud-updated"));
       }
-      setCloudSyncStatus("OneDrive डेटा और Storage सिंक हो गया");
+      setIsOneDriveConnected(true);
+      setCloudSyncStatus("OneDrive Live Synced");
       return true;
     } catch (error) {
       markDatabaseReady();
       if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
         setCloudSyncStatus("इंटरनेट उपलब्ध नहीं; बदलाव इस डिवाइस में सुरक्षित हैं");
       } else if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
-        setCloudSyncStatus("OneDrive sync के लिए Office Access Key आवश्यक है");
+        setIsOneDriveConnected(false);
+        setCloudSyncStatus("VITE_ONEDRIVE_CLIENT_ID कॉन्फ़िगर नहीं है");
       } else if (error instanceof OneDriveSyncError && error.code === "AUTH_REQUIRED") {
-        setCloudSyncStatus("Office Access Key अमान्य है");
+        setIsOneDriveConnected(false);
+        setCloudSyncStatus("OneDrive से कनेक्ट करें");
       } else {
         console.error("OneDrive sync failed:", error);
         setCloudSyncStatus(`OneDrive sync असफल: ${error.message}`);
@@ -439,7 +450,11 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
         const mainSheetName = savedData.allSheets?.["Master_All_Data"]
           ? "Master_All_Data"
           : Object.keys(savedData.allSheets || {})[0] || "Master_All_Data";
-        const hydrated = hydrateEmployeeData(savedData.allSheets || {}, sourceRecords, mainSheetName);
+        const sourceSheets = { ...(savedData.allSheets || {}) };
+        if (savedData.trainingNominations && !sourceSheets.Training_Nominations) {
+          sourceSheets.Training_Nominations = savedData.trainingNominations;
+        }
+        const hydrated = hydrateEmployeeData(sourceSheets, sourceRecords, mainSheetName);
         const nextSanctioned = savedData.sanctioned
           || readDistrictSetting("police_sanctioned_data", districtId, DEFAULT_SANCTIONED);
         const nextUnitRankSanc = savedData.unitRankSanc
@@ -493,9 +508,27 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     return () => { mounted = false; };
   }, [districtId, activeProfile, syncLanData, syncOneDriveData]);
 
+  useEffect(() => {
+    let active = true;
+    getOneDriveAccount()
+      .then((account) => {
+        if (active) setIsOneDriveConnected(Boolean(account));
+      })
+      .catch((error) => {
+        if (!active) return;
+        if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
+          setCloudSyncStatus("VITE_ONEDRIVE_CLIENT_ID कॉन्फ़िगर नहीं है");
+        } else {
+          console.error("OneDrive account status could not be checked:", error);
+        }
+      });
+    return () => { active = false; };
+  }, []);
+
   const districtVaultPayload = useMemo(() => ({
       fileName,
       allSheets,
+      trainingNominations: allSheets.Training_Nominations || [],
       records,
       attRecords,
       depRecords,
@@ -507,14 +540,25 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
 
   useEffect(() => {
     if (!districtId || loadedDistrictId !== districtId) return undefined;
-    const pollOneDrive = () => syncOneDriveData();
-    const interval = window.setInterval(pollOneDrive, LAN_SYNC_INTERVAL_MS);
+    const pollOneDrive = () => {
+      if (document.visibilityState === "visible") void syncOneDriveData();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void syncOneDriveData();
+    };
+    const interval = window.setInterval(pollOneDrive, ONEDRIVE_SYNC_INTERVAL_MS);
     window.addEventListener("police-vault-updated", pollOneDrive);
     window.addEventListener("online", pollOneDrive);
+    window.addEventListener("focus", pollOneDrive);
+    window.addEventListener("pageshow", pollOneDrive);
+    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("police-vault-updated", pollOneDrive);
       window.removeEventListener("online", pollOneDrive);
+      window.removeEventListener("focus", pollOneDrive);
+      window.removeEventListener("pageshow", pollOneDrive);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [districtId, loadedDistrictId, syncOneDriveData]);
 
@@ -903,21 +947,34 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     }
   }, [districtId, districtVaultPayload, syncOneDriveData]);
 
-  useEffect(() => {
-    if (!districtId || loadedDistrictId !== districtId) return undefined;
-    let timeout;
-    const scheduleCloudBackup = () => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => { void syncOneDriveData(); }, 600);
-    };
-    window.addEventListener("police-vault-updated", scheduleCloudBackup);
-    window.addEventListener("online", scheduleCloudBackup);
-    return () => {
-      clearTimeout(timeout);
-      window.removeEventListener("police-vault-updated", scheduleCloudBackup);
-      window.removeEventListener("online", scheduleCloudBackup);
-    };
-  }, [districtId, loadedDistrictId, syncOneDriveData]);
+  const connectToOneDriveDb = useCallback(async () => {
+    if (!districtId) {
+      setCloudSyncStatus("पहले जिला चुनें।");
+      return false;
+    }
+
+    setIsCloudSyncing(true);
+    try {
+      await connectOneDriveAccount();
+      setIsOneDriveConnected(true);
+      const localVault = await loadDistrictVault(districtId);
+      const sourceVault = localVault || {
+        ...districtVaultPayload,
+        updatedAt: new Date().toISOString()
+      };
+      if (!localVault) await saveDistrictVault(districtId, sourceVault);
+      const synced = await syncOneDriveData(sourceVault);
+      if (synced) setPersistenceError("");
+      return synced;
+    } catch (error) {
+      console.error("OneDrive connection failed:", error);
+      setIsOneDriveConnected(false);
+      setCloudSyncStatus(`OneDrive कनेक्शन असफल: ${error.message}`);
+      return false;
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  }, [districtId, districtVaultPayload, syncOneDriveData]);
 
   return {
     activeProfile,
@@ -944,6 +1001,8 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     persistenceError,
     cloudSyncStatus,
     isCloudSyncing,
+    isOneDriveConnected,
+    onConnectOneDriveDb: connectToOneDriveDb,
     lanSyncStatus: districtId === OFFICE_DISTRICT_ID ? lanSyncStatus : "disabled",
     onSaveSanctioned: saveSanctionedSettings,
     onSaveUnitRankSanc: saveUnitRankSettings,
