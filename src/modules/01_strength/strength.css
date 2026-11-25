@@ -79,7 +79,7 @@
 }
 
 .strength-subtab-btn.is-active {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  background: linear-gradient(135deg, #435339 0%, #273123 100%);
   border-color: transparent;
   color: #ffffff;
 }
@@ -107,8 +107,8 @@
 }
 
 .strength-post-pill.is-active {
-  border-color: #1d63dc;
-  background-color: #1d63dc;
+  border-color: #435339;
+  background-color: #435339;
   color: #ffffff;
 }
 
@@ -132,7 +132,7 @@
 .strength-summary-table col.col-num { width: 18%; }
 
 .strength-summary-table thead tr {
-  background: #0f172a;
+  background: #273123;
   color: #ffffff;
 }
 
@@ -192,7 +192,7 @@
 }
 
 .strength-grand-total-row {
-  background-color: #0B1E3D !important;
+  background-color: #273123 !important;
   color: #FFFFFF !important;
   font-weight: bold;
 }
