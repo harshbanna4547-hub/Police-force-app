@@ -3,16 +3,16 @@
    ========================================================================== */
 
 .portal-sidebar {
-  background: linear-gradient(180deg, #111827 0%, #161b26 55%, #1e293b 100%);
-  color: #ffffff;
+  background: linear-gradient(180deg, #1a2118 0%, #141813 58%, #10130f 100%);
+  color: #f4f1ea;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   flex-shrink: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 6px 0 28px rgba(15, 23, 42, 0.14);
+  border-right: 1px solid rgba(216, 180, 137, 0.14);
+  box-shadow: 6px 0 28px rgba(20, 24, 19, 0.18);
 }
 
 .sidebar-overlay {
@@ -64,8 +64,9 @@
 .sidebar-profile-district {
   display: block;
   margin-top: 5px;
-  color: #bfdbfe;
+  color: #d8b489;
   font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .sidebar-switch-btn {
@@ -115,10 +116,11 @@
 }
 
 .sidebar-nav-btn.is-active {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #4b5d40 0%, #37462f 100%);
   color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  border-color: rgba(216, 180, 137, 0.25);
 }
 
 .sidebar-modules-toggle {
@@ -212,8 +214,8 @@
 }
 
 .sidebar-dev-btn.is-active {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border-color: transparent;
+  background: linear-gradient(135deg, #4b5d40 0%, #37462f 100%);
+  border-color: rgba(216, 180, 137, 0.25);
   color: #ffffff;
   font-weight: 700;
 }
@@ -265,7 +267,7 @@
 .sidebar-about-name {
   font-size: 0.84rem;
   font-weight: 800;
-  color: #93c5fd;
+  color: #d8b489;
 }
 
 .sidebar-about-row strong {
@@ -273,7 +275,7 @@
 }
 
 .sidebar-about-mail {
-  color: #93c5fd;
+  color: #d8b489;
   text-decoration: underline;
   word-break: break-all;
 }

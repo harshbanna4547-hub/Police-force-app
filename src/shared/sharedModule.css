@@ -15,9 +15,9 @@
   max-width: 100%;
   box-sizing: border-box;
   background-color: var(--surface-raised, #ffffff);
-  border-radius: var(--radius-card, 20px);
-  padding: clamp(12px, 1.4vw, 24px);
-  border: 1px solid var(--border, rgba(226, 232, 240, 0.9));
+  border-radius: var(--radius-card, 24px);
+  padding: clamp(14px, 1.6vw, 26px);
+  border: 1px solid var(--border, rgba(30, 34, 26, 0.09));
   box-shadow: var(--shadow-card);
 }
 
@@ -26,10 +26,10 @@
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
   gap: 12px;
   margin-bottom: 18px;
-  background-color: var(--surface, #f8fafc);
+  background-color: var(--surface, #faf8f4);
   padding: 16px;
-  border-radius: 16px;
-  border: 1px solid var(--border, rgba(226, 232, 240, 0.9));
+  border-radius: 18px;
+  border: 1px solid var(--border, rgba(30, 34, 26, 0.09));
 }
 
 .module-form-card input,
@@ -72,17 +72,17 @@
 }
 
 .module-tab-btn.is-active {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+  background: linear-gradient(135deg, #435339 0%, #273123 100%);
   border-color: transparent;
   color: #ffffff;
 }
 
 .module-btn-primary {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+  background: linear-gradient(135deg, #435339 0%, #273123 100%);
   color: #fff;
   border: none;
-  padding: clamp(6px, 0.65vw, 10px) clamp(12px, 1.1vw, 18px);
-  border-radius: 10px;
+  padding: clamp(7px, 0.7vw, 10px) clamp(14px, 1.2vw, 20px);
+  border-radius: 999px;
   font-weight: 700;
   font-size: clamp(11px, 0.85vw, 15px);
   cursor: pointer;
@@ -147,14 +147,14 @@
 }
 
 .module-table thead tr {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  background: linear-gradient(135deg, #273123 0%, #3d4d35 100%);
   color: #fff;
 }
 
 .module-table th,
 .module-table td {
   padding: clamp(6px, 0.65vw, 12px) clamp(6px, 0.6vw, 11px);
-  border: 1px solid var(--border, rgba(226, 232, 240, 0.9));
+  border: 1px solid var(--border, rgba(30, 34, 26, 0.09));
 }
 
 .module-cell-center {

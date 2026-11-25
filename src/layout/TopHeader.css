@@ -51,11 +51,11 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 6px 12px;
+  padding: 6px 13px;
   border-radius: var(--radius-pill, 999px);
-  background: var(--surface-tint, #eff6ff);
-  border: 1px solid rgba(30, 58, 138, 0.16);
-  color: var(--text-strong, #0b1e3d);
+  background: var(--surface-tint, #eef1e9);
+  border: 1px solid var(--border, rgba(30, 34, 26, 0.09));
+  color: var(--text-strong, #151814);
   font-size: clamp(11px, 0.82vw, 13px);
   font-weight: 700;
   white-space: nowrap;
@@ -66,15 +66,15 @@
   line-height: 1;
 }
 
-/* --- Center Title --- */
+/* --- Center Editorial Title --- */
 .portal-main-title {
   margin: 0;
-  font-family: var(--font-ui);
-  font-size: clamp(14px, 1.45vw, 25px);
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  font-family: var(--font-editorial, "Playfair Display", Georgia, serif);
+  font-size: clamp(16px, 1.55vw, 27px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-align: center;
-  color: var(--text-strong, #0b1e3d);
+  color: var(--text-strong, #151814);
   justify-self: center;
 }
 

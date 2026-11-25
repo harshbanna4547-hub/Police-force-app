@@ -161,9 +161,12 @@ export default function DashboardBento({ modules = [], onOpenModule, language = 
       aria-label={english ? "All Operational Modules" : "सभी विभागीय कार्य मॉड्यूल"}
       className="bento-dashboard-section"
     >
-      {/* === SECTION HEADER === */}
+      {/* === EDITORIAL SECTION HEADER === */}
       <div className="bento-section-header">
         <div>
+          <span className="bento-section-eyebrow">
+            {english ? "ESTABLISHMENT DIRECTORY" : "विभागीय स्थापना निर्देशिका"}
+          </span>
           <h2 className="bento-section-title">
             {english ? "Operational Modules" : "विभागीय कार्य मॉड्यूल"}
           </h2>
@@ -175,40 +178,44 @@ export default function DashboardBento({ modules = [], onOpenModule, language = 
         </div>
       </div>
 
-      {/* === FROSTED GLASS PILLAR GRID === */}
+      {/* === EDITORIAL PILLAR GRID === */}
       <div className="rajifms-pillar-grid">
-        {pillars.map((pillar) => (
-          <article key={pillar.id} className="rajifms-pillar-card">
-            {/* Non-Clickable Top Header */}
-            <div className="rajifms-pillar-header">
-              <span className="rajifms-header-icon" aria-hidden="true">
-                {pillar.icon}
-              </span>
-              <span className="rajifms-header-title">
-                {english ? pillar.enTitle : pillar.hiTitle}
-              </span>
-              <span className="rajifms-header-subtitle">
-                {english ? pillar.enSubtitle : pillar.hiSubtitle}
-              </span>
-            </div>
+        {pillars.map((pillar, index) => {
+          const toneClasses = ["tone-olive", "tone-espresso", "tone-slate", "tone-terracotta"];
+          const toneClass = toneClasses[index % toneClasses.length];
+          return (
+            <article key={pillar.id} className={`rajifms-pillar-card ${toneClass}`}>
+              {/* Non-Clickable Top Header */}
+              <div className="rajifms-pillar-header">
+                <span className="rajifms-header-icon" aria-hidden="true">
+                  {pillar.icon}
+                </span>
+                <span className="rajifms-header-title">
+                  {english ? pillar.enTitle : pillar.hiTitle}
+                </span>
+                <span className="rajifms-header-subtitle">
+                  {english ? pillar.enSubtitle : pillar.hiSubtitle}
+                </span>
+              </div>
 
-            {/* Only Sub-Items Inside Card Are Clickable (No > chevrons, No count badges) */}
-            <div className="rajifms-subrow-list">
-              {pillar.rows.map((row) => (
-                <button
-                  key={`${pillar.id}-${row.en}`}
-                  type="button"
-                  onClick={() => onOpenModule(resolveTarget(row.target, pillar.id), row.initialTab)}
-                  className="rajifms-subrow-btn"
-                >
-                  <span className="rajifms-subrow-text">
-                    {english ? row.en : row.hi}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </article>
-        ))}
+              {/* Only Sub-Items Inside Card Are Clickable (Zero chevrons / Zero badges) */}
+              <div className="rajifms-subrow-list">
+                {pillar.rows.map((row) => (
+                  <button
+                    key={`${pillar.id}-${row.en}`}
+                    type="button"
+                    onClick={() => onOpenModule(resolveTarget(row.target, pillar.id), row.initialTab)}
+                    className="rajifms-subrow-btn"
+                  >
+                    <span className="rajifms-subrow-text">
+                      {english ? row.en : row.hi}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );

@@ -1,75 +1,78 @@
 /* ==========================================================================
-   PORTAL DESIGN SYSTEM & MINIMALIST EDITORIAL TOKENS (न्यूनतम संपादकीय थीम)
-   Light Mode: Soft ice-slate canvas (#f3f6f9) + pure white cards (#ffffff)
-   Dark Mode:  Charcoal-navy canvas (#161b26) + elevated slate (#1f2636)
+   MINIMALIST EDITORIAL & ORGANIC LUXURY DESIGN TOKENS
+   Light Mode: Warm Alabaster Canvas (#f5f2eb) + Pure White Cards + Olive-Espresso
+   Dark Mode:  Deep Twinkle Charcoal-Navy (#141821) + Champagne Sand (#d8b489)
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* --- Typography (फ़ॉन्ट व्यवस्था: Plus Jakarta Sans / Inter + DevLys 010 + Times New Roman) --- */
+  /* --- Typography (Editorial Serif Display + Crisp UI Sans + DevLys 010 + Times New Roman) --- */
+  --font-editorial: "Playfair Display", "Cormorant Garamond", "Noto Serif Devanagari", Georgia, serif;
   --font-ui: "Plus Jakarta Sans", "Inter", "Noto Sans Devanagari", "Arimo", system-ui, sans-serif;
   --font-devlys: "DevLys 010", "Kruti Dev 010", sans-serif;
   --font-numeric: "Times New Roman", "Tinos", Times, serif;
 
-  /* --- Light Mode Surfaces & Canvas --- */
-  --page: #f3f6f9;
-  --surface: #f8fafc;
+  /* --- Light Mode: Warm Alabaster, Linen Ivory & Sage Mist --- */
+  --page: #f5f2eb;
+  --surface: #faf8f4;
   --surface-raised: #ffffff;
-  --surface-muted: #f1f5f9;
-  --surface-tint: #eff6ff;
+  --surface-muted: #eeebe2;
+  --surface-tint: #eef1e9;
 
-  /* --- Text & Hairline Borders --- */
-  --text: #1e293b;
-  --text-strong: #0f172a;
-  --muted: #64748b;
-  --border: rgba(226, 232, 240, 0.9);
-  --border-strong: rgba(203, 213, 225, 0.95);
+  /* --- Text & Subtle Hairline Stone Borders --- */
+  --text: #272a25;
+  --text-strong: #151814;
+  --muted: #6c7066;
+  --border: rgba(30, 34, 26, 0.09);
+  --border-strong: rgba(30, 34, 26, 0.17);
 
-  /* --- Authoritative Classic Royal Blue & Ice/Fire Hover Accents --- */
-  --navy-950: #0f172a;
-  --navy-900: #161b26;
-  --navy-800: #1e3a8a;
-  --royal-blue: #1d4ed8;
-  --royal-blue-soft: rgba(29, 78, 216, 0.08);
-  --hero-gradient: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+  /* --- Calm Botanical Olive, Espresso & Slate Accents --- */
+  --navy-950: #151814;
+  --navy-900: #1f241d;
+  --navy-800: #3d4d35;
+  --royal-blue: #435339;
+  --sage-olive: #4b5d40;
+  --terracotta: #c86d41;
+  --champagne: #d8b489;
+  --royal-blue-soft: rgba(67, 83, 57, 0.1);
+  --hero-gradient: linear-gradient(135deg, #435339 0%, #273123 100%);
   --ice-accent: #38bdf8;
-  --fire-accent: #f43f5e;
-  --violet-accent: #8b5cf6;
+  --fire-accent: #e06d44;
 
-  /* --- Radii & Soft Diffused 3D Shadows --- */
+  /* --- Soft Editorial Radii & Diffused Shadows --- */
   --radius-header: 20px;
-  --radius-hero: 20px;
-  --radius-card: 20px;
-  --radius-control: 12px;
+  --radius-hero: 24px;
+  --radius-card: 24px;
+  --radius-control: 14px;
   --radius-pill: 999px;
 
-  --shadow-header: 0 8px 24px rgba(15, 23, 42, 0.04);
-  --shadow-hero: 0 14px 34px rgba(15, 23, 42, 0.12);
-  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.05);
-  --shadow-card-hover: 0 18px 38px rgba(15, 23, 42, 0.09);
+  --shadow-header: 0 8px 24px rgba(28, 30, 24, 0.04);
+  --shadow-hero: 0 16px 36px rgba(28, 30, 24, 0.1);
+  --shadow-card: 0 12px 32px rgba(28, 30, 24, 0.05);
+  --shadow-card-hover: 0 20px 42px rgba(28, 30, 24, 0.09);
 }
 
-/* === DARK THEME TOKENS (चारकोल-नेवी डार्क मोड) === */
+/* === DARK THEME TOKENS (Twinkle Charcoal-Navy + Warm Champagne Sand) === */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #161b26;
-  --surface: #1b2230;
-  --surface-raised: #1f2636;
-  --surface-muted: #262f42;
-  --surface-tint: rgba(96, 165, 250, 0.12);
+  --page: #141821;
+  --surface: #1a202c;
+  --surface-raised: #1e2533;
+  --surface-muted: #262e3f;
+  --surface-tint: rgba(216, 180, 137, 0.12);
 
-  --text: #e2e8f0;
-  --text-strong: #f8fafc;
-  --muted: #94a3b8;
-  --border: rgba(148, 163, 184, 0.18);
-  --border-strong: rgba(148, 163, 184, 0.3);
+  --text: #e6e2da;
+  --text-strong: #f9f6f0;
+  --muted: #98a2b3;
+  --border: rgba(216, 180, 137, 0.16);
+  --border-strong: rgba(216, 180, 137, 0.28);
 
-  --accent-champagne: #d4b483;
-  --accent-sky: #60a5fa;
+  --accent-champagne: #d8b489;
+  --accent-sky: #8ea3b0;
 
   --shadow-header: 0 10px 28px rgba(0, 0, 0, 0.3);
-  --shadow-hero: 0 18px 40px rgba(0, 0, 0, 0.42);
+  --shadow-hero: 0 18px 40px rgba(0, 0, 0, 0.44);
   --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.28);
-  --shadow-card-hover: 0 18px 40px rgba(0, 0, 0, 0.42);
+  --shadow-card-hover: 0 20px 44px rgba(0, 0, 0, 0.42);
 }
