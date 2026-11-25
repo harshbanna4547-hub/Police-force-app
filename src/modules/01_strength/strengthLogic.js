@@ -1,5 +1,5 @@
-import { getBeltNo, getRankCode } from "../../shared/commonFunctions";
-import { detectGenderFromRecord, filterEmployeesByGender, matchesEmployeeSearch } from "../../forceLogic";
+import { getBeltNo, getRankCode } from "../../shared/commonFunctions.js";
+import { filterEmployeesByGender, getEmployeeGender, matchesEmployeeSearch } from "../../forceLogic.js";
 
 export const POST_FILTER_TABS = [
   { id: "ALL", label: "सभी पद (ALL)", enLabel: "All Posts", groupIds: null },
@@ -94,7 +94,7 @@ export function buildCasteStrengthSummary(records = []) {
   list.forEach((rec) => {
     const cat = normalizeCasteCategory(rec);
     const bucket = rowsByCategory[cat];
-    const gender = detectGenderFromRecord(rec);
+    const gender = getEmployeeGender(rec);
     const rankBucket = getRankBucket(getRankCode(rec));
 
     bucket.total += 1;

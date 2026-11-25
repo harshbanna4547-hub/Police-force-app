@@ -1,18 +1,25 @@
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { CADRE_GROUPS, DEFAULT_SANCTIONED, mapRankToCode } from "../../data/cadreConfig";
-import { filterEmployeesByGender } from "../../forceLogic";
+import { filterEmployeesByGender, getEmployeeGender } from "../../forceLogic";
 import { getBeltNo } from "../../shared/commonFunctions";
 import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
 import SmartEmployeeTable from "../../components/shared/SmartEmployeeTable";
 import StatCards from "../../layout/StatCards";
 import OfficePsStrength from "./OfficePsStrength";
-import { filterStrengthRecords, formatVacancy, POST_FILTER_TABS } from "./strengthLogic";
+import {
+  buildCasteStrengthSummary,
+  filterStrengthRecords,
+  formatVacancy,
+  POST_FILTER_TABS
+} from "./strengthLogic";
 import { translateCadreGroup, translateRankLabel } from "../../utils/i18n";
 import "./strength.css";
 
+const VALID_TABS = new Set(["POST_WISE", "OFFICE_PS_WISE", "SUMMARY", "CASTE_WISE"]);
+
 /**
- * [COMPONENT] StrengthModule — स्वीकृत एवं कार्यरत नफरी, कार्यालय/थाना-वार नफरी और रिक्त पद सारांश
+ * [COMPONENT] StrengthModule — 4-Tab नफरी मॉड्यूल (Post-Wise, PS/CO/Office-Wise, Summary, Caste-Wise)
  */
 export default function StrengthModule({
   records = [],
@@ -28,11 +35,15 @@ export default function StrengthModule({
   attCount = 0,
   depCount = 0,
   setActiveView,
+  initialTab = "POST_WISE",
   currentDistrict,
   language = "hi"
 }) {
-  const [subTab, setSubTab] = useState("POST_WISE");
+  const [subTab, setSubTab] = useState(() =>
+    VALID_TABS.has(initialTab) ? initialTab : "POST_WISE"
+  );
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
+  const [selectedCasteRow, setSelectedCasteRow] = useState(null);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [genderFilter, setGenderFilter] = useState("ALL");
   const [expanded, setExpanded] = useState({});
@@ -40,13 +51,12 @@ export default function StrengthModule({
   const [officeExportRows, setOfficeExportRows] = useState([]);
   const english = language === "en";
 
-  // [FILTER] Male / Female / All employee count logic
   const genderFilteredRecords = useMemo(
     () => filterEmployeesByGender(records, genderFilter),
     [records, genderFilter]
   );
 
-  // [CALCULATION] Rank-wise working strength count per cadre code
+  // Rank-wise working strength count per cadre code
   const workStats = useMemo(() => {
     const stats = {};
     Object.keys(DEFAULT_SANCTIONED).forEach((k) => {
@@ -61,7 +71,7 @@ export default function StrengthModule({
     return stats;
   }, [genderFilteredRecords]);
 
-  // [FILTER] Visible cadre groups for selected rank tab
+  // Tab 1: Visible cadre groups for Post-Wise tab
   const visibleGroups = useMemo(() => {
     const tabSpec = POST_FILTER_TABS.find((t) => t.id === selectedPostTab);
     if (!tabSpec || !tabSpec.groupIds) return CADRE_GROUPS;
@@ -89,7 +99,6 @@ export default function StrengthModule({
     [selectedPostEmployees, employeeSearch]
   );
 
-  // [CALCULATION] Grand Total across visible cadre groups
   const grandTotals = useMemo(() => {
     let totalSanctioned = 0;
     let totalWorking = 0;
@@ -104,6 +113,34 @@ export default function StrengthModule({
     };
   }, [visibleGroups, sanctioned, workStats]);
 
+  // Tab 3: Gender & Cadre Distribution Summary
+  const genderBreakdown = useMemo(() => {
+    let male = 0;
+    let female = 0;
+    let other = 0;
+    records.forEach((rec) => {
+      const g = getEmployeeGender(rec);
+      if (g === "MALE") male += 1;
+      else if (g === "FEMALE") female += 1;
+      else other += 1;
+    });
+    return { male, female, other, total: records.length };
+  }, [records]);
+
+  // Tab 4: Caste-Wise Strength Breakdown
+  const casteSummaryRows = useMemo(
+    () => buildCasteStrengthSummary(genderFilteredRecords),
+    [genderFilteredRecords]
+  );
+
+  const selectedCasteEmployees = useMemo(() => {
+    const activeCat = selectedCasteRow
+      ? casteSummaryRows.find((r) => r.category === selectedCasteRow)?.employees || []
+      : [];
+    return filterStrengthRecords(activeCat, employeeSearch, "ALL");
+  }, [selectedCasteRow, casteSummaryRows, employeeSearch]);
+
+  // Exports per tab
   const postExportRows = useMemo(() => {
     const rows = [];
     visibleGroups.forEach((grp) => {
@@ -135,13 +172,40 @@ export default function StrengthModule({
     return rows;
   }, [visibleGroups, sanctioned, workStats, grandTotals, language, english]);
 
+  const casteExportRows = useMemo(
+    () => casteSummaryRows.map((r) => ({
+      Category: r.category,
+      Male: r.male,
+      Female: r.female,
+      Total: r.total,
+      "Share %": `${r.sharePct}%`,
+      "Officers (SP-CI)": r.ranks.OFFICERS,
+      "SI / ASI": r.ranks.SUPERVISORY,
+      HC: r.ranks.HC,
+      FC: r.ranks.FC,
+      "Ministerial / Support": r.ranks.SUPPORT
+    })),
+    [casteSummaryRows]
+  );
+
+  const summaryExportRows = useMemo(
+    () => CADRE_GROUPS.map((grp) => {
+      const gSanc = grp.ranks.reduce((s, r) => s + Number(sanctioned[r.code] || 0), 0);
+      const gWork = grp.ranks.reduce((s, r) => s + (workStats[r.code]?.working || 0), 0);
+      return {
+        Cadre: translateCadreGroup(grp, language),
+        Sanctioned: gSanc,
+        Working: gWork,
+        "Vacant / Surplus": formatVacancy(gSanc, gWork)
+      };
+    }),
+    [sanctioned, workStats, language]
+  );
+
   const savePostSanctioned = async () => {
+    setEditing(false);
     try {
-      await onSaveSanctioned(sanctioned);
-      setEditing(false);
-      alert(english
-        ? "Post-wise sanctioned strength saved to IndexedDB."
-        : "पद-वार स्वीकृत नफरी IndexedDB में सुरक्षित हो गई है!");
+      await onSaveSanctioned?.(sanctioned);
     } catch (error) {
       console.error("Post-wise sanctioned strength could not be saved:", error);
       alert(`स्वीकृत नफरी सेव नहीं हो सकी: ${error.message}`);
@@ -161,17 +225,22 @@ export default function StrengthModule({
   };
 
   const toolbarTitle = subTab === "OFFICE_PS_WISE"
-    ? (english ? "Office / CO / PS-Wise Strength" : "कार्यालय, वृत्त एवं थाना-वार नफरी")
-    : subTab === "VACANCY_SUMMARY"
-      ? (english ? "Vacancy & Recruitment Summary" : "संवर्ग-वार रिक्त पदों का संक्षिप्त सारांश")
-      : (english ? "Sanctioned & Working Strength" : "स्वीकृत एवं कार्यरत नफरी");
+    ? (english ? "PS / CO / Office-Wise Strength" : "थाना / वृत्त / कार्यालयवार नफरी")
+    : subTab === "SUMMARY"
+      ? (english ? "Strength Summary & Gender Distribution" : "समेकित सारांश एवं Male/Female")
+      : subTab === "CASTE_WISE"
+        ? (english ? "Caste-Wise Strength" : "जाति / वर्गवार नफरी")
+        : (english ? "Post-Wise Strength" : "पदवार नफरी");
 
-  const toolbarRows = subTab === "OFFICE_PS_WISE" ? officeExportRows : postExportRows;
-  const toolbarFileName = subTab === "OFFICE_PS_WISE"
-    ? "Office_CO_PS_Strength"
-    : subTab === "VACANCY_SUMMARY"
-      ? "Vacancy_Summary"
-      : `Strength_${selectedPostTab}`;
+  const toolbarRows = subTab === "OFFICE_PS_WISE"
+    ? officeExportRows
+    : subTab === "CASTE_WISE"
+      ? casteExportRows
+      : subTab === "SUMMARY"
+        ? summaryExportRows
+        : postExportRows;
+
+  const toolbarFileName = `Strength_${subTab}`;
 
   const toolbarExtraActions = subTab === "POST_WISE" ? (
     !editing ? (
@@ -196,26 +265,7 @@ export default function StrengthModule({
 
   return (
     <div className="strength-module">
-      {/* === COMPACT ROYAL-NAVY 4-KPI BANNER (केवल नफरी मॉड्यूल के शीर्ष पर) === */}
-      <div className="strength-kpi-banner">
-        <StatCards
-          totalSanc={resolvedTotalSanc}
-          activeCount={records.length}
-          attCount={attCount}
-          depCount={depCount}
-          setActiveView={(targetView) => {
-            if (targetView === "STRENGTH") {
-              setSubTab("POST_WISE");
-            } else {
-              setActiveView?.(targetView);
-            }
-          }}
-          currentDistrict={currentDistrict}
-          language={language}
-        />
-      </div>
-
-      {/* === TOP UNIFIED TOOLBAR (ऊपरी टूलबार) === */}
+      {/* === TOP UNIFIED TOOLBAR === */}
       <ModuleHeaderToolbar
         title={`🛡️ ${toolbarTitle}`}
         search={employeeSearch}
@@ -231,12 +281,13 @@ export default function StrengthModule({
           : (english ? "🔍 Search name, belt no., post, unit..." : "🔍 नाम, बेल्ट नं., पद या पदस्थापन खोजें...")}
       />
 
-      {/* === SUB-VIEW TABS (उप-टैब) === */}
+      {/* === 4 EXACT STRENGTH TABS === */}
       <div className="strength-subtabs">
         {[
-          { id: "POST_WISE", hi: "पद-वार स्वीकृत नफरी", en: "Post-Wise Sanctioned Strength" },
-          { id: "OFFICE_PS_WISE", hi: "कार्यालय / वृत्त / थाना-वार नफरी", en: "Office / CO / PS-Wise Strength" },
-          { id: "VACANCY_SUMMARY", hi: "रिक्त पद सारांश", en: "Vacancy & Recruitment Summary" }
+          { id: "POST_WISE", hi: "पदवार नफरी (Post-Wise)", en: "Post-Wise Strength" },
+          { id: "OFFICE_PS_WISE", hi: "थाना / वृत्त / कार्यालयवार नफरी", en: "PS / CO / Office-Wise Strength" },
+          { id: "SUMMARY", hi: "समेकित सारांश एवं Male/Female", en: "Strength Summary" },
+          { id: "CASTE_WISE", hi: "जाति / वर्गवार नफरी", en: "Caste-Wise Strength" }
         ].map((t) => (
           <button
             type="button"
@@ -249,7 +300,7 @@ export default function StrengthModule({
         ))}
       </div>
 
-      {/* === 1. POST-WISE STRENGTH TABLE === */}
+      {/* === TAB 1: POST-WISE STRENGTH === */}
       {subTab === "POST_WISE" && (
         <div>
           <div className="strength-post-pills">
@@ -334,7 +385,6 @@ export default function StrengthModule({
                     </React.Fragment>
                   );
                 })}
-                {/* === GRAND TOTAL ROW (महायोग पंक्ति) === */}
                 <tr className="strength-grand-total-row">
                   <td>{english ? "GRAND TOTAL" : "महायोग (GRAND TOTAL)"}</td>
                   <td className="english-cell">{grandTotals.sanctioned}</td>
@@ -363,7 +413,7 @@ export default function StrengthModule({
         </div>
       )}
 
-      {/* === 2. OFFICE / CO / PS-WISE VIEW === */}
+      {/* === TAB 2: PS / CO / OFFICE-WISE VIEW === */}
       {subTab === "OFFICE_PS_WISE" && (
         <OfficePsStrength
           records={genderFilteredRecords}
@@ -378,28 +428,134 @@ export default function StrengthModule({
         />
       )}
 
-      {/* === 3. VACANCY SUMMARY CARDS === */}
-      {subTab === "VACANCY_SUMMARY" && (
-        <div className="strength-vacancy-grid">
-          {CADRE_GROUPS.map((grp) => {
-            const gSanc = grp.ranks.reduce((s, r) => s + Number(sanctioned[r.code] || 0), 0);
-            const gWork = grp.ranks.reduce((s, r) => s + (workStats[r.code]?.working || 0), 0);
-            const gVac = gSanc - gWork;
-            return (
-              <div key={grp.id} className="strength-vacancy-card">
-                <div className="strength-vacancy-title">
-                  {translateCadreGroup(grp, language)}
+      {/* === TAB 3: EXECUTIVE SUMMARY (4-KPI BANNER + MALE/FEMALE GENDER BREAKDOWN + CADRE DISTRIBUTION) === */}
+      {subTab === "SUMMARY" && (
+        <div className="strength-summary-tab">
+          <div className="strength-kpi-banner">
+            <StatCards
+              totalSanc={resolvedTotalSanc}
+              activeCount={records.length}
+              attCount={attCount}
+              depCount={depCount}
+              setActiveView={(targetView) => {
+                if (targetView === "STRENGTH") setSubTab("POST_WISE");
+                else setActiveView?.(targetView);
+              }}
+              currentDistrict={currentDistrict}
+              language={language}
+            />
+          </div>
+
+          <div className="strength-gender-strip">
+            <div className="strength-gender-card">
+              <span className="strength-gender-label">👮 {english ? "Male Force" : "पुरुष बल (Male)"}</span>
+              <strong className="strength-gender-value english-cell">{genderBreakdown.male}</strong>
+            </div>
+            <div className="strength-gender-card is-magenta">
+              <span className="strength-gender-label">👮‍♀️ {english ? "Female Force" : "महिला बल (Female)"}</span>
+              <strong className="strength-gender-value english-cell">{genderBreakdown.female}</strong>
+            </div>
+            <div className="strength-gender-card is-purple">
+              <span className="strength-gender-label">⚖️ {english ? "Unspecified Gender" : "अन्य / अचिह्नित"}</span>
+              <strong className="strength-gender-value english-cell">{genderBreakdown.other}</strong>
+            </div>
+            <div className="strength-gender-card is-blue">
+              <span className="strength-gender-label">🛡️ {english ? "Total Active Force" : "कुल कार्यरत बल"}</span>
+              <strong className="strength-gender-value english-cell">{genderBreakdown.total}</strong>
+            </div>
+          </div>
+
+          <div className="strength-vacancy-grid">
+            {CADRE_GROUPS.map((grp) => {
+              const gSanc = grp.ranks.reduce((s, r) => s + Number(sanctioned[r.code] || 0), 0);
+              const gWork = grp.ranks.reduce((s, r) => s + (workStats[r.code]?.working || 0), 0);
+              const gVac = gSanc - gWork;
+              return (
+                <div key={grp.id} className="strength-vacancy-card">
+                  <div className="strength-vacancy-title">
+                    {translateCadreGroup(grp, language)}
+                  </div>
+                  <div className="strength-vacancy-metrics">
+                    <span>{english ? "Sanc." : "स्वीकृत"}: <b>{gSanc}</b></span>
+                    <span className="module-cell-accent-green">{english ? "Work." : "कार्यरत"}: <b>{gWork}</b></span>
+                    <span className={gVac > 0 ? "module-cell-accent-red" : "module-cell-accent-green"}>
+                      {english ? "Vac." : "रिक्त/अधिक"}: <b>{formatVacancy(gSanc, gWork)}</b>
+                    </span>
+                  </div>
                 </div>
-                <div className="strength-vacancy-metrics">
-                  <span>{english ? "Sanc." : "स्वीकृत"}: <b>{gSanc}</b></span>
-                  <span className="module-cell-accent-green">{english ? "Work." : "कार्यरत"}: <b>{gWork}</b></span>
-                  <span className={gVac > 0 ? "module-cell-accent-red" : "module-cell-accent-green"}>
-                    {english ? "Vac." : "रिक्त/अधिक"}: <b>{formatVacancy(gSanc, gWork)}</b>
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* === TAB 4: CASTE-WISE STRENGTH (GEN, OBC, MBC, EWS, SC, ST RANK & GENDER BREAKDOWN) === */}
+      {subTab === "CASTE_WISE" && (
+        <div>
+          <div className="strength-summary-wrap">
+            <table className="module-table">
+              <thead>
+                <tr>
+                  <th className="module-cell-left">{english ? "Category" : "वर्ग (Category)"}</th>
+                  <th>{english ? "Male" : "पुरुष"}</th>
+                  <th>{english ? "Female" : "महिला"}</th>
+                  <th>{english ? "Total" : "कुल"}</th>
+                  <th>{english ? "Share %" : "प्रतिशत"}</th>
+                  <th>{english ? "Officers (SP-CI)" : "अधिकारी"}</th>
+                  <th>SI / ASI</th>
+                  <th>HC</th>
+                  <th>FC</th>
+                  <th>{english ? "Min./Support" : "मंत्रालयिक/अन्य"}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {casteSummaryRows.map((row) => (
+                  <tr
+                    key={row.category}
+                    onClick={() => setSelectedCasteRow((prev) => (prev === row.category ? null : row.category))}
+                    className={`strength-caste-row${selectedCasteRow === row.category ? " is-selected" : ""}`}
+                  >
+                    <td className="module-cell-left"><strong>{row.category}</strong></td>
+                    <td className="module-cell-center module-cell-tnr">{row.male}</td>
+                    <td className="module-cell-center module-cell-tnr">{row.female}</td>
+                    <td className="module-cell-center module-cell-tnr"><strong>{row.total}</strong></td>
+                    <td className="module-cell-center module-cell-tnr">{row.sharePct}%</td>
+                    <td className="module-cell-center module-cell-tnr">{row.ranks.OFFICERS}</td>
+                    <td className="module-cell-center module-cell-tnr">{row.ranks.SUPERVISORY}</td>
+                    <td className="module-cell-center module-cell-tnr">{row.ranks.HC}</td>
+                    <td className="module-cell-center module-cell-tnr">{row.ranks.FC}</td>
+                    <td className="module-cell-center module-cell-tnr">{row.ranks.SUPPORT}</td>
+                  </tr>
+                ))}
+                <tr className="strength-grand-total-row">
+                  <td className="module-cell-left">{english ? "GRAND TOTAL" : "महायोग"}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.male, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.female, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.total, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">100.0%</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.ranks.OFFICERS, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.ranks.SUPERVISORY, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.ranks.HC, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.ranks.FC, 0)}</td>
+                  <td className="module-cell-center module-cell-tnr">{casteSummaryRows.reduce((s, r) => s + r.ranks.SUPPORT, 0)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {selectedCasteRow && (
+            <div className="strength-drilldown-section">
+              <h4 className="strength-drilldown-heading">
+                {selectedCasteRow} — {english ? "Category Personnel" : "वर्गवार कार्यरत कर्मचारी"} ({selectedCasteEmployees.length})
+              </h4>
+              <SmartEmployeeTable
+                employees={selectedCasteEmployees}
+                onAction={handleEmployeeAction}
+                caption={`${selectedCasteRow} employees`}
+                language={language}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

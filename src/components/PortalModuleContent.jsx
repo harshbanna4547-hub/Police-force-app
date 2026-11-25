@@ -1,19 +1,57 @@
-import { useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import EmployeeEditModal from "../core/EmployeeEditModal";
 
 /**
- * [COMPONENT] PortalModuleContent — सक्रिय मॉड्यूल को रेंडर करता है एवं वैश्विक संपादन मोडल जोड़ता है
+ * [COMPONENT] PortalModuleContent — सक्रिय मॉड्यूल, बॉटम बैक बटन, ग्लोबल राइट-क्लिक मेन्यू एवं संपादन मोडल
  */
 export default function PortalModuleContent({
   activeView,
   setActiveView,
+  initialTab = null,
+  onBack,
+  onHome,
   portalData,
   districtId,
   currentDistrict,
   modules,
   language = "hi"
 }) {
+  const english = language === "en";
   const [editInitialTab, setEditInitialTab] = useState("personal");
+  const [contextMenu, setContextMenu] = useState(null);
+  const contextRef = useRef(null);
+
+  useEffect(() => {
+    if (!contextMenu) return undefined;
+    const closeMenu = () => setContextMenu(null);
+    const onPointerDown = (e) => {
+      if (contextRef.current && !contextRef.current.contains(e.target)) closeMenu();
+    };
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") closeMenu();
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", closeMenu, true);
+    window.addEventListener("blur", closeMenu);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", closeMenu, true);
+      window.removeEventListener("blur", closeMenu);
+    };
+  }, [contextMenu]);
+
+  useLayoutEffect(() => {
+    const el = contextRef.current;
+    if (!el || !contextMenu) return;
+    const rect = el.getBoundingClientRect();
+    const maxX = Math.max(8, window.innerWidth - rect.width - 10);
+    const maxY = Math.max(8, window.innerHeight - rect.height - 10);
+    el.style.left = `${Math.max(8, Math.min(contextMenu.x, maxX))}px`;
+    el.style.top = `${Math.max(8, Math.min(contextMenu.y, maxY))}px`;
+  }, [contextMenu]);
   const {
     activeProfile,
     allSheets,
@@ -77,6 +115,7 @@ export default function PortalModuleContent({
       attCount: attRecords.length,
       depCount: depRecords.length,
       setActiveView,
+      initialTab,
       currentDistrict: currentDistrict || { id: districtId, name: activeProfile },
       language
     },
@@ -142,10 +181,92 @@ export default function PortalModuleContent({
     DEV_SERVICES: { districtId, portalData, language }
   };
   const ActiveModule = selectedModule.component;
+  const activeKey = activeView === "STRENGTH" ? `STRENGTH_${initialTab || "POST_WISE"}` : activeView;
+
+  const handleGlobalContextMenu = (e) => {
+    if (activeView === "STORAGE" || e.target.closest(".win11-desktop-shell")) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  };
 
   return (
-    <>
-      <ActiveModule {...propsByModule[activeView]} />
+    <div className="portal-module-stage" onContextMenu={handleGlobalContextMenu}>
+      <ActiveModule key={activeKey} {...propsByModule[activeView]} />
+
+      {/* === DUAL BACK NAVIGATION: BOTTOM GLASSMORPHIC BACK BAR === */}
+      <div className="module-bottom-back-bar">
+        <div className="module-bottom-back-actions">
+          <button
+            type="button"
+            onClick={() => (onBack ? onBack() : setActiveView?.("HOME"))}
+            className="module-bottom-back-btn"
+          >
+            ⬅️ {english ? "Back" : "पीछे जाएं (Back)"}
+          </button>
+          <button
+            type="button"
+            onClick={() => (onHome ? onHome() : setActiveView?.("HOME"))}
+            className="module-bottom-home-btn"
+          >
+            🏠 {english ? "Dashboard" : "मुख्य डैशबोर्ड"}
+          </button>
+        </div>
+        {activeView !== "STORAGE" && (
+          <span className="module-bottom-hint">
+            {english
+              ? "Tip: Right-click anywhere for Back / Dashboard / Print"
+              : "सुझाव: Back / Dashboard / Print के लिए कहीं भी राइट-क्लिक करें"}
+          </span>
+        )}
+      </div>
+
+      {/* === GLOBAL RIGHT-CLICK CONTEXT MENU (Outside Storage Desktop) === */}
+      {contextMenu && createPortal(
+        <div
+          ref={contextRef}
+          role="menu"
+          className="portal-context-menu"
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setContextMenu(null);
+              if (onBack) onBack();
+              else setActiveView?.("HOME");
+            }}
+            className="portal-context-item"
+          >
+            ⬅️ {english ? "Back to Previous" : "पिछले पृष्ठ पर वापस"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setContextMenu(null);
+              if (onHome) onHome();
+              else setActiveView?.("HOME");
+            }}
+            className="portal-context-item"
+          >
+            🏠 {english ? "Go to Dashboard" : "डैशबोर्ड पर जाएं"}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setContextMenu(null);
+              window.print();
+            }}
+            className="portal-context-item"
+          >
+            🖨️ {english ? "Print Page" : "पृष्ठ प्रिंट करें"}
+          </button>
+        </div>,
+        document.body
+      )}
+
       {editingEmployee && (
         <EmployeeEditModal
           key={`${editingEmployee._uid || editingEmployee.NAME}-${editInitialTab}`}
@@ -155,6 +276,6 @@ export default function PortalModuleContent({
           onClose={() => setEditingEmployee(null)}
         />
       )}
-    </>
+    </div>
   );
 }

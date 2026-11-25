@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./App.css";
 import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
@@ -34,6 +34,8 @@ function readActiveDistrict() {
 export default function App() {
   const [currentDistrict, setCurrentDistrict] = useState(readActiveDistrict);
   const [activeView, setActiveView] = useState("HOME");
+  const viewHistoryRef = useRef(["HOME"]);
+  const [moduleInitialTab, setModuleInitialTab] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const [theme, setTheme] = useState(() => {
     try {
@@ -91,6 +93,32 @@ export default function App() {
     setCurrentDistrict(nextDistrict);
   };
 
+  const navigateToView = (targetView, initialTab = null) => {
+    const nextView = targetView || "HOME";
+    setModuleInitialTab(initialTab || null);
+    setActiveView(nextView);
+    if (nextView === "HOME") {
+      viewHistoryRef.current = ["HOME"];
+    } else if (viewHistoryRef.current[viewHistoryRef.current.length - 1] !== nextView) {
+      viewHistoryRef.current = [...viewHistoryRef.current, nextView];
+    }
+  };
+
+  const handleGoBack = () => {
+    setModuleInitialTab(null);
+    const prev = viewHistoryRef.current;
+    if (prev.length <= 1) {
+      viewHistoryRef.current = ["HOME"];
+      setActiveView("HOME");
+      return;
+    }
+    const next = prev.slice(0, -1);
+    viewHistoryRef.current = next;
+    setActiveView(next[next.length - 1] || "HOME");
+  };
+
+  const handleGoHome = () => navigateToView("HOME", null);
+
   if (!portalData.isDistrictDataReady) {
     return <main className="app-loading-screen">जिला डेटा सुरक्षित स्टोरेज से लोड हो रहा है…</main>;
   }
@@ -102,7 +130,7 @@ export default function App() {
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         activeView={activeView}
-        setActiveView={setActiveView}
+        setActiveView={navigateToView}
         modules={modules}
         currentDistrict={currentDistrict}
         onDistrictChange={handleDistrictChange}
@@ -122,14 +150,16 @@ export default function App() {
           {activeView === "HOME" ? (
             <DashboardBento
               modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"].includes(module.id))}
-              portalData={portalData}
-              onOpenModule={setActiveView}
+              onOpenModule={navigateToView}
               language={language}
             />
           ) : (
             <PortalModuleContent
               activeView={activeView}
-              setActiveView={setActiveView}
+              setActiveView={navigateToView}
+              initialTab={moduleInitialTab}
+              onBack={handleGoBack}
+              onHome={handleGoHome}
               portalData={portalData}
               districtId={currentDistrict.id}
               currentDistrict={currentDistrict}

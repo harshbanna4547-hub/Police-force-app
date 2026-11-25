@@ -239,6 +239,75 @@
   font-size: 0.85rem;
 }
 
+/* === SUMMARY TAB: GENDER DISTRIBUTION STRIP & CASTE-WISE ROWS === */
+.strength-summary-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.strength-gender-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.strength-gender-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08);
+}
+
+.strength-gender-card.is-magenta {
+  border-color: rgba(217, 70, 239, 0.28);
+}
+
+.strength-gender-card.is-purple {
+  border-color: rgba(139, 92, 246, 0.28);
+}
+
+.strength-gender-card.is-blue {
+  border-color: rgba(37, 99, 235, 0.34);
+}
+
+.strength-gender-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted, #475569);
+}
+
+.strength-gender-value {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-strong, #0b1e3d);
+}
+
+.strength-caste-row {
+  cursor: pointer;
+  transition: background-color 0.14s ease;
+}
+
+.strength-caste-row:hover {
+  background-color: #eff6ff;
+}
+
+.strength-caste-row.is-selected {
+  background-color: rgba(139, 92, 246, 0.14);
+}
+
+.app-shell[data-theme="dark"] .strength-gender-card {
+  background: rgba(15, 23, 42, 0.72);
+}
+
 /* === OFFICE / CO / PS-WISE SUB-VIEW === */
 .office-ps-topbar {
   display: flex;
