@@ -24,11 +24,13 @@ export default function PortalModuleContent({
     onSaveSanctioned,
     onSaveUnitRankSanc,
     reports,
+    editingEmployee,
     setEditingEmployee,
+    updateEmployeeRecord,
+    addNewEmployee,
     onLoadExcelBlob,
     fileName,
     hasUnsavedChanges,
-    onDirectExcelConnect,
     onSaveToExcel,
     onExportMasterFile,
     isExportingMaster,
@@ -79,9 +81,21 @@ export default function PortalModuleContent({
     SENIORITY: { seniorityList: reports.seniorityList, devToHindi },
     ROSTER: { records, reports, plSummary: reports.plSummary, allSheets, setAllSheets, devToHindi },
     REPORTS: { records, devToHindi },
-    STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob, fileName, hasData: records.length > 0, hasUnsavedChanges, onDirectExcelConnect, onSaveToExcel, onExportMasterFile, isExportingMaster, onRemoveDistrictData },
+    STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob, fileName, hasData: records.length > 0, hasUnsavedChanges, onSaveToExcel, onExportMasterFile, isExportingMaster, onRemoveDistrictData },
     POSTING: { records, sanctioned, unitRankSanc, onEditEmployee: setEditingEmployee, onArchiveEmployee: removeEmployee },
-    EMPLOYEES: { records, onEditEmployee: setEditingEmployee, onArchiveEmployee: removeEmployee },
+    EMPLOYEES: {
+      records,
+      activeProfile,
+      editingEmployee,
+      setEditingEmployee,
+      onUpdateEmployee: updateEmployeeRecord,
+      onSaveSmartEmployee: addNewEmployee,
+      onRemoveEmployee: removeEmployee,
+      onDirectExcelConnect: portalData.onDirectExcelConnect,
+      fileName,
+      onEditEmployee: setEditingEmployee,
+      onArchiveEmployee: removeEmployee
+    },
     ARCHIVE: { records, allSheets, onArchiveEmployee: removeEmployee }
   };
   const ActiveModule = selectedModule.component;

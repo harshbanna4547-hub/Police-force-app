@@ -45,7 +45,9 @@ export default function EmployeeFooterManager({
   setEditingEmployee,
   onUpdateEmployee,
   onSaveSmartEmployee,
-  onRemoveEmployee
+  onRemoveEmployee,
+  onDirectExcelConnect,
+  fileName
 }) {
   const [isSmartFormOpen, setIsSmartFormOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState(null);
@@ -85,14 +87,20 @@ export default function EmployeeFooterManager({
 
   return (
     <>
-      {records.length > 0 && (
-        <footer style={{ margin: "0 24px 18px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(115deg, #0B1E3D, #173D73)", boxShadow: "0 8px 22px rgba(11,30,61,0.18)", color: "#fff" }}>
+        <footer className="employee-quick-management" style={{ margin: "0 0 18px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(115deg, #0B1E3D, #173D73)", boxShadow: "0 8px 22px rgba(11,30,61,0.18)", color: "#fff" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
             <div>
               <strong style={{ display: "block", fontSize: "0.98rem" }}>👮 Employee Quick Management</strong>
               <span style={{ display: "block", marginTop: "3px", color: "#BFDBFE", fontSize: "0.8rem" }}>{records.length} कर्मचारी • तेज़ी से प्रबंधन करें</span>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              <button
+                type="button"
+                onClick={onDirectExcelConnect}
+                style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#0EA5E9", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
+              >
+                📂 {fileName ? "Replace Master Sheet" : "Upload Master Sheet"}
+              </button>
               <button
                 type="button"
                 onClick={() => setIsSmartFormOpen(true)}
@@ -109,7 +117,6 @@ export default function EmployeeFooterManager({
             </div>
           </div>
         </footer>
-      )}
 
       {pickerMode && (
         <div

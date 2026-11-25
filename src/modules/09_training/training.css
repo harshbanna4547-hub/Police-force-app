@@ -1,4 +1,5 @@
 .training-module { min-width: 0; }
+.training-section-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .training-module .module-table { min-width: 780px; }
 .training-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 .training-tabs button,
@@ -24,7 +25,7 @@
 .training-women-form label { display: grid; gap: 4px; color: #475569; font-size: .85rem; }
 .training-filter-row select,
 .training-filter-row input { padding: 8px; border: 1px solid #CBD5E1; border-radius: 6px; }
-.training-table-scroll { width: 100%; overflow: auto; }
+.training-table-scroll { width: 100%; min-width: 0; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; }
 .training-data-table { width: 100%; min-width: 950px; border-collapse: collapse; }
 .training-data-table th,
 .training-data-table td { border: 1px solid #CBD5E1; padding: 7px; text-align: left; vertical-align: middle; }

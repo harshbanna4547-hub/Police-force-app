@@ -39,7 +39,6 @@ export default function StorageVaultModule({
   fileName,
   hasData,
   hasUnsavedChanges,
-  onDirectExcelConnect,
   onSaveToExcel,
   onExportMasterFile,
   isExportingMaster,
@@ -300,9 +299,6 @@ export default function StorageVaultModule({
       {/* ऊपरी Action Toolbar */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px", marginBottom: "12px" }}>
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          <button type="button" onClick={onDirectExcelConnect} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
-            📂 {fileName ? "Overwrite Excel" : "Upload Master Excel"}
-          </button>
           {hasData && (
             <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} style={{ backgroundColor: "#0284C7", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: isExportingMaster ? "wait" : "pointer", fontSize: "0.84rem" }}>
               {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}

@@ -158,6 +158,7 @@ export default function OfficePsStrength({
 
       <input type="text" placeholder="🔍 कार्यालय या थाना खोजें..." value={search} onChange={(e) => setSearch(e.target.value)} style={{ width: "100%", maxWidth: "350px", padding: "7px 10px", borderRadius: "6px", border: "1px solid #94A3B8", marginBottom: "10px" }} />
 
+      <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
         <thead>
           <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
@@ -242,6 +243,7 @@ export default function OfficePsStrength({
                               📊 {activeSub === "TOTAL" ? `${u} — कुल योग (थाना + चौकियाँ)` : `${u} ➔ ${activeSub}`}
                             </div>
 
+                            <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", backgroundColor: "#fff" }}>
                               <thead>
                                 <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
@@ -307,6 +309,7 @@ export default function OfficePsStrength({
                                 </tr>
                               </tbody>
                             </table>
+                            </div>
 
                             {CO_PS_MAP[u] && (
                               <div style={{ marginTop: "10px" }}>
@@ -340,6 +343,7 @@ export default function OfficePsStrength({
           })}
         </tbody>
       </table>
+      </div>
       {modal && (
           <div className="strength-working-modal" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
             <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "100%", maxWidth: "850px", maxHeight: "82vh", overflowY: "auto", padding: "14px" }}>
@@ -367,6 +371,7 @@ export default function OfficePsStrength({
                 </div>
               )}
 
+              <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
@@ -412,6 +417,7 @@ export default function OfficePsStrength({
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
       )}

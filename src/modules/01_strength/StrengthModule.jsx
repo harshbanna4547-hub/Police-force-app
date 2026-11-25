@@ -79,6 +79,7 @@ export default function StrengthModule({
 }) {
   const [subTab, setSubTab] = useState("POST_WISE");
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
+  const [employeeSearch, setEmployeeSearch] = useState("");
   const [expanded, setExpanded] = useState({});
   const [editing, setEditing] = useState(false);
 
@@ -117,6 +118,18 @@ export default function StrengthModule({
     });
     return list;
   }, [selectedPostTab, visibleGroups, workStats]);
+
+  const employeeSearchResults = useMemo(() => {
+    const query = employeeSearch.trim().toLocaleLowerCase();
+    const candidates = selectedPostTab === "ALL" ? records : selectedPostEmployees;
+    if (!query) return candidates;
+    return candidates.filter((employee) => [
+      devToHindi(employee.NAME) || employee.NAME,
+      getStrengthEmployeeIdentity(employee).beltNo,
+      devToHindi(employee.POSTING) || employee.POSTING,
+      employee.CADER
+    ].some((value) => String(value || "").toLocaleLowerCase().includes(query)));
+  }, [devToHindi, employeeSearch, records, selectedPostEmployees, selectedPostTab]);
 
   const postExportRows = useMemo(() => {
     const rows = [];
@@ -182,6 +195,14 @@ export default function StrengthModule({
 
       {subTab === "POST_WISE" && (
         <div>
+          <input
+            type="search"
+            aria-label="कर्मचारी का नाम, बेल्ट नं. या पदस्थापन खोजें"
+            value={employeeSearch}
+            onChange={(event) => setEmployeeSearch(event.target.value)}
+            placeholder="🔍 कर्मचारी का नाम, बेल्ट नं. या पदस्थापन खोजें..."
+            style={{ width: "100%", padding: "10px 12px", marginBottom: "12px", border: "1px solid #CBD5E1", borderRadius: "8px" }}
+          />
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", backgroundColor: "#F8FAFC", padding: "10px", borderRadius: "10px", border: "1px solid #CBD5E1", marginBottom: "14px" }}>
             {POST_FILTER_TABS.map((pt) => {
               const active = selectedPostTab === pt.id;
@@ -224,7 +245,7 @@ export default function StrengthModule({
             </div>
           </div>
 
-          <div style={{ overflowX: "auto" }}>
+          <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
               <thead>
                 <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
@@ -282,12 +303,15 @@ export default function StrengthModule({
               </tbody>
             </table>
           </div>
-          {selectedPostTab !== "ALL" && selectedPostEmployees.length > 0 && (
+          {(employeeSearch.trim() || (selectedPostTab !== "ALL" && selectedPostEmployees.length > 0)) && (
             <div style={{ marginTop: "20px", borderTop: "2px solid #CBD5E1", paddingTop: "14px" }}>
               <h4 style={{ margin: "0 0 10px", color: "#1D63DC" }}>
-                👥 {selectedPostTab} पद पर कार्यरत कर्मचारियों की विस्तृत सूची (कुल: {selectedPostEmployees.length})
+                {employeeSearch.trim()
+                  ? `🔍 कर्मचारी खोज परिणाम (कुल: ${employeeSearchResults.length})`
+                  : `👥 ${selectedPostTab} पद पर कार्यरत कर्मचारियों की विस्तृत सूची (कुल: ${employeeSearchResults.length})`}
               </h4>
-              <div style={{ overflowX: "auto", maxHeight: "420px" }}>
+              {employeeSearchResults.length > 0 ? (
+              <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", maxHeight: "420px" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem", whiteSpace: "nowrap" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
@@ -307,7 +331,7 @@ export default function StrengthModule({
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedPostEmployees.map((emp, idx) => (
+                    {employeeSearchResults.map((emp, idx) => (
                       <EmployeeActionRow
                         key={emp._uid || idx}
                         employee={emp}
@@ -363,6 +387,7 @@ export default function StrengthModule({
                   </tbody>
                 </table>
               </div>
+              ) : <p style={{ margin: 0, color: "#64748B" }}>कोई कर्मचारी नहीं मिला।</p>}
             </div>
           )}
         </div>
@@ -405,13 +430,7 @@ export default function StrengthModule({
         </div>
       )}
       <footer className="strength-footer-bar">
-        <label>
-          पद / फ़िल्टर
-          <select value={selectedPostTab} onChange={(event) => setSelectedPostTab(event.target.value)}>
-            {POST_FILTER_TABS.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}
-          </select>
-        </label>
-        <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} />
+        <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} actions={["excel"]} />
         <button type="button" onClick={() => window.print()}>🖨 Print</button>
       </footer>
     </div>

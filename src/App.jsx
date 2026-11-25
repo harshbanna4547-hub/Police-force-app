@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import EmployeeFooterManager from "./core/EmployeeFooterManager";
 import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
@@ -90,7 +89,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell" data-theme={theme} style={{ display: "flex", minHeight: "100vh", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
+    <div className="app-shell" data-theme={theme} style={{ display: "flex", minHeight: "100vh", maxWidth: "100vw", overflowX: "hidden", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
       <SidebarNav
         portalData={portalData}
         sidebarOpen={sidebarOpen}
@@ -103,7 +102,7 @@ export default function App() {
         lanSyncStatus={portalData.lanSyncStatus}
         language={language}
       />
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflowX: "clip" }}>
+      <div className="app-main-content" style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", overflowX: "hidden" }}>
         <TopHeaderAndStats
           portalData={portalData}
           activeView={activeView}
@@ -115,7 +114,7 @@ export default function App() {
           language={language}
           onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
         />
-        <main style={{ padding: "12px 24px 24px", flex: 1 }}>
+        <main className="app-main-area" style={{ minWidth: 0, width: "100%", padding: "12px 24px 24px", flex: 1 }}>
           {activeView === "HOME" ? (
             <ModuleCardGrid modules={modules} onOpenModule={setActiveView} />
           ) : (
@@ -126,15 +125,6 @@ export default function App() {
             />
           )}
         </main>
-        <EmployeeFooterManager
-          records={portalData.records}
-          activeProfile={portalData.activeProfile}
-          editingEmployee={portalData.editingEmployee}
-          setEditingEmployee={portalData.setEditingEmployee}
-          onUpdateEmployee={portalData.updateEmployeeRecord}
-          onSaveSmartEmployee={portalData.addNewEmployee}
-          onRemoveEmployee={portalData.removeEmployee}
-        />
       </div>
     </div>
   );

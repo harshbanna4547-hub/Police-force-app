@@ -2,7 +2,12 @@
 import * as XLSX from "xlsx";
 import { unicodeToDevlys } from "../utils/devlysConverter";
 
-export default function ExportBar({ title = "Report", rows = [], fileName = "Police_Report" }) {
+export default function ExportBar({
+  title = "Report",
+  rows = [],
+  fileName = "Police_Report",
+  actions = ["excel", "word", "pdf", "print"]
+}) {
   // Excel (.xlsx) में DevLys 010 टेक्स्ट के साथ एक्सपोर्ट
   const handleExcel = () => {
     if (!rows.length) return alert("डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
@@ -121,10 +126,10 @@ export default function ExportBar({ title = "Report", rows = [], fileName = "Pol
 
   return (
     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-      <button type="button" onClick={handleExcel} style={btn("#16A34A")}>📊 Excel (DevLys)</button>
-      <button type="button" onClick={handleWord} style={btn("#2563EB")}>📝 Word (DevLys 16)</button>
-      <button type="button" onClick={handlePrintOrPdf} style={btn("#DC2626")}>📕 PDF (DevLys 16)</button>
-      <button type="button" onClick={handlePrintOrPdf} style={btn("#334155")}>🖨️ Print</button>
+      {actions.includes("excel") && <button type="button" onClick={handleExcel} style={btn("#16A34A")}>📊 Excel (DevLys)</button>}
+      {actions.includes("word") && <button type="button" onClick={handleWord} style={btn("#2563EB")}>📝 Word (DevLys 16)</button>}
+      {actions.includes("pdf") && <button type="button" onClick={handlePrintOrPdf} style={btn("#DC2626")}>📕 PDF (DevLys 16)</button>}
+      {actions.includes("print") && <button type="button" onClick={handlePrintOrPdf} style={btn("#334155")}>🖨️ Print</button>}
     </div>
   );
 }

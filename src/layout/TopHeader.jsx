@@ -14,10 +14,12 @@ export default function TopHeader({
     <header className="portal-top-header" style={{ position: "sticky", top: 0, zIndex: 900, padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px", background: "var(--surface, #F4F7FB)", borderBottom: "1px solid var(--border, #E2E8F0)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button
+          type="button"
+          aria-label={sidebarOpen ? "साइडबार बंद करें" : "साइडबार खोलें"}
           onClick={() => setSidebarOpen(!sidebarOpen)}
           style={{ backgroundColor: "#0B1E3D", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontSize: "1.05rem", fontWeight: "bold", cursor: "pointer" }}
         >
-          {sidebarOpen ? "◀" : "☰"}
+          ☰
         </button>
 
         {activeView !== "HOME" && (

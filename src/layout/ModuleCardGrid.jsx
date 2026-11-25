@@ -8,7 +8,7 @@ export default function ModuleCardGrid({ modules, onOpenModule }) {
         <p style={{ margin: 0, color: "#64748B", fontSize: "0.9rem" }}>किसी कार्ड को चुनकर संबंधित मॉड्यूल खोलें।</p>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: "14px" }}>
-        {enabledModules.map((module, index) => (
+        {enabledModules.map((module) => (
           <button
             key={module.id}
             type="button"
@@ -32,12 +32,8 @@ export default function ModuleCardGrid({ modules, onOpenModule }) {
           >
             <div style={{ width: "100%", display: "flex", alignItems: "center", gap: "10px" }}>
               <span aria-hidden="true" style={{ fontSize: "1.6rem" }}>{module.icon}</span>
-              <span style={{ color: "#64748B", fontFamily: "'Times New Roman', Times, serif", fontSize: "0.8rem" }}>
-                {String(index + 1).padStart(2, "0")}
-              </span>
             </div>
             <strong style={{ color: "#0B1E3D", fontSize: "1.02rem" }}>{module.hindiTitle || module.title}</strong>
-            <span style={{ color: "#475569", fontFamily: "'Times New Roman', Times, serif", fontSize: "0.88rem" }}>{module.title}</span>
             <span style={{ color: "#64748B", fontSize: "0.82rem", lineHeight: 1.4 }}>{module.description}</span>
           </button>
         ))}

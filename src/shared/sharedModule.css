@@ -1,6 +1,8 @@
 .module-table-wrap {
   width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .module-table {
@@ -40,6 +42,28 @@
 
 .module-print-document .english-cell {
   font-family: "Times New Roman", Times, serif;
+}
+
+@media (max-width: 768px) {
+  .strength-module th,
+  .strength-module td,
+  .office-ps-strength th,
+  .office-ps-strength td,
+  .posting-module th,
+  .posting-module td,
+  .training-module th,
+  .training-module td {
+    padding: 5px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .strength-module,
+  .office-ps-strength,
+  .posting-module,
+  .training-module {
+    min-width: 0;
+    max-width: 100%;
+  }
 }
 
 @media print {
