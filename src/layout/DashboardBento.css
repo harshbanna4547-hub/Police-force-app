@@ -131,6 +131,45 @@
   background: linear-gradient(145deg, #b86c47 0%, #8f4e2f 100%);
 }
 
+/* Template-Specific Pillar Header Harmony (Novara, Finora, WizardZ, Twinkle) */
+.app-shell[data-template="novara"] .rajifms-pillar-header {
+  background: linear-gradient(135deg, #0e2e3d 0%, #155e75 100%);
+}
+
+.app-shell[data-template="finora"] .rajifms-pillar-header {
+  background: linear-gradient(135deg, #14533c 0%, #0d3b2a 100%);
+}
+
+.app-shell[data-template="wizardz"] .rajifms-pillar-card {
+  border: 2px solid #191a23;
+  box-shadow: 0 6px 0 #191a23;
+}
+
+.app-shell[data-template="wizardz"] .rajifms-pillar-header {
+  background: #191a23;
+}
+
+.app-shell[data-template="wizardz"] .rajifms-header-icon {
+  background: #b9ff66;
+  color: #191a23;
+  border-color: #b9ff66;
+}
+
+.app-shell[data-template="wizardz"] .rajifms-subrow-btn:hover {
+  background: #b9ff66;
+  color: #191a23;
+}
+
+.app-shell[data-template="twinkle"] .rajifms-pillar-header {
+  background: linear-gradient(135deg, #232933 0%, #1b2028 100%);
+  border-bottom: 1px solid rgba(212, 163, 115, 0.25);
+}
+
+.app-shell[data-template="twinkle"] .rajifms-header-icon {
+  border-color: rgba(212, 163, 115, 0.45);
+  background: rgba(212, 163, 115, 0.16);
+}
+
 .rajifms-header-icon {
   width: 46px;
   height: 46px;

@@ -9,7 +9,7 @@
   margin: 0;
   box-sizing: border-box;
   padding: clamp(14px, 1.6vw, 26px);
-  background: linear-gradient(135deg, #273123 0%, #435339 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #273123 0%, #435339 100%));
   border-radius: var(--radius-hero, 24px);
   color: #ffffff;
   box-shadow: var(--shadow-hero);

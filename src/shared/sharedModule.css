@@ -72,13 +72,13 @@
 }
 
 .module-tab-btn.is-active {
-  background: linear-gradient(135deg, #435339 0%, #273123 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #435339 0%, #273123 100%));
   border-color: transparent;
   color: #ffffff;
 }
 
 .module-btn-primary {
-  background: linear-gradient(135deg, #435339 0%, #273123 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #435339 0%, #273123 100%));
   color: #fff;
   border: none;
   padding: clamp(7px, 0.7vw, 10px) clamp(14px, 1.2vw, 20px);
@@ -86,6 +86,13 @@
   font-weight: 700;
   font-size: clamp(11px, 0.85vw, 15px);
   cursor: pointer;
+}
+
+.app-shell[data-template="wizardz"] .module-tab-btn.is-active,
+.app-shell[data-template="wizardz"] .module-btn-primary {
+  background: #b9ff66;
+  color: #191a23;
+  border: 1.5px solid #191a23;
 }
 
 .module-btn-success {

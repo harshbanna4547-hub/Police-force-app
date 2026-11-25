@@ -3,13 +3,123 @@
    ========================================================================== */
 
 .app-shell {
+  position: relative;
   display: flex;
   min-height: 100vh;
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
-  background-color: var(--page, #f1f5f9);
+  background-color: var(--page, #f3efe7);
   font-family: var(--font-ui);
+}
+
+/* === GLOBAL AMBIENT BLURRED AURORA / CELESTIAL BACKDROP === */
+@keyframes ambientFloatOrb {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(26px, -22px, 0) scale(1.08); }
+}
+
+.portal-ambient-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(75px);
+  opacity: 0.38;
+  animation: ambientFloatOrb 14s ease-in-out infinite;
+}
+
+.ambient-orb-one {
+  width: 360px;
+  height: 360px;
+  top: -80px;
+  right: 8%;
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.45), rgba(224, 109, 68, 0.16));
+}
+
+.ambient-orb-two {
+  width: 420px;
+  height: 420px;
+  bottom: -120px;
+  left: 18%;
+  background: radial-gradient(circle, rgba(75, 93, 64, 0.28), rgba(56, 189, 248, 0.16));
+  animation-delay: -5s;
+}
+
+.app-shell[data-theme="dark"] .ambient-orb-one {
+  background: radial-gradient(circle, rgba(216, 180, 137, 0.22), rgba(30, 58, 138, 0.15));
+}
+
+.app-shell[data-theme="dark"] .ambient-orb-two {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.2), rgba(15, 23, 42, 0.12));
+}
+
+.app-main-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* === 5-TEMPLATE PORTAL SWITCHER PILL BAR === */
+.portal-template-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 16px;
+  background: var(--surface-raised, #ffffff);
+  border: 1px solid var(--border, rgba(30, 34, 26, 0.09));
+  box-shadow: var(--shadow-header);
+}
+
+.portal-template-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--muted, #57534e);
+  white-space: nowrap;
+}
+
+.portal-template-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.portal-template-btn {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong, rgba(30, 34, 26, 0.17));
+  background: var(--surface, #faf8f4);
+  color: var(--text, #1c1917);
+  font-family: var(--font-ui);
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+
+.portal-template-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--royal-blue, #435339);
+}
+
+.portal-template-btn.is-active {
+  background: var(--hero-gradient, linear-gradient(135deg, #435339 0%, #273123 100%));
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.app-shell[data-template="wizardz"] .portal-template-btn.is-active {
+  background: #b9ff66;
+  color: #191a23;
+  border-color: #191a23;
 }
 
 .app-loading-screen {

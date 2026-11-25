@@ -1,11 +1,18 @@
+import AmbientPortalWidgets from "../components/shared/AmbientPortalWidgets";
 import ModuleResourceCompanion from "../components/shared/ModuleResourceCompanion";
 import "./DashboardBento.css";
 
 /**
- * [COMPONENT] DashboardBento — आधुनिक Minimal Royal-Blue / Magenta / Light-Purple
- * राज-आईएफएमएस 3.0 पिलर कार्ड्स (Non-clickable header, Zero chevrons/badges, Ice & Fire hover)
+ * [COMPONENT] DashboardBento — आधुनिक Minimal Editorial राज-आईएफएमएस 3.0 पिलर कार्ड्स
+ * Non-clickable header, Zero chevrons/badges, Live Sunrise/Moonrise, Clock, Calendar, Flag & Map widgets
  */
-export default function DashboardBento({ modules = [], onOpenModule, language = "hi" }) {
+export default function DashboardBento({
+  modules = [],
+  currentDistrict,
+  theme = "light",
+  onOpenModule,
+  language = "hi"
+}) {
   const english = language === "en";
   const enabledIds = new Set(
     modules.filter((m) => m.enabled !== false).map((m) => m.id)
@@ -178,6 +185,13 @@ export default function DashboardBento({ modules = [], onOpenModule, language = 
           </p>
         </div>
       </div>
+
+      {/* === LIVE CELESTIAL WAVES, CLOCK, CALENDAR, FLAG & VECTOR MAP WIDGETS === */}
+      <AmbientPortalWidgets
+        currentDistrict={currentDistrict}
+        theme={theme}
+        language={language}
+      />
 
       {/* === EDITORIAL PILLAR GRID === */}
       <div className="rajifms-pillar-grid">

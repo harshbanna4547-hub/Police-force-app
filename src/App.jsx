@@ -37,6 +37,15 @@ export default function App() {
   const viewHistoryRef = useRef(["HOME"]);
   const [moduleInitialTab, setModuleInitialTab] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
+  const [portalTemplate, setPortalTemplate] = useState(() => {
+    try {
+      const saved = localStorage.getItem("police_portal_template");
+      if (["novara", "finora", "aurora", "wizardz", "twinkle"].includes(saved)) return saved;
+      return localStorage.getItem("police_portal_theme") === "dark" ? "twinkle" : "aurora";
+    } catch {
+      return "aurora";
+    }
+  });
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem("police_portal_theme") === "dark" ? "dark" : "light";
@@ -67,12 +76,29 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.template = portalTemplate;
     try {
       localStorage.setItem("police_portal_theme", theme);
+      localStorage.setItem("police_portal_template", portalTemplate);
     } catch (error) {
       console.error("Theme preference could not be saved:", error);
     }
-  }, [theme]);
+  }, [theme, portalTemplate]);
+
+  const handleTemplateSelect = (tplId) => {
+    setPortalTemplate(tplId);
+    setTheme(tplId === "twinkle" ? "dark" : "light");
+  };
+
+  const handleThemeToggle = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    if (nextTheme === "dark") {
+      setPortalTemplate("twinkle");
+    } else if (portalTemplate === "twinkle") {
+      setPortalTemplate("aurora");
+    }
+  };
 
   useEffect(() => {
     try {
@@ -124,7 +150,15 @@ export default function App() {
   }
 
   return (
-    <div className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"}`} data-theme={theme}>
+    <div
+      className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"}`}
+      data-theme={theme}
+      data-template={portalTemplate}
+    >
+      <div className="portal-ambient-canvas" aria-hidden="true">
+        <span className="ambient-orb ambient-orb-one" />
+        <span className="ambient-orb ambient-orb-two" />
+      </div>
       <SidebarNav
         portalData={portalData}
         sidebarOpen={sidebarOpen}
@@ -135,7 +169,7 @@ export default function App() {
         currentDistrict={currentDistrict}
         onDistrictChange={handleDistrictChange}
         theme={theme}
-        onThemeChange={() => setTheme((value) => value === "light" ? "dark" : "light")}
+        onThemeChange={handleThemeToggle}
         language={language}
         onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
       />
@@ -145,11 +179,15 @@ export default function App() {
           setSidebarOpen={setSidebarOpen}
           currentDistrict={currentDistrict}
           language={language}
+          portalTemplate={portalTemplate}
+          onTemplateChange={handleTemplateSelect}
         />
         <main className="app-main-area">
           {activeView === "HOME" ? (
             <DashboardBento
               modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"].includes(module.id))}
+              currentDistrict={currentDistrict}
+              theme={theme}
               onOpenModule={navigateToView}
               language={language}
             />

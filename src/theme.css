@@ -1,8 +1,7 @@
 /* ==========================================================================
-   MINIMALIST EDITORIAL & TACTILE 3D DEPTH DESIGN SYSTEM TOKENS
-   Applied globally across Dashboard AND every operational module.
-   Light Mode: Warm Alabaster Canvas (#f3efe7) + Pure Ivory Cards + 3D Depth Shadows
-   Dark Mode:  Twinkle Charcoal-Navy (#141821) + Champagne Sand (#d8b489)
+   5-TEMPLATE MULTI-STYLE DESIGN TOKEN SYSTEM
+   1. Aurora (Editorial) | 2. Novara (Teal) | 3. Finora (Green) | 4. WizardZ (Lime) | 5. Twinkle (Dark Gold)
+   Zero Inline Styles · Preserves DevLys 010 & Times New Roman typography.
    ========================================================================== */
 
 :root {
@@ -14,21 +13,19 @@
   --font-devlys: "DevLys 010", "Kruti Dev 010", sans-serif;
   --font-numeric: "Times New Roman", "Tinos", Times, serif;
 
-  /* --- Light Mode Surfaces --- */
-  --page: #f3efe7;
+  /* === 3. AURORA EDITORIAL (Default Light Canvas) === */
+  --page: #f5f2eb;
   --surface: #faf8f4;
   --surface-raised: #ffffff;
   --surface-muted: #eeebe2;
   --surface-tint: #eef1e9;
 
-  /* --- Text & Hairline Stone Borders --- */
-  --text: #272a25;
+  --text: #1c1917;
   --text-strong: #151814;
-  --muted: #6c7066;
+  --muted: #57534e;
   --border: rgba(30, 34, 26, 0.09);
   --border-strong: rgba(30, 34, 26, 0.17);
 
-  /* --- Botanical Olive, Espresso & Slate Palette --- */
   --navy-950: #151814;
   --navy-900: #1f241d;
   --navy-800: #3d4d35;
@@ -41,10 +38,9 @@
   --ice-accent: #38bdf8;
   --fire-accent: #e06d44;
 
-  /* --- Multi-Layer Tactile 3D Depth Shadows & Radii --- */
   --radius-header: 20px;
   --radius-hero: 24px;
-  --radius-card: 24px;
+  --radius-card: 22px;
   --radius-control: 14px;
   --radius-pill: 999px;
 
@@ -55,27 +51,111 @@
   --shadow-inset: inset 0 2px 5px rgba(28, 30, 24, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.75);
 }
 
-/* === DARK THEME TOKENS (Twinkle Charcoal-Navy + Warm Champagne Sand) === */
-:root[data-theme="dark"] {
+/* === 1. NOVARA (Dark Teal & Cool Slate) === */
+:root[data-template="novara"],
+.app-shell[data-template="novara"] {
+  --font-editorial: "Plus Jakarta Sans", "Noto Sans Devanagari", sans-serif;
+  --page: #f0f7fa;
+  --surface: #f8fbfd;
+  --surface-raised: #ffffff;
+  --surface-muted: #e6f2f8;
+  --surface-tint: #e0f2fe;
+  --text: #0f172a;
+  --text-strong: #0e2e3d;
+  --muted: #475569;
+  --border: #dbeafe;
+  --border-strong: #bae6fd;
+  --navy-950: #08202c;
+  --navy-900: #0e2e3d;
+  --navy-800: #155e75;
+  --royal-blue: #0e2e3d;
+  --sage-olive: #0e2e3d;
+  --hero-gradient: linear-gradient(135deg, #0e2e3d 0%, #155e75 100%);
+  --radius-card: 16px;
+  --shadow-card: 0 12px 30px rgba(14, 46, 61, 0.1);
+  --shadow-card-hover: 0 20px 42px rgba(14, 46, 61, 0.16);
+}
+
+/* === 2. FINORA (Forest Green Banking & Crisp Mint) === */
+:root[data-template="finora"],
+.app-shell[data-template="finora"] {
+  --font-editorial: "Plus Jakarta Sans", "Noto Sans Devanagari", sans-serif;
+  --page: #f8faf9;
+  --surface: #e6f2ec;
+  --surface-raised: #ffffff;
+  --surface-muted: #e2efe8;
+  --surface-tint: #dcfce7;
+  --text: #103c2b;
+  --text-strong: #0c2e20;
+  --muted: #4b6358;
+  --border: #d1e5db;
+  --border-strong: #a7d1bc;
+  --navy-950: #09241a;
+  --navy-900: #103c2b;
+  --navy-800: #14533c;
+  --royal-blue: #14533c;
+  --sage-olive: #14533c;
+  --hero-gradient: linear-gradient(135deg, #14533c 0%, #0d3b2a 100%);
+  --radius-card: 20px;
+  --shadow-card: 0 14px 32px rgba(20, 83, 60, 0.08);
+  --shadow-card-hover: 0 20px 42px rgba(20, 83, 60, 0.14);
+}
+
+/* === 4. WIZARDZ (Neo-Brutalist Lime & Charcoal Contrast) === */
+:root[data-template="wizardz"],
+.app-shell[data-template="wizardz"] {
+  --font-editorial: "Plus Jakarta Sans", "Noto Sans Devanagari", sans-serif;
+  --page: #f7f8f5;
+  --surface: #f3f3f3;
+  --surface-raised: #ffffff;
+  --surface-muted: #e9ece3;
+  --surface-tint: #b9ff66;
+  --text: #191a23;
+  --text-strong: #191a23;
+  --muted: #292a32;
+  --border: #191a23;
+  --border-strong: #191a23;
+  --navy-950: #111218;
+  --navy-900: #191a23;
+  --navy-800: #292a32;
+  --royal-blue: #191a23;
+  --sage-olive: #191a23;
+  --hero-gradient: linear-gradient(135deg, #191a23 0%, #292a32 100%);
+  --radius-card: 24px;
+  --shadow-card: 0 6px 0px #191a23;
+  --shadow-card-hover: 0 10px 0px #191a23;
+}
+
+/* === 5. TWINKLE DARK GOLD (Also shared with Dark Mode) === */
+:root[data-theme="dark"],
+:root[data-template="twinkle"],
+.app-shell[data-theme="dark"],
+.app-shell[data-template="twinkle"] {
   color-scheme: dark;
-  --page: #141821;
-  --surface: #1a202c;
-  --surface-raised: #1e2533;
-  --surface-muted: #262e3f;
-  --surface-tint: rgba(216, 180, 137, 0.12);
+  --page: #1b2028;
+  --surface: #232933;
+  --surface-raised: #2c3440;
+  --surface-muted: #333c4a;
+  --surface-tint: rgba(212, 163, 115, 0.14);
 
-  --text: #e6e2da;
-  --text-strong: #f9f6f0;
-  --muted: #98a2b3;
-  --border: rgba(216, 180, 137, 0.16);
-  --border-strong: rgba(216, 180, 137, 0.28);
+  --text: #f8fafc;
+  --text-strong: #f3e5d8;
+  --muted: #94a3b8;
+  --border: #3b4454;
+  --border-strong: #4e596d;
+  --navy-950: #12161c;
+  --navy-900: #1b2028;
+  --navy-800: #2c3440;
+  --royal-blue: #d4a373;
+  --sage-olive: #d4a373;
+  --hero-gradient: linear-gradient(135deg, #232933 0%, #1b2028 100%);
 
-  --accent-champagne: #d8b489;
+  --accent-champagne: #d4a373;
   --accent-sky: #8ea3b0;
 
-  --shadow-header: 0 14px 32px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(216, 180, 137, 0.08);
-  --shadow-hero: 0 22px 46px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(216, 180, 137, 0.12);
-  --shadow-card: 0 18px 40px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(216, 180, 137, 0.1);
-  --shadow-card-hover: 0 24px 50px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(216, 180, 137, 0.18);
+  --shadow-header: 0 14px 32px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(212, 163, 115, 0.08);
+  --shadow-hero: 0 22px 46px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(212, 163, 115, 0.12);
+  --shadow-card: 0 16px 36px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(212, 163, 115, 0.1);
+  --shadow-card-hover: 0 24px 50px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(212, 163, 115, 0.18);
   --shadow-inset: inset 0 2px 6px rgba(0, 0, 0, 0.35);
 }

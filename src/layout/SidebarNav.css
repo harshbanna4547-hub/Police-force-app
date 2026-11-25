@@ -116,7 +116,7 @@
 }
 
 .sidebar-nav-btn.is-active {
-  background: linear-gradient(135deg, #4b5d40 0%, #37462f 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #4b5d40 0%, #37462f 100%));
   color: #ffffff;
   font-weight: 700;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
@@ -214,10 +214,17 @@
 }
 
 .sidebar-dev-btn.is-active {
-  background: linear-gradient(135deg, #4b5d40 0%, #37462f 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #4b5d40 0%, #37462f 100%));
   border-color: rgba(216, 180, 137, 0.25);
   color: #ffffff;
   font-weight: 700;
+}
+
+.app-shell[data-template="wizardz"] .sidebar-nav-btn.is-active,
+.app-shell[data-template="wizardz"] .sidebar-dev-btn.is-active {
+  background: #b9ff66;
+  color: #191a23;
+  border-color: #b9ff66;
 }
 
 .sidebar-footer-caption {
