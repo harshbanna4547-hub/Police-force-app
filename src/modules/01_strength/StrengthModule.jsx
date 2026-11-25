@@ -318,7 +318,7 @@ export default function StrengthModule({
               </h4>
               {employeeSearchResults.length > 0 ? (
               <div className="table-responsive-box" style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", border: "1px solid #e2e8f0", borderRadius: "8px", maxHeight: "420px" }}>
-                <table className="strength-drilldown-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
+                <table className="strength-drilldown-table employee-responsive-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
                       <th className="drilldown-sticky-first" style={{ padding: "8px", border: "1px solid #475569" }}>S.N.</th>
@@ -341,6 +341,7 @@ export default function StrengthModule({
                       <EmployeeActionRow
                         key={emp._uid || idx}
                         employee={emp}
+                        responsiveDetails
                         onAction={(action, employee) => {
                           if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
                           if (action === "RELIEVE") {

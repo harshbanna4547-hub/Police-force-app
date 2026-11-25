@@ -62,6 +62,8 @@ function SummaryTable({ rows, title, sanctioned = {}, onEditEmployee, onArchiveE
                     <EmployeeActionRow
                       key={employee._uid || `${rank}-${index}`}
                       employee={employee}
+                      responsiveDetails
+                      nameCellIndex={3}
                       onAction={(action, selected) => {
                         if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(selected);
                         if (action === "RELIEVE") {

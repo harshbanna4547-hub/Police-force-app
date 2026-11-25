@@ -17,13 +17,14 @@ export default function TopHeader({
           type="button"
           aria-label={sidebarOpen ? "साइडबार बंद करें" : "साइडबार खोलें"}
           onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="header-menu-button"
           style={{ backgroundColor: "#0B1E3D", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontSize: "1.05rem", fontWeight: "bold", cursor: "pointer" }}
         >
           ☰
         </button>
 
         {activeView !== "HOME" && (
-          <button onClick={() => setActiveView("HOME")} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
+          <button className="header-back-button" onClick={() => setActiveView("HOME")} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}>
             ⬅ Back
           </button>
         )}
@@ -40,18 +41,22 @@ export default function TopHeader({
         <button
           type="button"
           onClick={onThemeChange}
+          className="header-action-button"
           aria-label="Toggle light and dark mode"
           style={{ backgroundColor: "var(--surface-raised, #fff)", color: "var(--text, #0F172A)", border: "1px solid var(--border, #CBD5E1)", padding: "8px 12px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold", fontSize: "0.82rem" }}
         >
-          {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+          <span aria-hidden="true">{theme === "light" ? "🌙" : "☀️"}</span>{" "}
+          <span className="header-action-label">{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
         </button>
         <button
           type="button"
           onClick={onLanguageChange}
+          className="header-action-button"
           aria-label="Toggle Hindi and English"
           style={{ backgroundColor: "var(--surface-raised, #fff)", color: "var(--text, #0F172A)", border: "1px solid var(--border, #CBD5E1)", padding: "8px 12px", borderRadius: "20px", cursor: "pointer", fontWeight: "bold", fontSize: "0.82rem" }}
         >
-          🌐 {language === "hi" ? "हिंदी" : "English"}
+          <span aria-hidden="true">अ/A</span>{" "}
+          <span className="header-action-label">{language === "hi" ? "हिंदी" : "English"}</span>
         </button>
       </div>
     </header>

@@ -372,7 +372,7 @@ export default function OfficePsStrength({
               )}
 
               <div className="table-responsive-box" style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
-              <table className="office-working-list-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
+              <table className="office-working-list-table employee-responsive-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
                     <th className="drilldown-sticky-first" style={{ padding: "6px" }}>क्र.</th>
@@ -392,7 +392,7 @@ export default function OfficePsStrength({
                 </thead>
                 <tbody>
                   {displayList.map((e, i) => (
-                    <EmployeeActionRow key={e._uid || i} employee={e} onAction={(action, employee) => {
+                    <EmployeeActionRow key={e._uid || i} employee={e} responsiveDetails onAction={(action, employee) => {
                       if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(employee);
                       if (action === "RELIEVE") {
                         const reason = window.prompt("Relieve / Retire / Death / Deputation का कारण लिखें:");

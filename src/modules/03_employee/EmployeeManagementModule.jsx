@@ -45,12 +45,13 @@ export default function EmployeeManagementModule({
       />
       <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="नाम, बेल्ट नं., पद या पदस्थापन खोजें" style={{ width: "100%", padding: "10px", marginBottom: "12px" }} />
       <div className="table-responsive-box" style={{ maxHeight: "68vh", overflow: "auto" }}>
-        <table>
-          <thead><tr>{["S.N.", "Name", "Father Name", "Post", "Belt No.", "Posting Place"].map((label) => <th key={label}>{label}</th>)}</tr></thead>
+        <table className="employee-responsive-table" style={{ minWidth: "1100px", whiteSpace: "nowrap" }}>
+          <thead><tr>{["S.N.", "Name", "Father Name", "Post", "Belt No.", "Posting DOB", "Posting Place", "Without DOB", "Education", "Date of Birth", "DOJ", "DOC", "Mobile Number"].map((label) => <th key={label}>{label}</th>)}</tr></thead>
           <tbody>{employees.map((employee, index) => (
             <EmployeeActionRow
               key={employee._uid || index}
               employee={employee}
+              responsiveDetails
               onAction={(action, selected) => {
                 if (action === "UPDATE" || action === "TRANSFER") onEditEmployee?.(selected);
                 if (action === "RELIEVE") {
@@ -65,7 +66,14 @@ export default function EmployeeManagementModule({
               <td>{devToHindi(employee["FATHER NAME"])}</td>
               <td>{employee.CADER || "-"}</td>
               <td>{employee["BELT NO"] || "-"}</td>
+              <td>{employee["POSTING DOB NO"] || "-"}</td>
               <td>{devToHindi(employee.POSTING) || "-"}</td>
+              <td>{employee["WITHOUT DOB"] || "-"}</td>
+              <td>{employee.EDUCATION || "-"}</td>
+              <td>{employee["DATE OF BIRTH"] || "-"}</td>
+              <td>{employee["DATE OF JOINING"] || "-"}</td>
+              <td>{employee.DOC || employee["DATE OF CONFIRMATION"] || "-"}</td>
+              <td>{employee["MOBILE NO 1"] || employee["MOBILE NO"] || employee.MOBILE || "-"}</td>
             </EmployeeActionRow>
           ))}</tbody>
         </table>

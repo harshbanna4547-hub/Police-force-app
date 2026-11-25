@@ -1,4 +1,12 @@
 /* src/index.css - Mobile, Tablet & PC Responsive Styling */
+@font-face {
+  font-family: "DevLys 010";
+  src: url("/fonts/DevLys010.ttf") format("truetype");
+  font-style: normal;
+  font-weight: normal;
+  font-display: swap;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -21,7 +29,7 @@ body {
   max-width: 100%;
   overflow-x: hidden;
   background-color: #F4F7FB;
-  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  font-family: 'Noto Sans Devanagari', 'Segoe UI', Roboto, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -108,6 +116,26 @@ table {
   border-collapse: collapse;
 }
 
+.employee-detail-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  white-space: normal;
+}
+
+.employee-detail-card > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.employee-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
 .portal-stat-cards {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
@@ -123,7 +151,13 @@ table {
   }
 }
 
-/* मोबाइल स्क्रीन (768px से कम) */
+/* Mobile and tablet layout */
+@media (max-width: 1024px) {
+  .app-main-area {
+    padding: clamp(8px, 2vw, 18px) !important;
+  }
+}
+
 @media (max-width: 768px) {
   .portal-sidebar {
     position: fixed !important;
@@ -139,28 +173,51 @@ table {
     transform: translateX(-100%);
   }
 
-  /* हेडर और पैडिंग को मोबाइल के अनुकूल बनाना */
   .portal-top-header {
-    padding: 12px 14px 6px !important;
+    padding: 6px clamp(8px, 2vw, 14px) !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
   }
 
   .portal-top-header > div:first-child {
     min-width: 0;
-    flex: 1 1 100%;
-    align-items: flex-start !important;
+    flex: 1 1 auto;
+    align-items: center !important;
+    gap: 8px !important;
   }
 
   .portal-top-header > div:first-child > div {
     min-width: 0;
-    overflow-wrap: anywhere;
+    overflow: hidden;
   }
 
   .portal-top-header > div:last-child {
-    width: 100%;
+    width: auto;
+    flex: 0 0 auto;
+    gap: 4px !important;
   }
 
   .portal-top-header h1 {
-    font-size: 1.05rem !important;
+    font-size: clamp(0.78rem, 3.2vw, 1rem) !important;
+    line-height: 1.2;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .portal-top-header small,
+  .portal-top-header .header-back-button,
+  .portal-top-header .header-action-label {
+    display: none !important;
+  }
+
+  .portal-top-header .header-menu-button,
+  .portal-top-header .header-action-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px !important;
+    border-radius: 9px !important;
+    text-align: center;
   }
 
   .portal-stat-cards,
@@ -169,12 +226,61 @@ table {
   }
 
   .portal-stat-cards {
-    padding: 6px 14px !important;
+    padding: 6px clamp(8px, 2vw, 14px) !important;
+    gap: clamp(6px, 1.5vw, 10px) !important;
+  }
+
+  .portal-stat-cards > div {
+    min-width: 0;
+    gap: 8px !important;
+    padding: clamp(8px, 2.5vw, 12px) !important;
+    border-radius: 12px !important;
+  }
+
+  .portal-stat-cards > div > div:first-child {
+    width: clamp(30px, 9vw, 40px) !important;
+    height: clamp(30px, 9vw, 40px) !important;
+    flex: 0 0 auto;
+    font-size: 1.1rem !important;
+  }
+
+  .portal-stat-cards > div > div:last-child > div:first-child {
+    font-size: clamp(0.62rem, 2.5vw, 0.75rem) !important;
+    line-height: 1.2;
+  }
+
+  .portal-stat-cards > div > div:last-child > div:last-child {
+    font-size: clamp(1.05rem, 5vw, 1.4rem) !important;
+  }
+
+  .module-card-grid {
+    gap: clamp(7px, 2vw, 12px) !important;
+  }
+
+  .module-card-grid > button {
+    min-height: 0 !important;
+    padding: clamp(10px, 2.5vw, 14px) !important;
+    gap: 6px !important;
+    border-radius: 10px !important;
+  }
+
+  .module-card-grid > button > div > span {
+    font-size: clamp(1.15rem, 5vw, 1.45rem) !important;
+  }
+
+  .module-card-grid > button > strong {
+    font-size: clamp(0.76rem, 3vw, 0.92rem) !important;
+    line-height: 1.25;
+  }
+
+  .module-card-grid > button > span {
+    font-size: clamp(0.68rem, 2.6vw, 0.78rem) !important;
+    line-height: 1.3 !important;
   }
 
   .app-main-area {
     min-width: 0;
-    padding: 10px 14px 20px !important;
+    padding: clamp(8px, 2vw, 12px) !important;
   }
 
   .app-main-area footer,
@@ -197,17 +303,87 @@ table {
     margin-right: -14px;
   }
 
-  /* इनपुट और बटन उंगलियों से आसानी से दबने लायक बनें */
   input, select, button {
     font-size: 14px !important;
     min-height: 38px;
   }
 }
 
-/* बहुत छोटे मोबाइल फोन (420px से कम) */
-@media (max-width: 420px) {
-  .portal-stat-cards,
-  .module-card-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
+@media (max-width: 640px) {
+  .employee-responsive-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 0 !important;
+    white-space: normal !important;
+    font-size: clamp(0.65rem, 2.5vw, 0.78rem) !important;
+  }
+
+  .employee-responsive-table th,
+  .employee-responsive-table td {
+    padding: 5px 3px !important;
+    overflow-wrap: anywhere;
+  }
+
+  .employee-responsive-table th:nth-child(n + 6),
+  .employee-responsive-table td:nth-child(n + 6) {
+    display: none;
+  }
+
+  .employee-responsive-table th:nth-child(1),
+  .employee-responsive-table td:nth-child(1) { width: 7%; }
+  .employee-responsive-table th:nth-child(2),
+  .employee-responsive-table td:nth-child(2) { width: 27%; }
+  .employee-responsive-table th:nth-child(3),
+  .employee-responsive-table td:nth-child(3) { width: 26%; }
+  .employee-responsive-table th:nth-child(4),
+  .employee-responsive-table td:nth-child(4) { width: 22%; }
+  .employee-responsive-table th:nth-child(5),
+  .employee-responsive-table td:nth-child(5) { width: 18%; }
+
+  .employee-responsive-table .employee-detail-row {
+    display: table-row !important;
+  }
+
+  .employee-name-trigger {
+    display: block;
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: inherit;
+    font: inherit;
+    font-weight: inherit;
+    cursor: pointer;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .employee-responsive-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 0 !important;
+    white-space: normal !important;
+    font-size: 0.76rem !important;
+  }
+
+  .employee-responsive-table th:nth-child(6),
+  .employee-responsive-table td:nth-child(6),
+  .employee-responsive-table th:nth-child(8),
+  .employee-responsive-table td:nth-child(8),
+  .employee-responsive-table th:nth-child(9),
+  .employee-responsive-table td:nth-child(9),
+  .employee-responsive-table th:nth-child(11),
+  .employee-responsive-table td:nth-child(11),
+  .employee-responsive-table th:nth-child(12),
+  .employee-responsive-table td:nth-child(12) {
+    display: none;
+  }
+
+  .employee-responsive-table th,
+  .employee-responsive-table td {
+    padding: 6px 4px !important;
+    overflow-wrap: anywhere;
   }
 }
