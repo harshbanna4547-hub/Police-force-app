@@ -61,6 +61,24 @@
     linear-gradient(145deg, #022c22 0%, #065f46 50%, #0e7490 100%);
 }
 
+.win11-desktop-stage.wp-arras-coast {
+  background:
+    linear-gradient(180deg, rgba(14, 46, 61, 0.45) 0%, rgba(15, 23, 42, 0.55) 100%),
+    url("/assets/arras/starter-coast.png") center / cover no-repeat;
+}
+
+.win11-desktop-stage.wp-arras-arch {
+  background:
+    linear-gradient(180deg, rgba(28, 25, 23, 0.38) 0%, rgba(28, 25, 23, 0.54) 100%),
+    url("/assets/arras/starter-architecture.png") center / cover no-repeat;
+}
+
+.win11-desktop-stage.wp-arras-botanical {
+  background:
+    linear-gradient(180deg, rgba(24, 28, 22, 0.35) 0%, rgba(24, 28, 22, 0.52) 100%),
+    url("/assets/arras/starter-botanical.png") center / cover no-repeat;
+}
+
 /* Layered Windows 11 Bloom SVG Overlay */
 .win11-bloom-svg {
   position: absolute;

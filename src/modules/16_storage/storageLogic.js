@@ -24,7 +24,10 @@ export const WALLPAPER_PRESETS = [
   { id: "bloom", label: "Blue Bloom", hiLabel: "ब्लू ब्लूम", className: "wp-bloom" },
   { id: "dark-glow", label: "Dark Glow", hiLabel: "डार्क ग्लो", className: "wp-dark-glow" },
   { id: "sunset", label: "Sunset Ridge", hiLabel: "सनसेट रिज", className: "wp-sunset" },
-  { id: "emerald", label: "Emerald Waves", hiLabel: "एमराल्ड वेव्स", className: "wp-emerald" }
+  { id: "emerald", label: "Emerald Waves", hiLabel: "एमराल्ड वेव्स", className: "wp-emerald" },
+  { id: "arras-coast", label: "Arras Coast", hiLabel: "समुद्री तट", className: "wp-arras-coast" },
+  { id: "arras-arch", label: "Arras Arch", hiLabel: "टेराकोटा आर्च", className: "wp-arras-arch" },
+  { id: "arras-botanical", label: "Arras Botanical", hiLabel: "बोटैनिकल क्ले", className: "wp-arras-botanical" }
 ];
 
 export const APP_STORE_CATALOG = [

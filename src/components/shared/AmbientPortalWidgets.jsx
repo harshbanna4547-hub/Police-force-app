@@ -105,6 +105,7 @@ export default function AmbientPortalWidgets({ currentDistrict, theme = "light",
       {/* === 1. SUNRISE / MOONRISE SKY + ANIMATED WATER WAVES WIDGET === */}
       <div className={`widget-glass-card widget-celestial ${isMoonMode ? "is-moonrise" : "is-sunrise"}`}>
         <div className="widget-celestial-sky" aria-hidden="true">
+          <img src="/assets/arras/starter-coast.png" alt="" className="celestial-bg-photo" />
           <div className="celestial-stars" />
           <div className="celestial-orb" />
           <div className="celestial-cloud cloud-a" />

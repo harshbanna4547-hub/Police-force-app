@@ -28,7 +28,7 @@ export default function TopHeader({
         </button>
 
         <div className="header-emblem-badge" title={districtLabel}>
-          <span className="header-emblem-icon" aria-hidden="true">🛡️</span>
+          <img src="/assets/arras/arras-icon.png" alt="Portal Logo" className="header-arras-logo" />
           <span className="header-emblem-text">{districtLabel}</span>
         </div>
       </div>

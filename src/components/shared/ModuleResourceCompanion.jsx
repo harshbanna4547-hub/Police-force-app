@@ -36,7 +36,11 @@ export default function ModuleResourceCompanion({
           </div>
           <div className="companion-hub-art">
             <PoliceCrestSvg className="portal-crest-svg" />
-            <ModuleArtworkSvg artType="waves" className="companion-art-svg" />
+            <div className="companion-photo-trio">
+              <img src="/assets/arras/starter-botanical.png" alt="Botanical Calm" className="companion-thumb-photo" />
+              <img src="/assets/arras/starter-architecture.png" alt="Architectural Harmony" className="companion-thumb-photo" />
+              <img src="/assets/arras/starter-coast.png" alt="Coastal Horizon" className="companion-thumb-photo" />
+            </div>
           </div>
         </div>
 
@@ -116,6 +120,17 @@ export default function ModuleResourceCompanion({
       </div>
 
       <div className="companion-module-art">
+        <img
+          src={
+            article.artType === "waves"
+              ? "/assets/arras/starter-coast.png"
+              : article.artType === "stones"
+                ? "/assets/arras/starter-architecture.png"
+                : "/assets/arras/starter-botanical.png"
+          }
+          alt={article.tag}
+          className="companion-module-photo"
+        />
         <ModuleArtworkSvg artType={article.artType} className="companion-art-svg" />
       </div>
     </aside>
