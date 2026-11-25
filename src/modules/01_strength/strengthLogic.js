@@ -1,5 +1,5 @@
 import { getBeltNo, getRankCode } from "../../shared/commonFunctions";
-import { filterEmployeesByGender, matchesEmployeeSearch } from "../../forceLogic";
+import { detectGenderFromRecord, filterEmployeesByGender, matchesEmployeeSearch } from "../../forceLogic";
 
 export const POST_FILTER_TABS = [
   { id: "ALL", label: "सभी पद (ALL)", enLabel: "All Posts", groupIds: null },
@@ -37,4 +37,79 @@ export function filterStrengthRecords(records, search = "", gender = "ALL") {
   return byGender.filter((record) =>
     matchesEmployeeSearch(record, query, ["NAME", "FATHER NAME", "CADER", "POSTING", "BELT NO"])
   );
+}
+
+export const CASTE_CATEGORIES = ["GEN", "OBC", "MBC", "EWS", "SC", "ST", "UNSPECIFIED"];
+
+export function normalizeCasteCategory(record = {}) {
+  const raw = String(
+    record["CAST CATEGORY"] ??
+    record.CATEGORY ??
+    record.CAT ??
+    record.CASTE ??
+    record["GEN/OBC"] ??
+    ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (!raw) return "UNSPECIFIED";
+  if (raw === "GENERAL" || raw === "UR" || raw === "GEN") return "GEN";
+  if (raw.includes("OBC")) return "OBC";
+  if (raw.includes("MBC") || raw.includes("SBC")) return "MBC";
+  if (raw.includes("EWS")) return "EWS";
+  if (raw === "SC" || raw.includes("SCHEDULED CASTE")) return "SC";
+  if (raw === "ST" || raw.includes("SCHEDULED TRIBE") || raw.includes("TSP")) return "ST";
+  return "UNSPECIFIED";
+}
+
+function getRankBucket(rankCode) {
+  if (["SP", "ASP", "DYSP", "CI"].includes(rankCode)) return "OFFICERS";
+  if (["SI", "ASI"].includes(rankCode)) return "SUPERVISORY";
+  if (rankCode === "HC") return "HC";
+  if (["FC", "FC_DR"].includes(rankCode)) return "FC";
+  return "SUPPORT";
+}
+
+/**
+ * [CALCULATION] Builds Category-wise (GEN, OBC, MBC, EWS, SC, ST) Rank & Gender breakdown
+ */
+export function buildCasteStrengthSummary(records = []) {
+  const list = Array.isArray(records) ? records : [];
+  const totalCount = list.length;
+
+  const rowsByCategory = {};
+  CASTE_CATEGORIES.forEach((cat) => {
+    rowsByCategory[cat] = {
+      category: cat,
+      male: 0,
+      female: 0,
+      otherGender: 0,
+      total: 0,
+      ranks: { OFFICERS: 0, SUPERVISORY: 0, HC: 0, FC: 0, SUPPORT: 0 },
+      employees: []
+    };
+  });
+
+  list.forEach((rec) => {
+    const cat = normalizeCasteCategory(rec);
+    const bucket = rowsByCategory[cat];
+    const gender = detectGenderFromRecord(rec);
+    const rankBucket = getRankBucket(getRankCode(rec));
+
+    bucket.total += 1;
+    bucket.ranks[rankBucket] += 1;
+    bucket.employees.push(rec);
+    if (gender === "MALE") bucket.male += 1;
+    else if (gender === "FEMALE") bucket.female += 1;
+    else bucket.otherGender += 1;
+  });
+
+  return CASTE_CATEGORIES.map((cat) => {
+    const row = rowsByCategory[cat];
+    return {
+      ...row,
+      sharePct: totalCount > 0 ? ((row.total / totalCount) * 100).toFixed(1) : "0.0"
+    };
+  });
 }

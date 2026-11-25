@@ -11,39 +11,42 @@
   --font-devlys: "DevLys 010", "Kruti Dev 010", sans-serif;
   --font-numeric: "Times New Roman", "Tinos", Times, serif;
 
-  /* --- Surfaces & Backgrounds (पृष्ठ एवं कार्ड रंग) --- */
-  --page: #f1f5f9;
-  --surface: #f8fafc;
-  --surface-raised: #ffffff;
-  --surface-muted: #f1f5f9;
+  /* --- Surfaces & Backgrounds (पृष्ठ एवं फ्रॉस्टेड ग्लास रंग) --- */
+  --page: #f4f6ff;
+  --surface: #f8faff;
+  --surface-raised: rgba(255, 255, 255, 0.88);
+  --surface-muted: #eef2ff;
   --surface-tint: #eff6ff;
 
   /* --- Text & Borders (टेक्स्ट एवं बॉर्डर रंग) --- */
   --text: #0f172a;
   --text-strong: #0b1e3d;
   --muted: #64748b;
-  --border: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --border: rgba(139, 92, 246, 0.16);
+  --border-strong: rgba(99, 102, 241, 0.28);
 
-  /* --- Brand & Royal Navy Showcase Accents (शाही नेवी एवं एक्सेंट रंग) --- */
+  /* --- Brand & Minimal Blue / Magenta / Light Purple Accents --- */
   --navy-950: #091428;
   --navy-900: #0f172a;
   --navy-800: #1e3a8a;
-  --royal-blue: #1d63dc;
-  --royal-blue-soft: rgba(29, 99, 220, 0.1);
-  --hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  --royal-blue: #2563eb;
+  --magenta-soft: #d946ef;
+  --purple-light: #8b5cf6;
+  --ice-cyan: #38bdf8;
+  --royal-blue-soft: rgba(37, 99, 235, 0.12);
+  --hero-gradient: linear-gradient(135deg, #2563eb 0%, #8b5cf6 54%, #d946ef 100%);
 
-  /* --- Radii & Elevation Shadows (गोलाई एवं सॉफ्ट शैडो) --- */
+  /* --- Radii & Frosted Elevation Shadows --- */
   --radius-header: 18px;
   --radius-hero: 24px;
   --radius-card: 22px;
   --radius-control: 12px;
   --radius-pill: 999px;
 
-  --shadow-header: 0 8px 24px rgba(15, 23, 42, 0.06);
-  --shadow-hero: 0 18px 42px rgba(15, 23, 42, 0.18);
-  --shadow-card: 0 6px 22px rgba(15, 23, 42, 0.05);
-  --shadow-card-hover: 0 14px 32px rgba(30, 58, 138, 0.12);
+  --shadow-header: 0 12px 30px rgba(79, 70, 229, 0.09);
+  --shadow-hero: 0 18px 42px rgba(79, 70, 229, 0.18);
+  --shadow-card: 0 14px 34px rgba(79, 70, 229, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  --shadow-card-hover: 0 18px 40px rgba(139, 92, 246, 0.18), 0 0 0 1px rgba(217, 70, 239, 0.24);
 }
 
 /* === DARK THEME TOKENS (डार्क मोड रंग टोकन) === */
