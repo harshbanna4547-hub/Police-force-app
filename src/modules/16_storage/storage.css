@@ -244,10 +244,31 @@
 }
 
 .storage-mini-btn-blue { background-color: #1d63dc; }
+.storage-mini-btn-indigo { background-color: #4f46e5; }
 .storage-mini-btn-green { background-color: #16a34a; }
 .storage-mini-btn-sky { background-color: #0284c7; font-weight: 600; }
 .storage-mini-btn-muted { background-color: #e2e8f0; color: #1e293b; font-weight: 600; }
 .storage-mini-btn-danger { background-color: #fee2e2; color: #dc2626; font-weight: 600; }
+
+/* --- Contextual 01. Strength Master Data Bar (केवल 01. Strength फोल्डर के अंदर) --- */
+.storage-strength-master-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: var(--surface-tint, #eff6ff);
+  border: 1px solid #93c5fd;
+}
+
+.storage-strength-master-label {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #1e3a8a;
+}
 
 /* --- List Table View (लिस्ट व्यू तालिका) --- */
 .storage-list-name {

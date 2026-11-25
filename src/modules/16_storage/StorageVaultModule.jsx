@@ -2,12 +2,17 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
 import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
+import InbuiltOfficeEditor from "../../components/shared/InbuiltOfficeEditor";
 import {
   getDistrictStorageBackupFolderId,
   openDriveVaultDB,
   saveDistrictOfflineBackup
 } from "../../utils/vaultStorage";
-import { getStorageItemSummary } from "./storageLogic";
+import {
+  getOfficeEditorKind,
+  getStorageItemSummary,
+  isStrengthVaultFolder
+} from "./storageLogic";
 import "./storage.css";
 
 const MODULE_DEFAULT_FOLDERS = [
@@ -57,9 +62,10 @@ export default function StorageVaultModule({
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("GRID"); // GRID | LIST
 
-  // Inbuilt Hindi Font Installer States
+  // Inbuilt Hindi Font Installer & Office Suite States
   const [installedFonts, setInstalledFonts] = useState([]);
   const [fontChoice, setFontChoice] = useState("DevLys 010");
+  const [officeItem, setOfficeItem] = useState(null);
   const loadAllItems = useCallback(async () => {
     const db = await openDriveVaultDB();
     const tx = db.transaction("drive_items", "readonly");
@@ -204,13 +210,14 @@ export default function StorageVaultModule({
     const rawName = prompt(docType === "EXCEL" ? "नई Excel फ़ाइल का नाम लिखें:" : "नई Word फ़ाइल का नाम लिखें:");
     if (!rawName || !rawName.trim()) return;
 
+    let createdItem;
     if (docType === "EXCEL") {
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet([{ "क्र.सं.": 1, "पद": "", "बेल्ट नं.": "", "नाम": "", "पदस्थापन": "" }]);
       XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
       const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const fName = rawName.endsWith(".xlsx") ? rawName : `${rawName.trim()}.xlsx`;
-      await saveItemToDB({
+      createdItem = {
         id: "fil_" + Date.now(),
         parentId: currentFolderId,
         kind: "FILE",
@@ -220,13 +227,13 @@ export default function StorageVaultModule({
         district: activeProfile,
         updatedAt: new Date().toISOString(),
         data: out
-      });
+      };
     } else {
       const html = `<html><head><meta charset="utf-8"><style>body{font-family:'DevLys 010',Arial;font-size:16pt;}</style></head><body><h2 style="text-align:center;">कार्यालय पुलिस अधीक्षक ${activeProfile}</h2><p></p></body></html>`;
       const blob = new Blob(["\ufeff", html], { type: "application/msword" });
       const buf = await blob.arrayBuffer();
       const fName = rawName.endsWith(".doc") ? rawName : `${rawName.trim()}.doc`;
-      await saveItemToDB({
+      createdItem = {
         id: "fil_" + Date.now(),
         parentId: currentFolderId,
         kind: "FILE",
@@ -236,8 +243,23 @@ export default function StorageVaultModule({
         district: activeProfile,
         updatedAt: new Date().toISOString(),
         data: buf
-      });
+      };
     }
+    await saveItemToDB(createdItem);
+    await loadAllItems();
+    setOfficeItem(createdItem);
+  };
+
+  // [OFFICE SUITE] Save updates made in Inbuilt Excel, Word, or PDF Editor back to IndexedDB + OneDrive Sync
+  const handleSaveOfficeFile = async (updatedItem) => {
+    const byteLength = updatedItem?.data?.byteLength ?? updatedItem?.data?.length ?? 0;
+    const nextItem = {
+      ...updatedItem,
+      sizeKB: byteLength ? (byteLength / 1024).toFixed(1) : updatedItem.sizeKB,
+      updatedAt: new Date().toISOString()
+    };
+    await saveItemToDB(nextItem);
+    setOfficeItem(nextItem);
     await loadAllItems();
   };
 
@@ -344,6 +366,18 @@ export default function StorageVaultModule({
     Updated: dateOnly(item.updatedAt)
   })), [visibleItems]);
 
+  const inStrengthFolder = useMemo(() => isStrengthVaultFolder(breadcrumbs), [breadcrumbs]);
+
+  const openVaultItem = (item) => {
+    if (item.kind === "FOLDER") {
+      setCurrentFolderId(item.id);
+      return;
+    }
+    if (getOfficeEditorKind(item.name, item.mime)) {
+      setOfficeItem(item);
+    }
+  };
+
   return (
     <div className="storage-vault-module module-panel">
       <ModuleHeaderToolbar
@@ -365,26 +399,11 @@ export default function StorageVaultModule({
         )}
       />
 
-      {/* [TOOLBAR] Vault Action Controls (फ़ोल्डर, अपलोड, बैकअप एवं मास्टर Excel बटन) */}
+      {/* [TOOLBAR] Main Storage Toolbar (केवल 4 सामान्य फ़ाइल बटन: + New Folder, Upload Files, + New Excel, + New Word) */}
       <div className="storage-action-bar">
         <div className="storage-action-group">
-          {hasData && (
-            <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} className="storage-btn storage-btn-sky">
-              {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}
-            </button>
-          )}
-          {fileName && hasUnsavedChanges && (
-            <button type="button" onClick={onSaveToExcel} className="storage-btn storage-btn-purple">
-              💾 Save Excel Changes
-            </button>
-          )}
-          {fileName && (
-            <button type="button" onClick={onRemoveDistrictData} className="storage-btn storage-btn-danger-soft">
-              🗑️ Remove District Data
-            </button>
-          )}
           <button type="button" onClick={handleCreateFolder} className="storage-btn storage-btn-navy">
-            📁+ New Folder
+            📁 + New Folder
           </button>
 
           <label className="storage-btn storage-btn-green">
@@ -392,26 +411,12 @@ export default function StorageVaultModule({
             <input type="file" multiple onChange={handleUploadFiles} className="storage-hidden-input" />
           </label>
 
-          <label className="storage-btn storage-btn-sky">
-            📊 Upload Master Excel File
-            <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} className="storage-hidden-input" />
-          </label>
-
-          <label className="storage-btn storage-btn-purple">
-            🔄 Restore Backup (.json)
-            <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} className="storage-hidden-input" />
-          </label>
-
           <button type="button" onClick={() => handleCreateNewDoc("EXCEL")} className="storage-btn storage-btn-emerald">
-            📊+ New Excel
+            📊 + New Excel
           </button>
 
           <button type="button" onClick={() => handleCreateNewDoc("WORD")} className="storage-btn storage-btn-blue">
-            📝+ New Word
-          </button>
-
-          <button type="button" onClick={handleSaveLivePortalBackup} className="storage-btn storage-btn-purple">
-            💾 Save Live Data Here
+            📝 + New Word
           </button>
         </div>
       </div>
@@ -465,6 +470,43 @@ export default function StorageVaultModule({
         ))}
       </div>
 
+      {/* [CONTEXTUAL BAR] 01. Strength Folder ONLY Master Excel Controls */}
+      {inStrengthFolder && (
+        <div className="storage-strength-master-bar">
+          <span className="storage-strength-master-label">
+            🛡️ {english ? "01. Strength Master Data Controls" : "01. Strength मास्टर डेटा प्रबंधन"}
+          </span>
+          <div className="storage-action-group">
+            {hasData && (
+              <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} className="storage-btn storage-btn-sky">
+                {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}
+              </button>
+            )}
+            {fileName && hasUnsavedChanges && (
+              <button type="button" onClick={onSaveToExcel} className="storage-btn storage-btn-purple">
+                💾 Save Excel Changes
+              </button>
+            )}
+            <label className="storage-btn storage-btn-sky">
+              📊 Upload Master Excel File
+              <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} className="storage-hidden-input" />
+            </label>
+            {fileName && (
+              <button type="button" onClick={onRemoveDistrictData} className="storage-btn storage-btn-danger-soft">
+                🗑️ Remove District Data
+              </button>
+            )}
+            <label className="storage-btn storage-btn-purple">
+              🔄 Restore Backup (.json)
+              <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} className="storage-hidden-input" />
+            </label>
+            <button type="button" onClick={handleSaveLivePortalBackup} className="storage-btn storage-btn-purple">
+              💾 Save Live Data Here
+            </button>
+          </div>
+        </div>
+      )}
+
       {visibleItems.length === 0 ? (
         <div className="storage-empty-state">
           <div className="storage-empty-icon">📂</div>
@@ -474,12 +516,13 @@ export default function StorageVaultModule({
       ) : viewMode === "GRID" ? (
         <div className="storage-grid">
           {visibleItems.map((item) => {
-            const isExcel = item.kind === "FILE" && (item.name.toLowerCase().endsWith(".xlsx") || item.name.toLowerCase().endsWith(".xls"));
+            const officeKind = item.kind === "FILE" ? getOfficeEditorKind(item.name, item.mime) : null;
+            const isExcel = officeKind === "EXCEL";
             const isFolder = item.kind === "FOLDER";
             return (
               <div
                 key={item.id}
-                onDoubleClick={() => isFolder && setCurrentFolderId(item.id)}
+                onDoubleClick={() => openVaultItem(item)}
                 className={`storage-card${isFolder ? " is-folder" : ""}`}
               >
                 <div
@@ -497,6 +540,11 @@ export default function StorageVaultModule({
                   {isFolder && (
                     <button type="button" onClick={() => setCurrentFolderId(item.id)} className="storage-mini-btn storage-mini-btn-blue">
                       Open
+                    </button>
+                  )}
+                  {officeKind && (
+                    <button type="button" onClick={() => setOfficeItem(item)} className="storage-mini-btn storage-mini-btn-indigo">
+                      {officeKind === "PDF" ? "📕 View" : "✏️ Open / Edit"}
                     </button>
                   )}
                   {isExcel && onLoadExcelBlob && (
@@ -534,13 +582,14 @@ export default function StorageVaultModule({
             </thead>
             <tbody>
               {visibleItems.map((item) => {
-                const isExcel = item.kind === "FILE" && (item.name.toLowerCase().endsWith(".xlsx") || item.name.toLowerCase().endsWith(".xls"));
+                const officeKind = item.kind === "FILE" ? getOfficeEditorKind(item.name, item.mime) : null;
+                const isExcel = officeKind === "EXCEL";
                 const isFolder = item.kind === "FOLDER";
                 return (
                   <tr key={item.id}>
                     <td
-                      onClick={() => isFolder && setCurrentFolderId(item.id)}
-                      className={`storage-list-name${isFolder ? " is-folder" : ""}`}
+                      onClick={() => openVaultItem(item)}
+                      className={`storage-list-name${isFolder || officeKind ? " is-folder" : ""}`}
                     >
                       {getFileIcon(item)} &nbsp; {item.name}
                     </td>
@@ -548,6 +597,11 @@ export default function StorageVaultModule({
                     <td className="module-cell-center module-cell-tnr">{isFolder ? "-" : `${item.sizeKB} KB`}</td>
                     <td className="module-cell-center module-cell-tnr">{dateOnly(item.updatedAt)}</td>
                     <td className="module-cell-center storage-list-actions">
+                      {officeKind && (
+                        <button type="button" onClick={() => setOfficeItem(item)} className="storage-mini-btn storage-mini-btn-indigo">
+                          {officeKind === "PDF" ? "📕 View" : "✏️ Open / Edit"}
+                        </button>
+                      )}
                       {isExcel && onLoadExcelBlob && (
                         <button type="button" onClick={() => onLoadExcelBlob(item.data, item.name)} className="storage-mini-btn storage-mini-btn-green">⚡ Use Data</button>
                       )}
@@ -563,6 +617,16 @@ export default function StorageVaultModule({
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* [IN-APP OFFICE SUITE MODAL] */}
+      {officeItem && (
+        <InbuiltOfficeEditor
+          item={officeItem}
+          onSaveFile={handleSaveOfficeFile}
+          onClose={() => setOfficeItem(null)}
+          language={language}
+        />
       )}
     </div>
   );
