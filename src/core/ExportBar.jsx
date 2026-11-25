@@ -1,6 +1,6 @@
 import { useState } from "react";
 import XLSX from "xlsx-js-style";
-import { unicodeToDevlys } from "../utils/devlysConverter";
+import { isDevlysText } from "./isDevlysText";
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -10,6 +10,12 @@ function escapeHtml(value) {
     "\"": "&quot;",
     "'": "&#39;"
   })[character]);
+}
+
+function getTextClass(value) {
+  const text = String(value ?? "");
+  if (/[\u0900-\u097F]/.test(text)) return "unicode-hindi";
+  return isDevlysText(text) ? "devlys" : "english";
 }
 
 export default function ExportBar({
@@ -28,11 +34,7 @@ export default function ExportBar({
       columns,
       ...rows.map((row) => columns.map((column) => row[column] ?? ""))
     ];
-    const worksheet = XLSX.utils.aoa_to_sheet(
-      rawRows.map((row) => row.map((value) => (
-        typeof value === "string" ? unicodeToDevlys(value) : value
-      )))
-    );
+    const worksheet = XLSX.utils.aoa_to_sheet(rawRows);
     worksheet["!merges"] = [{
       s: { r: 0, c: 0 },
       e: { r: 0, c: Math.max(columns.length - 1, 0) }
@@ -51,7 +53,11 @@ export default function ExportBar({
         const isHeader = rowIndex === 1;
         worksheet[address].s = {
           font: {
-            name: /[\u0900-\u097F]/.test(String(originalValue)) ? "DevLys 010" : "Times New Roman",
+            name: isDevlysText(originalValue)
+              ? "DevLys 010"
+              : /[\u0900-\u097F]/.test(String(originalValue))
+                ? "Noto Sans Devanagari"
+                : "Times New Roman",
             sz: isTitle ? 15 : 11,
             bold: isTitle || isHeader
           },
@@ -80,15 +86,13 @@ export default function ExportBar({
 
   const getDevlysHtml = () => {
     const columns = Object.keys(rows[0] || {});
-    const devTitle = unicodeToDevlys(`कार्यालय पुलिस अधीक्षक — ${title}`);
     const headerCells = columns
-      .map((column) => `<th>${escapeHtml(unicodeToDevlys(column))}</th>`)
+      .map((column) => `<th class="${getTextClass(column)}">${escapeHtml(column)}</th>`)
       .join("");
     const bodyRows = rows.map((row) => (
       `<tr>${columns.map((column) => {
         const value = row[column] ?? "";
-        const text = typeof value === "string" ? unicodeToDevlys(value) : value;
-        return `<td>${escapeHtml(text)}</td>`;
+        return `<td class="${getTextClass(value)}">${escapeHtml(value)}</td>`;
       }).join("")}</tr>`
     )).join("");
 
@@ -98,16 +102,19 @@ export default function ExportBar({
           <meta charset="utf-8" />
           <style>
             @page { size: A4 landscape; margin: 10mm; }
-            body { color: #000; font-family: 'DevLys 010', 'Kruti Dev 010', 'Times New Roman', Times, serif; font-size: 12pt; }
+            body { color: #000; font-family: 'Times New Roman', Times, serif; font-size: 12pt; }
             h2 { text-align: center; font-size: 16pt; margin: 0 0 12px; }
             table { width: 100%; border-collapse: collapse; }
             th, td { border: 1px solid #000; padding: 6px 8px; font-size: 11pt; }
             th { background: #e2e8f0; font-weight: bold; }
             tr { page-break-inside: avoid; }
+            .devlys { font-family: 'DevLys 010', sans-serif; font-size: 17px; line-height: 1.4; }
+            .unicode-hindi { font-family: 'Noto Sans Devanagari', sans-serif; }
+            .english { font-family: 'Times New Roman', Times, serif; }
           </style>
         </head>
         <body>
-          <h2>${escapeHtml(devTitle)}</h2>
+          <h2 class="${getTextClass(title)}">${escapeHtml(title)}</h2>
           <table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>
         </body>
       </html>`;
@@ -131,7 +138,7 @@ export default function ExportBar({
       const { default: html2pdf } = await import("html2pdf.js");
       const documentHtml = new DOMParser().parseFromString(getDevlysHtml(), "text/html");
       host = document.createElement("div");
-      host.style.cssText = "position:fixed;left:-10000px;top:0;width:1100px;background:#fff;color:#000;font-family:'DevLys 010','Kruti Dev 010','Times New Roman',serif;font-size:12pt;";
+      host.style.cssText = "position:fixed;left:-10000px;top:0;width:1100px;background:#fff;color:#000;font-family:'Times New Roman',serif;font-size:12pt;";
       documentHtml.head.querySelectorAll("style").forEach((style) => host.append(style.cloneNode(true)));
       documentHtml.body.childNodes.forEach((node) => host.append(node.cloneNode(true)));
       document.body.append(host);

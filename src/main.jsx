@@ -5,10 +5,14 @@ import './shared/sharedModule.css'
 import App from './App.jsx'
 import { loadAllInstalledFonts } from "./utils/fontInstaller";
 
-loadAllInstalledFonts();
-
-createRoot(document.getElementById('root')).render(
+const root = createRoot(document.getElementById('root'));
+const renderApp = () => root.render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);
+
+loadAllInstalledFonts().then(renderApp).catch((error) => {
+  console.error("Installed fonts could not be loaded before startup:", error);
+  renderApp();
+});

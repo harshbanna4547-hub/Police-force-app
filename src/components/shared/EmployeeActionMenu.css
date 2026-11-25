@@ -1,0 +1,72 @@
+.employee-action-menu {
+  position: fixed;
+  z-index: 1500;
+  min-width: 230px;
+  padding: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, .22);
+}
+
+.employee-action-menu button {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.employee-detail-cell {
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.employee-detail-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px;
+  white-space: normal;
+}
+
+.employee-detail-card > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.employee-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1 / -1;
+}
+
+.employee-name-trigger {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: inherit;
+  cursor: inherit;
+}
+
+@media (min-width: 1025px) {
+  .employee-detail-row {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .employee-detail-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
