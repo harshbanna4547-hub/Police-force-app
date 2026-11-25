@@ -27,12 +27,24 @@ export const WALLPAPER_PRESETS = [
   { id: "emerald", label: "Emerald Waves", hiLabel: "एमराल्ड वेव्स", className: "wp-emerald" },
   { id: "arras-coast", label: "Arras Coast", hiLabel: "समुद्री तट", className: "wp-arras-coast" },
   { id: "arras-arch", label: "Arras Arch", hiLabel: "टेराकोटा आर्च", className: "wp-arras-arch" },
-  { id: "arras-botanical", label: "Arras Botanical", hiLabel: "बोटैनिकल क्ले", className: "wp-arras-botanical" }
+  { id: "arras-botanical", label: "Arras Botanical", hiLabel: "बोटैनिकल क्ले", className: "wp-arras-botanical" },
+  { id: "deskx-aurora", label: "DeskX Aurora", hiLabel: "डेस्कएक्स ऑरोरा", className: "wp-deskx-aurora", isLive: true },
+  { id: "deskx-matrix", label: "DeskX Cyber Mesh", hiLabel: "डेस्कएक्स साइबर मेश", className: "wp-deskx-matrix", isLive: true },
+  { id: "deskx-cosmos", label: "DeskX Starfield", hiLabel: "डेस्कएक्स स्टारफील्ड", className: "wp-deskx-cosmos", isLive: true }
+];
+
+export const DESKX_OVERLAY_WIDGETS = [
+  { id: "clock-weather", icon: "🌤️", label: "Clock & Weather", hiLabel: "घड़ी व मौसम" },
+  { id: "analog-minimalist", icon: "🕰️", label: "Analog Dial", hiLabel: "एनालॉग घड़ी" },
+  { id: "astronomy", icon: "🌅", label: "Sun & Moon Cycle", hiLabel: "सूर्य व चंद्र चक्र" },
+  { id: "quote", icon: "🛡️", label: "Force Duty Motto", hiLabel: "कर्तव्य ध्येय वाक्य" },
+  { id: "off", icon: "👁️‍🗨️", label: "Hide Overlay", hiLabel: "विजेट छुपाएं" }
 ];
 
 export const APP_STORE_CATALOG = [
   { id: "excel-pro", icon: "📊", title: "MS Excel Pro", desc: "Formulas (=SUM, =AVERAGE, =COUNT), DevLys 010 & .xlsx editor", defaultInstalled: true, defaultPinned: true },
   { id: "word-pro", icon: "📝", title: "MS Word Pro", desc: "A4 Ribbon Editor with DevLys 010, Times New Roman & .doc export", defaultInstalled: true, defaultPinned: true },
+  { id: "deskx-engine", icon: "⚡", logoSrc: "/assets/deskx/deskx-logo.png", title: "DeskX Wallpaper", desc: "Live animated DeskX wallpaper scenes, blur controls & desktop widgets", defaultInstalled: true, defaultPinned: true },
   { id: "photo-viewer", icon: "🖼️", title: "Photo Viewer", desc: "Inspect .jpg, .png, .webp with zoom, rotate & gallery navigation", defaultInstalled: true, defaultPinned: false },
   { id: "media-player", icon: "🎬", title: "Media Player", desc: "Play .mp4, .webm, .mp3 training videos with speed controls", defaultInstalled: true, defaultPinned: false },
   { id: "vscode-lite", icon: "💻", title: "VS Code Lite", desc: "Dark code/JSON/text editor with line numbers & JSON formatter", defaultInstalled: true, defaultPinned: true },

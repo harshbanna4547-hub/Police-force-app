@@ -22,7 +22,11 @@ export default function AppStoreApp({
         return (
           <article key={app.id} className="wapp-store-card">
             <div className="wapp-store-head">
-              <span className="wapp-store-icon">{app.icon}</span>
+              {app.logoSrc ? (
+                <img src={app.logoSrc} alt="" className="wapp-store-logo" />
+              ) : (
+                <span className="wapp-store-icon">{app.icon}</span>
+              )}
               <strong>{app.title}</strong>
             </div>
 

@@ -12,6 +12,7 @@ import CalculatorApp from "../storage/apps/CalculatorApp";
 import StickyNotesApp from "../storage/apps/StickyNotesApp";
 import GamesApp from "../storage/apps/GamesApp";
 import AppStoreApp from "../storage/apps/AppStoreApp";
+import DeskXWallpaperApp from "../storage/apps/DeskXWallpaperApp";
 import {
   getDistrictStorageBackupFolderId,
   openDriveVaultDB,

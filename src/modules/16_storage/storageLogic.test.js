@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  APP_STORE_CATALOG,
   buildCopySubtree,
   canMoveItemToTarget,
   collectDescendantIds,
   deduplicateRootFolders,
+  DESKX_OVERLAY_WIDGETS,
   evaluateSpreadsheetFormula,
   extractWordBodyHtml,
   formatIstClockDate,
@@ -14,6 +16,7 @@ import {
   isStrengthVaultFolder,
   OFFICE_FONT_OPTIONS,
   RECYCLE_BIN_ID,
+  WALLPAPER_PRESETS,
   WINDOWS_11_DEFAULT_FOLDERS,
   wrapWordDocumentHtml
 } from "./storageLogic.js";
@@ -107,4 +110,17 @@ test("Excel formula evaluator computes =SUM, =AVERAGE, =COUNT and file app kinds
     { id: "t2", parentId: "ROOT", kind: "FOLDER", name: "10. Training" }
   ]);
   assert.deepEqual(dupIds, ["t1"]);
+});
+
+test("DeskX live wallpaper presets, overlay widgets & DeskX App Store entry are registered", () => {
+  const liveScenes = WALLPAPER_PRESETS.filter((w) => w.isLive);
+  assert.deepEqual(
+    liveScenes.map((w) => w.id),
+    ["deskx-aurora", "deskx-matrix", "deskx-cosmos"]
+  );
+  assert.ok(DESKX_OVERLAY_WIDGETS.some((w) => w.id === "clock-weather"));
+  assert.ok(DESKX_OVERLAY_WIDGETS.some((w) => w.id === "analog-minimalist"));
+  const engineApp = APP_STORE_CATALOG.find((a) => a.id === "deskx-engine");
+  assert.ok(engineApp);
+  assert.equal(engineApp.logoSrc, "/assets/deskx/deskx-logo.png");
 });

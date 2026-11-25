@@ -79,6 +79,32 @@
     url("/assets/arras/starter-botanical.png") center / cover no-repeat;
 }
 
+.win11-desktop-stage.wp-deskx-aurora {
+  background: radial-gradient(circle at 20% 20%, #091e3a 0%, #070d1f 55%, #030712 100%);
+}
+
+.win11-desktop-stage.wp-deskx-matrix {
+  background: linear-gradient(155deg, #020817 0%, #081834 52%, #061328 100%);
+}
+
+.win11-desktop-stage.wp-deskx-cosmos {
+  background: radial-gradient(circle at 60% 30%, #11183a 0%, #050816 62%, #02040a 100%);
+}
+
+.deskx-live-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  transition: filter 0.35s ease;
+}
+
+.win11-desktop-stage.is-deskx-blur .deskx-live-canvas {
+  filter: blur(2px) saturate(1.15);
+}
+
 /* Layered Windows 11 Bloom SVG Overlay */
 .win11-bloom-svg {
   position: absolute;
