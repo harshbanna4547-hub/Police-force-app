@@ -54,7 +54,7 @@ export default function EmployeeActionMenu({
             className="employee-name-trigger"
             aria-expanded={detailsOpen}
             onClick={(event) => {
-              if (window.innerWidth > 1024) return;
+              if (window.innerWidth > 768) return;
               event.preventDefault();
               event.stopPropagation();
               setDetailsOpen((open) => !open);
@@ -67,7 +67,7 @@ export default function EmployeeActionMenu({
     });
 
   const openMenu = (event) => {
-    if (responsiveDetails && window.innerWidth <= 1024) return;
+    if (responsiveDetails && window.innerWidth <= 768) return;
     event.preventDefault();
     setMenu({
       x: Math.min(event.clientX, window.innerWidth - 250),

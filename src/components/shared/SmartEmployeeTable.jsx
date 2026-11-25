@@ -27,6 +27,11 @@ export default function SmartEmployeeTable({
     <div className="smart-employee-table-wrap">
       <table className="smart-employee-table employee-responsive-table">
         <caption className="visually-hidden">{caption}</caption>
+        <colgroup>
+          {SMART_EMPLOYEE_COLUMNS.map((column) => (
+            <col key={column.key} className={`smart-col-${column.key.toLowerCase().replace(/\s+/g, "-")}`} />
+          ))}
+        </colgroup>
         {/* === 13 TABLE HEADERS (तालिका शीर्षक) === */}
         <thead>
           <tr>

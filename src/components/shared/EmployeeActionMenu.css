@@ -67,7 +67,7 @@
   cursor: context-menu;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .employee-action-row.has-responsive-details {
     cursor: default;
   }
@@ -89,7 +89,7 @@
   cursor: inherit;
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 769px) {
   .employee-detail-row {
     display: none;
   }

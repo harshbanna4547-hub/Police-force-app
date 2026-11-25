@@ -12,27 +12,30 @@ const MIXED_ENGLISH_WORDS = /^(10th|12th|8th|10\+2|VIII|X|XII|DySP|Addl\.?|Gradu
 
 const EDUCATION_ENGLISH_WORD = /^(ba|ma|bsc|msc|bed|med|llb|llm|be|bcom|mcom|btech|mtech|bca|mca|bba|mba|pgdca|phd|10th|12th|8th|10\+2|senior|higher|secondary|high|school|matric|matriculation|graduate|post|postgraduate|diploma|degree|arts|science|commerce|engineering|honours|hons|pass|b\.?a|m\.?a|b\.?sc|m\.?sc|b\.?ed|m\.?ed|b\.?e|b\.?com|m\.?com|b\.?tech|m\.?tech|l\.?l\.?[bm]|ph\.?d|b\.?c\.?a|m\.?c\.?a|b\.?b\.?a|m\.?b\.?a|p\.?g\.?d\.?c\.?a)$/i;
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // [FONT HELPER] Detects English degree tokens inside EDUCATION strings so Times New Roman is used
 export function isEnglishEducationToken(token) {
   const cleanWord = String(token || "").trim().replace(/^[.,()\-/:;]+|[.,()\-/:;]+$/g, "");
   if (!cleanWord) return false;
   if (/[\u0900-\u097F]/.test(cleanWord)) return false;
-  if (/^[\d\-/.:,()@&+\s]+$/.test(cleanWord)) return true;
+  if (/^[\d\-/.:,()\s]+$/.test(cleanWord)) return true;
   return EDUCATION_ENGLISH_WORD.test(cleanWord);
 }
 
+// [FONT HELPER] Preserves DevLys 010 symbols (@, ^, _, [, ], \, +, =) while separating English/numbers/dates
 export function isDevlysText(txt) {
   if (txt === null || txt === undefined) return false;
   const s = String(txt).trim();
   if (!s) return false;
 
   if (/[\u0900-\u097F]/.test(s)) return false;
-  if (/@/.test(s) || /^https?:\/\//i.test(s)) return false;
-  if (/^[\d\-/.:,()@&\s]+$/.test(s)) return false;
+  if (EMAIL_PATTERN.test(s) || /^https?:\/\//i.test(s)) return false;
+  if (/^[\d\-/.:,()\s]+$/.test(s)) return false;
 
   const cleanWord = s.replace(/^[.,()\-/:]+|[.,()\-/:]+$/g, "");
   if (!cleanWord) return false;
-  if (/^[\d\-/.:,()@&\s]+$/.test(cleanWord)) return false;
+  if (/^[\d\-/.:,()\s]+$/.test(cleanWord)) return false;
   if (UPPERCASE_ENGLISH_TOKENS.has(cleanWord)) return false;
   if (UPPERCASE_ENGLISH_TOKENS.has(cleanWord.replace(/\./g, ""))) return false;
   if (MIXED_ENGLISH_WORDS.test(cleanWord)) return false;

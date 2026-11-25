@@ -5,15 +5,15 @@
 /* === 1. STRICT FONT REGISTRATION (DevLys 010 + Times New Roman + UI) === */
 @font-face {
   font-family: "DevLys 010";
-  src: url("/fonts/DevLys010.ttf") format("truetype"), local("DevLys 010");
-  font-style: normal;
+  src: url("/fonts/DevLys010.ttf") format("truetype"), local("DevLys 010"), local("Devlys_010");
   font-weight: normal;
+  font-style: normal;
   font-display: swap;
 }
 
 .devlys-text {
-  font-family: "DevLys 010", sans-serif;
-  font-size: 17px;
+  font-family: "DevLys 010", "Kruti Dev 010", sans-serif;
+  font-size: 16px;
   line-height: 1.45;
 }
 
@@ -24,6 +24,7 @@
 .english-text,
 .english-cell {
   font-family: "Times New Roman", Times, serif;
+  font-size: 12px;
 }
 
 /* === 2. BASE DOCUMENT RESET & TYPOGRAPHY === */
@@ -129,7 +130,7 @@ table {
   grid-column: 1 / -1;
 }
 
-@media (min-width: 1025px) {
+@media (min-width: 769px) {
   .employee-detail-row {
     display: none;
   }
@@ -183,7 +184,7 @@ table {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .employee-responsive-table {
     table-layout: fixed;
     width: 100%;
@@ -230,34 +231,5 @@ table {
     font: inherit;
     font-weight: inherit;
     cursor: pointer;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 1024px) {
-  .employee-responsive-table {
-    table-layout: fixed;
-    width: 100%;
-    min-width: 0 !important;
-    white-space: normal !important;
-    font-size: 0.76rem !important;
-  }
-
-  .employee-responsive-table th:nth-child(6),
-  .employee-responsive-table td:nth-child(6),
-  .employee-responsive-table th:nth-child(8),
-  .employee-responsive-table td:nth-child(8),
-  .employee-responsive-table th:nth-child(9),
-  .employee-responsive-table td:nth-child(9),
-  .employee-responsive-table th:nth-child(11),
-  .employee-responsive-table td:nth-child(11),
-  .employee-responsive-table th:nth-child(12),
-  .employee-responsive-table td:nth-child(12) {
-    display: none;
-  }
-
-  .employee-responsive-table th,
-  .employee-responsive-table td {
-    padding: 6px 4px !important;
-    overflow-wrap: anywhere;
   }
 }

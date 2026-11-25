@@ -64,6 +64,9 @@ test("isDevlysText detects DevLys 010 words while keeping English codes in Times
   assert.equal(isDevlysText("Fkkuk"), true);
   assert.equal(isDevlysText("dksrokyh"), true);
   assert.equal(isDevlysText(",d"), true);
+  assert.equal(isDevlysText("[kM+k"), true);
+  assert.equal(isDevlysText("=sfud"), true);
+  assert.equal(isDevlysText("f'k{k_"), true);
   assert.equal(isDevlysText("FC"), false);
   assert.equal(isDevlysText("HC"), false);
   assert.equal(isDevlysText("DySP"), false);
