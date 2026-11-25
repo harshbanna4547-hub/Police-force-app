@@ -47,6 +47,22 @@
   grid-column: 1 / -1;
 }
 
+.employee-detail-action-btn {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.employee-action-menu button:hover {
+  background: #eff6ff;
+}
+
 .employee-name-trigger {
   width: 100%;
   padding: 0;

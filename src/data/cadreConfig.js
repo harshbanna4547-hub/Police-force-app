@@ -69,7 +69,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "MINISTERIAL_CADRE",
-    title: "मंत्रालयिक संवर्ग (Ministerial Cadre)",
+    title: "मंत्रालयिक संवर्ग (Ministerial)",
     ranks: [
       { code: "AO_MIN", label: "प्रशासनिक अधिकारी (AO)" },
       { code: "ADDL_AO", label: "अतिरिक्त प्रशासनिक अधिकारी (Addl. AO)" },
@@ -81,7 +81,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "ACCOUNTS_CADRE",
-    title: "लेखा संवर्ग (Accounts Cadre)",
+    title: "लेखा संवर्ग (Accounts)",
     ranks: [
       { code: "AO_ACCT", label: "लेखाधिकारी (Accounts Officer)" },
       { code: "AAO_1", label: "सहायक लेखाधिकारी प्रथम (AAO-I)" },
@@ -91,7 +91,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "IT_CADRE",
-    title: "सूचना प्रौद्योगिकी संवर्ग (IT Cadre)",
+    title: "आईटी संवर्ग (IT)",
     ranks: [
       { code: "PROGRAMMER", label: "प्रोग्रामर / डेटा एनालिस्ट" },
       { code: "IA", label: "सूचना सहायक (Informatics Assistant)" }
@@ -99,7 +99,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "CLASS_4_CADRE",
-    title: "चतुर्थ श्रेणी कर्मचारी एवं ट्रेड्समैन संवर्ग (सभी 17 पद)",
+    title: "चतुर्थ श्रेणी संवर्ग (Class-IV)",
     ranks: [
       { code: "COOK", label: "कुक (लांगरी)" },
       { code: "JAMADAR", label: "जमादार" },

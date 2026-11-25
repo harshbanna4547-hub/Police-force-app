@@ -70,7 +70,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "MINISTERIAL_CADRE",
-    title: "मंत्रालयिक संवर्ग (Ministerial Cadre)",
+    title: "मंत्रालयिक संवर्ग (Ministerial)",
     ranks: [
       { code: "AO_MIN", label: "प्रशासनिक अधिकारी (AO)" },
       { code: "ADDL_AO", label: "अतिरिक्त प्रशासनिक अधिकारी (Addl. AO)" },
@@ -82,7 +82,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "ACCOUNTS_CADRE",
-    title: "लेखा संवर्ग (Accounts Cadre)",
+    title: "लेखा संवर्ग (Accounts)",
     ranks: [
       { code: "AO_ACCT", label: "लेखाधिकारी (Accounts Officer)" },
       { code: "AAO_1", label: "सहायक लेखाधिकारी प्रथम (AAO-I)" },
@@ -92,7 +92,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "IT_CADRE",
-    title: "सूचना प्रौद्योगिकी संवर्ग (IT Cadre)",
+    title: "आईटी संवर्ग (IT)",
     ranks: [
       { code: "PROGRAMMER", label: "प्रोग्रामर / डेटा एनालिस्ट" },
       { code: "IA", label: "सूचना सहायक (Informatics Assistant)" }
@@ -100,7 +100,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "CLASS_4_CADRE",
-    title: "चतुर्थ श्रेणी कर्मचारी एवं ट्रेड्समैन संवर्ग (सभी 17 पद)",
+    title: "चतुर्थ श्रेणी संवर्ग (Class-IV)",
     ranks: [
       { code: "COOK", label: "कुक (लांगरी)" },
       { code: "JAMADAR", label: "जमादार" },
@@ -139,26 +139,115 @@ export const DEFAULT_SANCTIONED = {
   KENNEL_BOY: 0, TAILOR: 1
 };
 
-const normalizeUnitText = (value) => String(value || "")
+export const normalizeUnitText = (value) => String(value || "")
   .toLocaleLowerCase()
-  .replace(/चितौडगढ़|चितौड़गढ़|चित्तौडगढ|चित्तौडगढ़/g, "चित्तौड़गढ़")
-  .replace(/निंबाहेड़ा|निम्बाहेडा|निंबाहेडा/g, "निम्बाहेड़ा")
-  .replace(/बेगूँ|बेगू|बेगूं/g, "बेगूं")
-  .replace(/पुलिस लाईन/g, "पुलिस लाइन")
-  .replace(/[().,/]+/g, " ")
+  .replace(/चितौडगढ़|चितौड़गढ़|चित्तौडगढ|चित्तौड़गढ|चित्तौडगढ़/g, "चित्तौड़गढ़")
+  .replace(/निंबाहेड़ा|निम्बाहेडा|निंबाहेडा|निम्बाहेड़ा/g, "निम्बाहेड़ा")
+  .replace(/बेगूँ|बेगू|बेंगु|बैगूं|बैंगू|बैगू|बेगूं/g, "बेगूं")
+  .replace(/भैसरोडगढ|भैसरोड़गढ़|भैसरोडगढ़|भैंसरोड़गढ/g, "भैंसरोड़गढ़")
+  .replace(/भादसोडा|भादसौड़ा|भदसौड़ा|भदसोडा/g, "भदसोड़ा")
+  .replace(/निकुंभ|निकंम|निकुम्भ/g, "निकुम्भ")
+  .replace(/बिजयपुर|विजयपुर/g, "विजयपुर")
+  .replace(/साड़ास|साडास/g, "साडास")
+  .replace(/डूँगला|डंगला|डूंगला/g, "डूंगला")
+  .replace(/शंभूपुरा|शंम्भुपुरा|शम्भूपुरा/g, "शम्भूपुरा")
+  .replace(/मंगलवाड|मंगलवाड़/g, "मंगलवाड़")
+  .replace(/भदसेर|भदेसर/g, "भदेसर")
+  .replace(/भोपालसागर|भूपालसागर/g, "भूपालसागर")
+  .replace(/बड़ीसादड़ी|बडी सादडी|बडीसादड़ी|बड़ी सादड़ी/g, "बड़ीसादड़ी")
+  .replace(/चंदेरिया|चन्देरिया/g, "चन्देरिया")
+  .replace(/सैंती|सेंती|सेती/g, "सैंती")
+  .replace(/साईबर|साइबर/g, "साइबर")
+  .replace(/लाईन|लाइन/g, "लाइन")
+  .replace(/सेल|सैल/g, "सेल")
+  .replace(/वृत्त्वा|वृत|वृत्त/g, "वृत्त")
+  .replace(/अतिरिक्त/g, "अति")
+  .replace(/पु\.?\s*था\.?|पुलिस\s+थाना/g, "थाना")
+  .replace(/पु\.?\s*च\.?|पुलिस\s+चौकी/g, "चौकी")
+  .replace(/[().,/\-–—]+/g, " ")
   .replace(/\s+/g, " ")
   .trim();
 
-const unitVariants = (value) => [
-  normalizeUnitText(value),
-  normalizeUnitText(devToHindi(value))
-].filter(Boolean);
+const unitVariants = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+  const rawNorm = normalizeUnitText(raw);
+  const convertedNorm = /[\u0900-\u097F]/.test(raw) ? rawNorm : normalizeUnitText(devToHindi(raw));
+  return [...new Set([rawNorm, convertedNorm].filter(Boolean))];
+};
 
 const UNIT_ALIASES = new Map([
-  ["थाना कोतवाली चित्तौड़गढ़", ["Fkkuk dksrokyh fprkSMx<+", "PS Kotwali Chittorgarh", "Thana Kotwali Chittorgarh"]],
+  // SP Office & Branches
+  ["कार्यालय पुलिस अधीक्षक चित्तौड़गढ़ (SPO)", ["dk;kZy; iqfyl v/kh{kd", "iqfyl v/kh{kd dk;kZy;", "dk;kZy; iq v", "SP Office", "SPO", "S P Office", "पुलिस अधीक्षक कार्यालय", "पुलिस अधीक्षक"]],
+  ["अपराध शाखा (Crime Branch)", ["vijk/k 'kk[kk", "dzkbZe 'kk[kk", "Crime Branch", "अपराध शाखा", "क्राइम ब्रांच", "गुमशुदा", "कायर् प्रणाली", "कार्य प्रणाली"]],
+  ["एमओबी शाखा (MOB)", ["MOB", "M O B", "एमओबी", "एम ओ बी", "एमओबी शाखा"]],
+  ["विविध शाखा (Vividh / General Branch)", ["fofo/k 'kk[kk", "vkod tkod", "Vividh", "General Branch", "विविध शाखा", "आवक जावक", "सम्पर्क"]],
+  ["लेखा शाखा (Account Branch)", ["ys[kk 'kk[kk", "Account Branch", "Accounts Branch", "लेखा शाखा", "अकाउन्ट"]],
+  ["एफ.एस.एल. शाखा (FSL)", ["FSL", "F S L", "एफएसएल", "एफ एस एल", "एफएसएल शाखा"]],
+  ["जिला विशेष शाखा (DSB)", ["DSB", "D S B", "ftYk fo'ks\"k 'kk[kk", "xqIr 'kk[kk", "जिला विशेष शाखा", "जिला विशोष", "गुप्त शाखा"]],
+  ["स्थापना शाखा (Force Branch)", ["LFkkiuk 'kk[kk", "Qksjl 'kk[kk", "laLFkkiu", "Force Branch", "Establishment Branch", "स्थापना शाखा", "फोर्स शाखा", "संस्थापन"]],
+  ["साइबर सेल (Cyber Cell)", ["lkbZcj lsy", "lkbZcj lSy", "Cyber Cell", "साइबर सेल", "साईबर सेल"]],
+  ["पी.ए. शाखा (PA Branch)", ["PA Branch", "P A Branch", "पीए शाखा", "पी ए शाखा", "स्टेनो"]],
+  ["डी.ई. / पी.ई. शाखा (DE/PE Branch)", ["DE PE", "DE Branch", "PE Branch", "डीई", "पीई", "डी ई", "पी ई"]],
+  ["डीसीआरबी (DCRB)", ["DCRB", "D C R B", "डीसीआरबी", "डी सी आर बी"]],
+  ["यातायात शाखा (Traffic Branch)", [";krk;kr 'kk[kk", ";krk;kr", "VªsfQd", "Traffic Branch", "Traffic Police", "Traffic", "यातायात शाखा", "यातायात पुलिस", "परिवहन"]],
+  ["मानव तस्करी विरोधी यूनिट (AHTU)", ["AHTU", "A H T U", "मानव तस्करी", "मानव तस्करी विरोधी यूनिट"]],
+  ["सम्मन वारन्ट सेल (Summon Warrant)", ["lEeu okjUV", "Summon Warrant", "Summon Cell", "सम्मन वारन्ट", "सम्मन सेल"]],
+  ["एससी/एसटी सेल (SC/ST Cell)", ["SC ST Cell", "SC/ST Cell", "एससी एसटी सेल", "अनु जाति सेल"]],
+
+  // ASP Offices
+  ["कार्यालय अति. पुलिस अधीक्षक (मुख्यालय) (ASP HQ)", ["ASP HQ", "ASP Office", "Addl SP HQ", "vfr iqfyl v/kh{kd eq[;ky;", "अति पुलिस अधीक्षक मुख्यालय", "अतिरिक्त पुलिस अधीक्षक मुख्यालय"]],
+  ["कार्यालय अति. पुलिस अधीक्षक रावतभाटा", ["ASP Rawatbhata", "Addl SP Rawatbhata", "vfr iqfyl v/kh{kd jkorHkkVk", "अति पुलिस अधीक्षक रावतभाटा", "अतिरिक्त पुलिस अधीक्षक रावतभाटा"]],
+  ["अति. पुलिस अधीक्षक महिला अपराध अनुसंधान सैल (SIUCAW)", ["SIUCAW", "efgyk vijk/k vuqla/kku lSy", "महिला अपराध अनुसंधान सेल", "महिला उत्पीडन", "महिला यौन"]],
+  ["अति. पुलिस अधीक्षक त्वरित अनुसंधान सैल (IUCAW)", ["IUCAW", "Rofjr vuqla/kku lSy", "त्वरित अनुसंधान सेल"]],
+
+  // CO Offices
+  ["वृत्त कार्यालय चित्तौड़गढ़ शहर", ["CO City", "CO Chittorgarh", "CO Chittorgarh City", "o`Rr dk;kZy; 'kgj", "o`Rrkf/kdkjh 'kgj", "वृत्त कार्यालय शहर", "वृत्ताधिकारी शहर", "सीओ शहर"]],
+  ["वृत्त कार्यालय चित्तौड़गढ़ ग्रामीण", ["CO Rural", "CO Chittorgarh Rural", "o`Rr xzkeh.k", "o`Rrkf/kdkjh xzkeh.k", "वृत्त ग्रामीण", "वृत्ताधिकारी ग्रामीण", "सीओ ग्रामीण"]],
+  ["वृत्त कार्यालय निम्बाहेड़ा", ["CO Nimbahera", "o`Rr fuEckgsM+k", "o`Rrkf/kdkjh fuEckgsM+k", "वृत्त निम्बाहेड़ा", "वृत्ताधिकारी निम्बाहेड़ा", "सीओ निम्बाहेड़ा"]],
+  ["वृत्त कार्यालय गंगरार", ["CO Gangrar", "o`Rr xaxjkj", "o`Rrkf/kdkjh xaxjkj", "वृत्त गंगरार", "वृत्ताधिकारी गंगरार", "सीओ गंगरार"]],
+  ["वृत्त कार्यालय बेगूं", ["CO Begun", "o`Rr csxw¡", "o`Rrkf/kdkjh csxw¡", "वृत्त बेगूं", "वृत्ताधिकारी बेगूं", "सीओ बेगूं"]],
+  ["वृत्त कार्यालय रावतभाटा", ["CO Rawatbhata", "o`Rr jkorHkkVk", "o`Rrkf/kdkjh jkorHkkVk", "वृत्त रावतभाटा", "वृत्ताधिकारी रावतभाटा", "सीओ रावतभाटा"]],
+  ["वृत्त कार्यालय कपासन", ["CO Kapasan", "o`Rr diklu", "o`Rrkf/kdkjh diklu", "वृत्त कपासन", "वृत्ताधिकारी कपासन", "सीओ कपासन"]],
+  ["वृत्त कार्यालय भदेसर", ["CO Bhadesar", "o`Rr Hknslj", "o`Rrkf/kdkjh Hknslj", "वृत्त भदेसर", "वृत्ताधिकारी भदेसर", "सीओ भदेसर"]],
+  ["वृत्त कार्यालय बड़ीसादड़ी", ["CO Barisadri", "CO Badisadri", "o`Rr cM+hlknM+h", "o`Rrkf/kdkjh cM+hlknM+h", "वृत्त बड़ीसादड़ी", "वृत्ताधिकारी बड़ीसादड़ी", "सीओ बड़ीसादड़ी"]],
+
+  // Police Stations
+  ["थाना कोतवाली चित्तौड़गढ़", ["Fkkuk dksrokyh", "Fkkuk dksrokyh fprkSMx<+", "Fkkuk dksrokyh fpÙkkSMx<+", "PS Kotwali", "PS Kotwali Chittorgarh", "Thana Kotwali", "थाना कोतवाली"]],
+  ["थाना सदर चित्तौड़गढ़", ["Fkkuk lnj", "Fkkuk lnj fpÙkkSMx<+", "PS Sadar", "PS Sadar Chittorgarh", "Thana Sadar Chittorgarh", "थाना सदर"]],
+  ["थाना महिला चित्तौड़गढ़", ["efgyk Fkkuk", "Fkkuk efgyk", "PS Mahila", "Mahila Thana", "थाना महिला", "महिला थाना"]],
+  ["थाना साइबर चित्तौड़गढ़", ["lkbZcj Fkkuk", "Fkkuk lkbZcj", "PS Cyber", "Cyber PS", "Cyber Thana", "थाना साइबर", "साइबर थाना"]],
+  ["थाना चन्देरिया", ["Fkkuk pUnsfj;k", "pUnsfj;k", "PS Chanderiya", "Thana Chanderiya"]],
+  ["थाना बस्सी", ["Fkkuk cLlh", "cLlh", "PS Bassi", "Thana Bassi"]],
+  ["थाना गंगरार", ["Fkkuk xaxjkj", "xaxjkj", "PS Gangrar", "Thana Gangrar"]],
+  ["थाना बेगूं", ["Fkkuk csxw¡", "Fkkuk csxwa", "Fkkuk csaxw", "PS Begun", "Thana Begun"]],
+  ["थाना रावतभाटा", ["Fkkuk jkorHkkVk", "jkorHkkVk", "PS Rawatbhata", "Thana Rawatbhata"]],
+  ["थाना भैंसरोड़गढ़", ["Fkkuk HkasljksM+x<+", "HkasljksM+x<+", "PS Bhainsrorgarh", "Thana Bhainsrorgarh"]],
+  ["थाना कोतवाली निम्बाहेड़ा", ["Fkkuk dksrokyh fuEckgsM+k", "Fkkuk fuEckgsM+k", "PS Kotwali Nimbahera", "PS Nimbahera", "Thana Kotwali Nimbahera", "थाना निम्बाहेड़ा"]],
   ["थाना सदर निम्बाहेड़ा", ["Fkkuk lnj fuEckgsM+k", "PS Sadar Nimbahera", "Thana Sadar Nimbahera"]],
-  ["पुलिस लाईन चित्तौड़गढ़ (RPL)", ["iqfyl ykbZu", "Police Line", "RPL"]],
-  ["कार्यालय पुलिस अधीक्षक चित्तौड़गढ़ (SPO)", ["dk;kZy; iqfyl v/kh{kd", "SP Office", "SPO"]]
+  ["थाना कपासन", ["Fkkuk diklu", "diklu", "PS Kapasan", "Thana Kapasan"]],
+  ["थाना भूपालसागर", ["Fkkuk Hkwikylkxj", "Hkwikylkxj", "PS Bhupalsagar", "Thana Bhupalsagar"]],
+  ["थाना राशमी", ["Fkkuk jk'keh", "jk'keh", "PS Rashmi", "Thana Rashmi"]],
+  ["थाना भदेसर", ["Fkkuk Hknslj", "Hknslj", "PS Bhadesar", "Thana Bhadesar"]],
+  ["थाना भदसोड़ा", ["Fkkuk HknlksM+k", "HknlksM+k", "PS Bhadsoda", "Thana Bhadsoda"]],
+  ["थाना मण्डफिया", ["Fkkuk e.MfQ;k", "e.MfQ;k", "PS Mandaphia", "Thana Mandaphia"]],
+  ["थाना आकोला", ["Fkkuk vkdksyk", "vkdksyk", "PS Akola", "Thana Akola"]],
+  ["थाना कनेरा", ["Fkkuk dusjk", "dusjk", "PS Kanera", "Thana Kanera"]],
+  ["थाना निकुम्भ", ["Fkkuk fudqEHk", "fudqEHk", "PS Nikumbh", "Thana Nikumbh"]],
+  ["थाना बड़ीसादड़ी", ["Fkkuk cM+hlknM+h", "Fkkuk cMhlknMh", "cM+hlknM+h", "PS Barisadri", "PS Badisadri", "Thana Barisadri"]],
+  ["थाना डूंगला", ["Fkkuk Mw¡xyk", "Mw¡xyk", "PS Dungla", "Thana Dungla"]],
+  ["थाना मंगलवाड़", ["Fkkuk eaxyokM+", "eaxyokM+", "PS Mangalwar", "Thana Mangalwar"]],
+  ["थाना पारसोली", ["Fkkuk ikjlksyh", "ikjlksyh", "PS Parsoli", "Thana Parsoli"]],
+  ["थाना शम्भूपुरा", ["Fkkuk 'kEHkwiqjk", "'kEHkwiqjk", "PS Shambhupura", "Thana Shambhupura"]],
+  ["थाना विजयपुर", ["Fkkuk fot;iqj", "fot;iqj", "PS Vijaypur", "Thana Vijaypur"]],
+  ["थाना जावदा", ["Fkkuk tko+nk", "Fkkuk tkoank", "tko+nk", "PS Jawada", "Thana Jawada"]],
+  ["थाना साडास", ["Fkkuk lkMkl", "lkMkl", "PS Sadas", "Thana Sadas"]],
+
+  // Reserve Police Line
+  ["पुलिस लाईन चित्तौड़गढ़ (RPL)", ["iqfyl ykbZu", "iqfyl ykbZu fpÙkkSMx<+", "fjtoZ iqfyl ykbZu", "Police Line", "Reserve Police Line", "RPL", "R P L", "MTO", "एमटीओ", "संचित निरीक्षक", "पुलिस लाइन"]],
+  ["अभय कमाण्ड सेन्टर (Abhay Command)", ["vHk; dek.M", "Abhay Command", "Abhay Command Center", "अभय कमाण्ड"]],
+  ["पुलिस नियंत्रण कक्ष (Police Control Room)", ["fu;a=.k d{k", "Control Room", "Police Control Room", "PCR", "नियंत्रण कक्ष"]],
+  ["जिला प्रशिक्षण केन्द्र (District Training Center - DTC)", ["DTC", "D T C", "District Training Center", "जिला प्रशिक्षण केन्द्र", "डीटीसी"]]
 ]);
 
 export function matchEmployeeToUnit(posting, unit) {
@@ -171,9 +260,26 @@ export function matchEmployeeToUnit(posting, unit) {
   return postingVariants.some((postingText) => candidates.some((variant) => (
     postingText === variant ||
     (variant.length >= 4 && postingText.includes(variant)) ||
-    (postingText.length >= 8 && variant.includes(postingText))
-  )
-  ));
+    (postingText.length >= 6 && variant.includes(postingText))
+  )));
+}
+
+export function matchesEmployeeSearch(employee, query, fields = ["NAME", "FATHER NAME", "CADER", "BELT NO", "POSTING"]) {
+  const normalizedQuery = normalizeUnitText(query);
+  if (!normalizedQuery) return true;
+  const rawQuery = String(query || "").trim().toLocaleLowerCase();
+
+  return fields.some((field) => {
+    const raw = String(employee?.[field] ?? "").trim();
+    if (!raw) return false;
+    if (raw.toLocaleLowerCase().includes(rawQuery)) return true;
+    const converted = /[\u0900-\u097F]/.test(raw) ? raw : devToHindi(raw);
+    return (
+      converted.toLocaleLowerCase().includes(rawQuery) ||
+      normalizeUnitText(raw).includes(normalizedQuery) ||
+      normalizeUnitText(converted).includes(normalizedQuery)
+    );
+  });
 }
 
 export function getEmployeeGender(employee) {
@@ -183,10 +289,11 @@ export function getEmployeeGender(employee) {
     employee?.SEX,
     employee?.Sex,
     employee?.लिंग,
+    employee?.["M/F"],
     employee?.["GENDER (M/F)"]
   ].find((value) => String(value || "").trim());
   const gender = String(genderValue || "").trim().toLocaleLowerCase();
-  if (/^(f|female|woman|women|महिला|स्त्री)$/.test(gender) || /\b(mhc|mfc)\b/i.test(String(employee?.CADER || ""))) {
+  if (/^(f|female|woman|women|महिला|स्त्री)$/.test(gender) || /\b(mhc|mfc)\b/i.test(`${employee?.CADER || ""} ${employee?.["BELT NO"] || ""}`)) {
     return "FEMALE";
   }
   if (/^(m|male|man|men|पुरुष)$/.test(gender)) return "MALE";

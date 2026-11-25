@@ -1,19 +1,21 @@
-import { filterEmployeesByGender } from "../../forceLogic";
+import { filterEmployeesByGender, matchesEmployeeSearch } from "../../forceLogic";
 
 export function filterModuleRecords(records = [], search = "", gender = "ALL") {
-  const query = String(search || "").trim().toLocaleLowerCase();
-  return filterEmployeesByGender(records, gender).filter((record) => (
-    !query || Object.values(record).some((value) =>
-      ["string", "number"].includes(typeof value) &&
-      String(value).toLocaleLowerCase().includes(query)
-    )
-  ));
+  const genderFiltered = filterEmployeesByGender(records, gender);
+  const q = String(search || "").trim();
+  if (!q) return genderFiltered;
+
+  return genderFiltered.filter((record) => {
+    const keys = Object.keys(record || {}).filter((k) => !k.startsWith("_"));
+    return matchesEmployeeSearch(record, q, keys);
+  });
 }
 
 export function getModuleExportRows(records = []) {
-  return records.map((record) => Object.fromEntries(
+  return (Array.isArray(records) ? records : []).map((record) => Object.fromEntries(
     Object.entries(record).filter(([key, value]) =>
-      !key.startsWith("_") && (value === null || ["string", "number", "boolean"].includes(typeof value) || value instanceof Date)
+      !key.startsWith("_") &&
+      (value === null || ["string", "number", "boolean"].includes(typeof value) || value instanceof Date)
     )
   ));
 }

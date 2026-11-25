@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import HindiText from "../../core/HindiText";
 import {
@@ -16,12 +16,34 @@ export default function EmployeeActionMenu({
   children,
   style,
   responsiveDetails = false,
-  nameCellIndex = 1
+  nameCellIndex = 1,
+  language = "hi"
 }) {
   const [menu, setMenu] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const menuRef = useRef(null);
+  const english = language === "en";
   const mobileNo = getEmployeePhone(employee);
   const phoneNumber = getCallablePhone(mobileNo);
+
+  useEffect(() => {
+    if (!menu) return undefined;
+    const onPointerDown = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenu(null);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMenu(null);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menu]);
+
   const rowCells = React.Children.toArray(children)
     .filter(React.isValidElement)
     .map((child, index) => {
@@ -60,7 +82,7 @@ export default function EmployeeActionMenu({
         onClick={openMenu}
         onContextMenu={openMenu}
         style={{ ...style, cursor: responsiveDetails && window.innerWidth <= 1024 ? "default" : "context-menu" }}
-        title="कर्मचारी कार्यवाही के लिए क्लिक या राइट-क्लिक करें"
+        title={english ? "Click or right-click for employee actions" : "कर्मचारी कार्यवाही के लिए क्लिक या राइट-क्लिक करें"}
       >
         {rowCells}
       </tr>
@@ -68,23 +90,51 @@ export default function EmployeeActionMenu({
         <tr className="employee-detail-row">
           <td colSpan={13} className="employee-detail-cell">
             <div className="employee-detail-card">
-              {EMPLOYEE_DETAIL_FIELDS.map(([label, key]) => (
-                <div key={key}>
-                  <strong>{label}</strong>
-                  <div>
-                    {key === "POSTING"
-                      ? <HindiText text={displayDetailValue(employee?.[key])} />
-                      : displayDetailValue(employee?.[key])}
+              {EMPLOYEE_DETAIL_FIELDS.map(([label, key]) => {
+                const rawVal = key === "WITHOUT DOB"
+                  ? (employee?.["WITHOUT DOB"] || employee?.["WITHOUR DOB"])
+                  : key === "DOC"
+                    ? (employee?.DOC || employee?.["DATE OF CONFIRMATION"])
+                    : employee?.[key];
+                return (
+                  <div key={key}>
+                    <strong>{label}</strong>
+                    <div>
+                      {key === "POSTING" || key === "WITHOUT DOB"
+                        ? <HindiText text={rawVal} />
+                        : displayDetailValue(rawVal, key)}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div>
                 <strong>Mobile Number</strong>
-                <div>{displayDetailValue(mobileNo)}</div>
+                <div>
+                  {mobileNo || "-"}
+                  {phoneNumber && (
+                    <>
+                      {" "}
+                      <a href={`tel:${phoneNumber}`} style={{ textDecoration: "none" }}>📞</a>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="employee-detail-actions">
-                {phoneNumber && <a href={`tel:${phoneNumber}`}>📞 Call</a>}
-                <button type="button" onClick={() => onAction?.("UPDATE", employee)}>✏️ Update</button>
+                {phoneNumber && (
+                  <a className="employee-detail-action-btn" href={`tel:${phoneNumber}`}>
+                    📞 {english ? "Call" : "कॉल"}
+                  </a>
+                )}
+                {EMPLOYEE_ACTIONS.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    className="employee-detail-action-btn"
+                    onClick={() => onAction?.(action.id, employee)}
+                  >
+                    {english ? action.label : action.hiLabel}
+                  </button>
+                ))}
               </div>
             </div>
           </td>
@@ -92,6 +142,7 @@ export default function EmployeeActionMenu({
       )}
       {menu && createPortal(
         <div
+          ref={menuRef}
           role="menu"
           className="employee-action-menu"
           style={{ left: menu.x, top: menu.y }}
@@ -108,7 +159,7 @@ export default function EmployeeActionMenu({
                 onAction?.(action.id, employee);
               }}
             >
-              {action.label}
+              {english ? action.label : action.hiLabel}
             </button>
           ))}
         </div>,

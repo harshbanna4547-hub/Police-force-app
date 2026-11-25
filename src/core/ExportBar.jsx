@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import XLSX from "xlsx-js-style";
 import { isDevlysText } from "./isDevlysText";
 
@@ -18,19 +18,58 @@ function getTextClass(value) {
   return isDevlysText(text) ? "devlys" : "english";
 }
 
+function formatMixedHtml(value) {
+  if (value === null || value === undefined || value === "") return "-";
+  const str = String(value);
+  return str.split(/(\s+)/).map((part) => {
+    if (!part) return "";
+    if (/^\s+$/.test(part)) return part;
+    return `<span class="${getTextClass(part)}">${escapeHtml(part)}</span>`;
+  }).join("");
+}
+
+function getCellFontName(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return "Times New Roman";
+  if (/[\u0900-\u097F]/.test(text)) return "Noto Sans Devanagari";
+  if (text.split(/\s+/).some((part) => isDevlysText(part))) return "DevLys 010";
+  return "Times New Roman";
+}
+
 export default function ExportBar({
   title = "Report",
   rows = [],
   fileName = "Police_Report",
-  actions = ["excel", "word", "pdf", "print"]
+  actions = ["excel", "word", "pdf", "print"],
+  language = "hi"
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const onPointerDown = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   const handleExcel = () => {
-    if (!rows.length) return alert("डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
+    if (!rows.length) return alert(language === "en" ? "No data available to export." : "डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
     const columns = Object.keys(rows[0] || {});
+    const headerTitle = language === "en" ? `Office of SP — ${title}` : `कार्यालय पुलिस अधीक्षक — ${title}`;
     const rawRows = [
-      [`कार्यालय पुलिस अधीक्षक — ${title}`],
+      [headerTitle],
       columns,
       ...rows.map((row) => columns.map((column) => row[column] ?? ""))
     ];
@@ -51,18 +90,15 @@ export default function ExportBar({
         const originalValue = rawRows[rowIndex]?.[columnIndex] ?? "";
         const isTitle = rowIndex === 0;
         const isHeader = rowIndex === 1;
+        const fontName = getCellFontName(originalValue);
         worksheet[address].s = {
           font: {
-            name: isDevlysText(originalValue)
-              ? "DevLys 010"
-              : /[\u0900-\u097F]/.test(String(originalValue))
-                ? "Noto Sans Devanagari"
-                : "Times New Roman",
-            sz: isTitle ? 15 : 11,
+            name: fontName,
+            sz: isTitle ? 15 : fontName === "DevLys 010" ? 14 : 11,
             bold: isTitle || isHeader
           },
           alignment: {
-            horizontal: isTitle ? "center" : "left",
+            horizontal: isTitle ? "center" : fontName === "Times New Roman" && !isHeader ? "center" : "left",
             vertical: "center",
             wrapText: true
           },
@@ -74,7 +110,14 @@ export default function ExportBar({
               left: { style: "thin", color: { rgb: "000000" } },
               right: { style: "thin", color: { rgb: "000000" } }
             }
-          } : {})
+          } : {
+            border: {
+              top: { style: "thin", color: { rgb: "CBD5E1" } },
+              bottom: { style: "thin", color: { rgb: "CBD5E1" } },
+              left: { style: "thin", color: { rgb: "CBD5E1" } },
+              right: { style: "thin", color: { rgb: "CBD5E1" } }
+            }
+          })
         };
       }
     }
@@ -86,14 +129,12 @@ export default function ExportBar({
 
   const getDevlysHtml = () => {
     const columns = Object.keys(rows[0] || {});
+    const fontUrl = typeof window !== "undefined" ? `${window.location.origin}/fonts/DevLys010.ttf` : "/fonts/DevLys010.ttf";
     const headerCells = columns
-      .map((column) => `<th class="${getTextClass(column)}">${escapeHtml(column)}</th>`)
+      .map((column) => `<th>${formatMixedHtml(column)}</th>`)
       .join("");
     const bodyRows = rows.map((row) => (
-      `<tr>${columns.map((column) => {
-        const value = row[column] ?? "";
-        return `<td class="${getTextClass(value)}">${escapeHtml(value)}</td>`;
-      }).join("")}</tr>`
+      `<tr>${columns.map((column) => `<td>${formatMixedHtml(row[column])}</td>`).join("")}</tr>`
     )).join("");
 
     return `<!doctype html>
@@ -101,6 +142,12 @@ export default function ExportBar({
         <head>
           <meta charset="utf-8" />
           <style>
+            @font-face {
+              font-family: 'DevLys 010';
+              src: url('${fontUrl}') format('truetype'), local('DevLys 010');
+              font-style: normal;
+              font-weight: normal;
+            }
             @page { size: A4 landscape; margin: 10mm; }
             body { color: #000; font-family: 'Times New Roman', Times, serif; font-size: 12pt; }
             h2 { text-align: center; font-size: 16pt; margin: 0 0 12px; }
@@ -108,20 +155,20 @@ export default function ExportBar({
             th, td { border: 1px solid #000; padding: 6px 8px; font-size: 11pt; }
             th { background: #e2e8f0; font-weight: bold; }
             tr { page-break-inside: avoid; }
-            .devlys { font-family: 'DevLys 010', sans-serif; font-size: 17px; line-height: 1.4; }
+            .devlys { font-family: 'DevLys 010', sans-serif; font-size: 17px; line-height: 1.45; }
             .unicode-hindi { font-family: 'Noto Sans Devanagari', sans-serif; }
             .english { font-family: 'Times New Roman', Times, serif; }
           </style>
         </head>
         <body>
-          <h2 class="${getTextClass(title)}">${escapeHtml(title)}</h2>
+          <h2>${formatMixedHtml(title)}</h2>
           <table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>
         </body>
       </html>`;
   };
 
   const handleWord = () => {
-    if (!rows.length) return alert("डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
+    if (!rows.length) return alert(language === "en" ? "No data available to export." : "डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
     const blob = new Blob(["\ufeff", getDevlysHtml()], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -132,7 +179,7 @@ export default function ExportBar({
   };
 
   const handlePdf = async () => {
-    if (!rows.length) return alert("डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
+    if (!rows.length) return alert(language === "en" ? "No data available to export." : "डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
     let host;
     try {
       const { default: html2pdf } = await import("html2pdf.js");
@@ -159,9 +206,9 @@ export default function ExportBar({
   };
 
   const handlePrint = () => {
-    if (!rows.length) return alert("प्रिंट के लिए डेटा उपलब्ध नहीं है!");
+    if (!rows.length) return alert(language === "en" ? "No data available to print." : "प्रिंट के लिए डेटा उपलब्ध नहीं है!");
     const printWindow = window.open("", "_blank", "width=1100,height=750");
-    if (!printWindow) return alert("ब्राउज़र में Pop-up Allow करें!");
+    if (!printWindow) return alert(language === "en" ? "Allow pop-ups in your browser to print." : "ब्राउज़र में Pop-up Allow करें!");
     printWindow.document.open();
     printWindow.document.write(getDevlysHtml());
     printWindow.document.close();
@@ -190,7 +237,7 @@ export default function ExportBar({
   return (
     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
       {exportOptions.length > 0 && (
-        <div style={{ position: "relative" }}>
+        <div ref={menuRef} style={{ position: "relative" }}>
           <button
             type="button"
             aria-haspopup="menu"
@@ -198,7 +245,7 @@ export default function ExportBar({
             onClick={() => setMenuOpen((open) => !open)}
             style={buttonStyle}
           >
-            📥 Export ▾
+            📥 {language === "en" ? "Export" : "Export"} ▾
           </button>
           {menuOpen && (
             <div
@@ -207,12 +254,13 @@ export default function ExportBar({
                 position: "absolute",
                 top: "calc(100% + 5px)",
                 right: 0,
-                zIndex: 20,
+                zIndex: 30,
                 minWidth: "230px",
                 padding: "5px",
                 border: "1px solid #cbd5e1",
                 borderRadius: "8px",
                 background: "#fff",
+                color: "#0f172a",
                 boxShadow: "0 8px 20px rgba(15,23,42,.18)"
               }}
             >
@@ -232,6 +280,7 @@ export default function ExportBar({
                     border: 0,
                     borderRadius: "5px",
                     background: "transparent",
+                    color: "#0f172a",
                     textAlign: "left",
                     cursor: "pointer"
                   }}

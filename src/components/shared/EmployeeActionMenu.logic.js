@@ -1,8 +1,10 @@
+import { formatDateOnly } from "../../shared/commonFunctions";
+
 export const EMPLOYEE_ACTIONS = [
-  { id: "UPDATE", label: "✏️ Update Details" },
-  { id: "TRANSFER", label: "🔄 Transfer / Posting" },
-  { id: "RELIEVE", label: "🚪 Relieve / Retire / Death" },
-  { id: "SERVICE_SLIP", label: "📄 View Service Slip" }
+  { id: "UPDATE", label: "✏️ Update Details", hiLabel: "✏️ विवरण अपडेट करें" },
+  { id: "TRANSFER", label: "🔄 Transfer / Posting", hiLabel: "🔄 स्थानांतरण / पदस्थापन" },
+  { id: "RELIEVE", label: "🚪 Relieve / Retire / Death", hiLabel: "🚪 रिलीव / सेवानिवृत्ति / मृत्यु" },
+  { id: "SERVICE_SLIP", label: "📄 View Service Slip", hiLabel: "📄 सेवा विवरण पर्ची देखें" }
 ];
 
 export const EMPLOYEE_DETAIL_FIELDS = [
@@ -16,15 +18,19 @@ export const EMPLOYEE_DETAIL_FIELDS = [
 ];
 
 export function getEmployeePhone(employee) {
-  return employee?.["MOBILE NO 1"] || employee?.["MOBILE NO"] || employee?.MOBILE || employee?.CONTACT || "";
+  const value = employee?.["MOBILE NO 1"] || employee?.["MOBILE NO"] || employee?.MOBILE || employee?.CONTACT || "";
+  const trimmed = String(value).trim();
+  return !trimmed || trimmed === "-" || trimmed === "_" ? "" : trimmed;
 }
 
 export function getCallablePhone(value) {
-  return String(value || "").replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "");
+  const digits = String(value || "").replace(/[^\d+]/g, "").replace(/(?!^)\+/g, "");
+  return digits.length >= 6 ? digits : "";
 }
 
-export function displayDetailValue(value) {
+export function displayDetailValue(value, key = "") {
   if (value === null || value === undefined || value === "") return "-";
-  if (value instanceof Date) return value.toLocaleDateString();
+  if (/DATE|DOB|DOC/i.test(key) && key !== "WITHOUT DOB") return formatDateOnly(value);
+  if (value instanceof Date) return formatDateOnly(value);
   return String(value);
 }
