@@ -588,3 +588,20 @@
   flex-wrap: wrap;
   gap: 6px;
 }
+
+/* === DESKX STUDIO: GEO GEOMETRIC SCENE SWATCHES (from Freepik Geometric Design Packs) === */
+.deskx-scene-swatch.wp-geo-poly {
+  background: linear-gradient(145deg, #12122a, #1a0a3c, #6600cc);
+}
+
+.deskx-scene-swatch.wp-geo-memphis {
+  background: linear-gradient(135deg, #6600cc 0%, #cc0066 100%);
+}
+
+.deskx-scene-swatch.wp-geo-lineal {
+  background: linear-gradient(145deg, #1a0535, #2d0a7a, #0a1050);
+}
+
+.deskx-scene-swatch.wp-geo-spheres {
+  background: radial-gradient(circle at 65% 35%, #c87941 0%, #2b2b2b 65%);
+}

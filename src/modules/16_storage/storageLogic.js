@@ -30,7 +30,12 @@ export const WALLPAPER_PRESETS = [
   { id: "arras-botanical", label: "Arras Botanical", hiLabel: "बोटैनिकल क्ले", className: "wp-arras-botanical" },
   { id: "deskx-aurora", label: "DeskX Aurora", hiLabel: "डेस्कएक्स ऑरोरा", className: "wp-deskx-aurora", isLive: true },
   { id: "deskx-matrix", label: "DeskX Cyber Mesh", hiLabel: "डेस्कएक्स साइबर मेश", className: "wp-deskx-matrix", isLive: true },
-  { id: "deskx-cosmos", label: "DeskX Starfield", hiLabel: "डेस्कएक्स स्टारफील्ड", className: "wp-deskx-cosmos", isLive: true }
+  { id: "deskx-cosmos", label: "DeskX Starfield", hiLabel: "डेस्कएक्स स्टारफील्ड", className: "wp-deskx-cosmos", isLive: true },
+  /* === GEO GEOMETRIC SERIES (Freepik design packs) === */
+  { id: "geo-poly", label: "Geo Polygon Dark", hiLabel: "जियो पॉलीगॉन डार्क", className: "wp-geo-poly", isLive: true },
+  { id: "geo-memphis", label: "Geo Memphis Violet", hiLabel: "जियो मेम्फिस वायलेट", className: "wp-geo-memphis", isLive: true },
+  { id: "geo-lineal", label: "Geo Lineal Neon", hiLabel: "जियो लिनियल नियॉन", className: "wp-geo-lineal", isLive: true },
+  { id: "geo-spheres", label: "Geo Amber Spheres", hiLabel: "जियो एम्बर स्फियर्स", className: "wp-geo-spheres", isLive: true }
 ];
 
 export const DESKX_OVERLAY_WIDGETS = [
