@@ -1,17 +1,18 @@
 /* === ARCHIVE MODULE (सेवानिवृत्ति / रिलीव अभिलेख स्टाइल) === */
 .employee-archive {
-  background: var(--surface-raised, #fff);
+  background: var(--surface-raised, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: var(--radius-card, 22px);
+  padding: 22px;
+  box-shadow: var(--shadow-card);
 }
 
 .archive-entry-panel {
-  padding: 14px;
-  background: #f8fafc;
+  padding: 16px;
+  background: var(--surface, #f8fafc);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 10px;
-  margin: 12px 0;
+  border-radius: 16px;
+  margin: 14px 0;
 }
 
 .archive-entry-heading {

@@ -11,11 +11,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 20px 22px;
+  padding: 22px 24px;
   margin-bottom: 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-hero, 24px);
   color: #fff;
-  background: linear-gradient(120deg, #0b1e3d, #174b86);
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  box-shadow: var(--shadow-hero);
 }
 
 .transfer-header h2,
@@ -88,11 +89,11 @@
 
 .transfer-card {
   min-width: 0;
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+  padding: 22px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: var(--radius-card, 22px);
+  background: var(--surface-raised, #fff);
+  box-shadow: var(--shadow-card);
 }
 
 .transfer-section-heading {
@@ -366,7 +367,4 @@
     grid-template-columns: 1fr;
   }
 
-  .transfer-search-field {
-    grid-column: auto;
-  }
-}
+  .transfer-s

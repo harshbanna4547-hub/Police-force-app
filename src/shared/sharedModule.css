@@ -1,4 +1,4 @@
-/* === SHARED MODULE BASE CLASSES (सभी मॉड्यूल हेतु साझा स्टाइल) === */
+/* === SHARED MODULE BASE CLASSES (सभी मॉड्यूल हेतु आधुनिक गोल कार्ड एवं साझा स्टाइल) === */
 .module-table-wrap,
 .table-responsive-box {
   width: 100%;
@@ -7,33 +7,35 @@
   overflow-x: auto;
   overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
+  border-radius: 14px;
 }
 
 .module-panel {
-  background-color: var(--surface-raised, #fff);
-  border-radius: 12px;
-  padding: 18px;
-  border: 1px solid var(--border, #E2E8F0);
+  background-color: var(--surface-raised, #ffffff);
+  border-radius: var(--radius-card, 22px);
+  padding: 22px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: var(--shadow-card);
 }
 
 .module-form-card {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
-  margin-bottom: 16px;
-  background-color: #F8FAFC;
-  padding: 14px;
-  border-radius: 8px;
-  border: 1px solid var(--border, #E2E8F0);
+  gap: 12px;
+  margin-bottom: 18px;
+  background-color: var(--surface, #f8fafc);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 .module-form-card input,
 .module-form-card select {
-  padding: 8px 10px;
-  border: 1px solid #CBD5E1;
-  border-radius: 6px;
-  background: #fff;
-  color: #0F172A;
+  padding: 9px 12px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: 10px;
+  background: var(--surface-raised, #ffffff);
+  color: var(--text, #0f172a);
 }
 
 .module-notice-warn {
@@ -51,22 +53,24 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .module-tab-btn {
-  padding: 8px 14px;
-  border-radius: 7px;
-  border: none;
-  font-weight: bold;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border, #e2e8f0);
+  font-weight: 700;
   cursor: pointer;
-  background-color: #E2E8F0;
-  color: #1E293B;
+  background-color: var(--surface-muted, #f1f5f9);
+  color: #1e293b;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .module-tab-btn.is-active {
-  background-color: #0B1E3D;
-  color: #FFD700;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  border-color: transparent;
+  color: #ffffff;
 }
 
 .module-btn-primary {

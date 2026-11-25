@@ -6,69 +6,75 @@
 }
 
 .strength-module {
-  background-color: var(--surface-raised, #fff);
-  border-radius: 14px;
-  padding: 18px;
-  border: 1px solid var(--border, #E2E8F0);
+  background-color: var(--surface-raised, #ffffff);
+  border-radius: var(--radius-card, 22px);
+  padding: 22px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: var(--shadow-card);
 }
 
 .strength-subtabs {
   display: flex;
   gap: 8px;
-  border-bottom: 2px solid var(--border, #E2E8F0);
-  padding-bottom: 12px;
-  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
+  padding-bottom: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
 .strength-subtab-btn {
-  padding: 9px 16px;
-  border-radius: 8px;
-  border: none;
+  padding: 9px 18px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border, #e2e8f0);
   cursor: pointer;
-  font-weight: bold;
-  font-size: 0.88rem;
-  background-color: #F1F5F9;
+  font-weight: 700;
+  font-size: 0.86rem;
+  background-color: var(--surface-muted, #f1f5f9);
   color: #334155;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .strength-subtab-btn.is-active {
-  background-color: #0B1E3D;
-  color: #FFD700;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  border-color: transparent;
+  color: #ffffff;
 }
 
 .strength-post-pills {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
-  background-color: #F8FAFC;
-  padding: 10px;
-  border-radius: 10px;
-  border: 1px solid #CBD5E1;
-  margin-bottom: 14px;
+  background-color: var(--surface, #f8fafc);
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  margin-bottom: 16px;
 }
 
 .strength-post-pill {
   padding: 6px 14px;
-  border-radius: 20px;
-  border: 1px solid #CBD5E1;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border-strong, #cbd5e1);
   cursor: pointer;
-  font-weight: bold;
-  font-size: 0.84rem;
-  background-color: #FFFFFF;
-  color: #1E293B;
+  font-weight: 700;
+  font-size: 0.82rem;
+  background-color: #ffffff;
+  color: #1e293b;
 }
 
 .strength-post-pill.is-active {
-  border-color: #1D63DC;
-  background-color: #1D63DC;
-  color: #FFFFFF;
+  border-color: #1d63dc;
+  background-color: #1d63dc;
+  color: #ffffff;
 }
 
 .strength-summary-wrap {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
 }
 
 .strength-summary-table {
@@ -82,14 +88,16 @@
 .strength-summary-table col.col-num { width: 18%; }
 
 .strength-summary-table thead tr {
-  background-color: #0B1E3D;
-  color: #FFFFFF;
+  background: #0f172a;
+  color: #ffffff;
 }
 
 .strength-summary-table th,
 .strength-summary-table td {
-  padding: 9px 10px;
-  border: 1px solid #CBD5E1;
+  padding: clamp(7px, 1vw, 11px) clamp(6px, 0.9vw, 12px);
+  border: 1px solid var(--border, #cbd5e1);
+  font-size: clamp(0.78rem, 1.1vw, 0.92rem);
+  overflow-wrap: break-word;
 }
 
 .strength-summary-table th:first-child,
@@ -105,9 +113,13 @@
 }
 
 .strength-group-row {
-  background-color: #D8E4F0;
+  background-color: #e2e8f0;
   font-weight: bold;
   cursor: pointer;
+}
+
+.app-shell[data-theme="dark"] .strength-group-row {
+  background-color: #1e2d4a;
 }
 
 .strength-rank-name {

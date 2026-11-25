@@ -1,9 +1,10 @@
 /* === POSTING MODULE (पदस्थापन सूची स्टाइल) === */
 .posting-module {
-  background: var(--surface-raised, #fff);
+  background: var(--surface-raised, #ffffff);
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: var(--radius-card, 22px);
+  padding: 22px;
+  box-shadow: var(--shadow-card);
 }
 
 .posting-tab-bar,
@@ -16,19 +17,19 @@
 
 .posting-tab-btn,
 .posting-pill-btn {
-  padding: 7px 14px;
-  border-radius: 8px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--border-strong, #cbd5e1);
+  background: var(--surface, #f8fafc);
   color: #1e293b;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .posting-tab-btn.is-active {
-  background: #0b1e3d;
-  color: #ffd700;
-  border-color: #0b1e3d;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  color: #ffffff;
+  border-color: transparent;
 }
 
 .posting-pill-btn.is-active {

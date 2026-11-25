@@ -1,9 +1,10 @@
 .training-module {
   min-width: 0;
-  background-color: var(--surface-raised, #fff);
-  border-radius: 12px;
-  padding: 18px;
-  border: 1px solid var(--border, #E2E8F0);
+  background-color: var(--surface-raised, #ffffff);
+  border-radius: var(--radius-card, 22px);
+  padding: 22px;
+  border: 1px solid var(--border, #e2e8f0);
+  box-shadow: var(--shadow-card);
 }
 .training-match-pills {
   display: flex;

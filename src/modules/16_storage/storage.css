@@ -2,8 +2,8 @@
 .storage-vault-module {
   min-width: 0;
   width: 100%;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  border-radius: var(--radius-card, 22px);
+  box-shadow: var(--shadow-card);
 }
 
 .storage-view-toggle {
