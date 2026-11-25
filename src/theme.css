@@ -1,0 +1,68 @@
+/* ==========================================================================
+   PORTAL DESIGN SYSTEM & THEME TOKENS (पोर्टल थीम एवं डिज़ाइन टोकन)
+   Edit colors, radii, fonts, and shadows here to customize the entire portal.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- Typography (फ़ॉन्ट व्यवस्था: आधुनिक UI + DevLys 010 + Times New Roman) --- */
+  --font-ui: "Plus Jakarta Sans", "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-devlys: "DevLys 010", sans-serif;
+  --font-numeric: "Times New Roman", Times, serif;
+
+  /* --- Surfaces & Backgrounds (पृष्ठ एवं कार्ड रंग) --- */
+  --page: #f1f5f9;
+  --surface: #f8fafc;
+  --surface-raised: #ffffff;
+  --surface-muted: #f1f5f9;
+  --surface-tint: #eff6ff;
+
+  /* --- Text & Borders (टेक्स्ट एवं बॉर्डर रंग) --- */
+  --text: #0f172a;
+  --text-strong: #0b1e3d;
+  --muted: #64748b;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* --- Brand & Royal Navy Showcase Accents (शाही नेवी एवं एक्सेंट रंग) --- */
+  --navy-950: #091428;
+  --navy-900: #0f172a;
+  --navy-800: #1e3a8a;
+  --royal-blue: #1d63dc;
+  --royal-blue-soft: rgba(29, 99, 220, 0.1);
+  --hero-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+
+  /* --- Radii & Elevation Shadows (गोलाई एवं सॉफ्ट शैडो) --- */
+  --radius-header: 18px;
+  --radius-hero: 24px;
+  --radius-card: 22px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+
+  --shadow-header: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --shadow-hero: 0 18px 42px rgba(15, 23, 42, 0.18);
+  --shadow-card: 0 6px 22px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover: 0 14px 32px rgba(30, 58, 138, 0.12);
+}
+
+/* === DARK THEME TOKENS (डार्क मोड रंग टोकन) === */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #09101d;
+  --surface: #0f172a;
+  --surface-raised: #162238;
+  --surface-muted: #1b2942;
+  --surface-tint: #1e2d4a;
+
+  --text: #e2e8f0;
+  --text-strong: #f8fafc;
+  --muted: #94a3b8;
+  --border: #26354d;
+  --border-strong: #334663;
+
+  --shadow-header: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-hero: 0 18px 42px rgba(0, 0, 0, 0.45);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.25);
+  --shadow-card-hover: 0 16px 34px rgba(0, 0, 0, 0.42);
+}
