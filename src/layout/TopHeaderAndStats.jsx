@@ -5,11 +5,13 @@ const TEMPLATE_OPTIONS = [
   { id: "finora", label: "2. Finora (Green)" },
   { id: "aurora", label: "3. Aurora (Editorial)" },
   { id: "wizardz", label: "4. WizardZ (Lime)" },
-  { id: "twinkle", label: "5. Twinkle (Dark Gold)" }
+  { id: "twinkle", label: "5. Twinkle (Dark Gold)" },
+  { id: "xenon", label: "6. Xenon (Liquid Glass)" }
 ];
 
 /**
- * [COMPONENT] TopHeaderAndStats — शीर्ष नेविगेशन बार एवं 5-टेम्पलेट ग्लोबल थीम स्विचर बार
+ * [COMPONENT] TopHeaderAndStats — शीर्ष नेविगेशन बार एवं 6-टेम्पलेट ग्लोबल थीम स्विचर बार
+ * Themes: Aurora · Novara · Finora · WizardZ · Twinkle · Xenon Liquid Glass
  */
 export default function TopHeaderAndStats({
   sidebarOpen,

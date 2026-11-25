@@ -1085,14 +1085,65 @@ export default function StorageVaultModule({
 
       {/* === 1. WINDOWS 11 DESKTOP STAGE === */}
       <div
-        className={`win11-desktop-stage ${wpClass}`}
+        className={`win11-desktop-stage ${wpClass}${deskxBlur && WALLPAPER_PRESETS.find((w) => w.id === wallpaper)?.isLive ? " is-deskx-blur" : ""}`}
         onClick={() => {
           setSelectedId(null);
           setStartMenuOpen(false);
         }}
         onContextMenu={(e) => openContextMenu(e, "EMPTY")}
       >
-        {/* Decorative Bloom Overlay */}
+        {/* DeskX Live Canvas Wallpaper (aurora / matrix / cosmos) — rendered by useEffect */}
+        {WALLPAPER_PRESETS.find((w) => w.id === wallpaper)?.isLive && (
+          <canvas ref={liveBgCanvasRef} className="deskx-live-canvas" aria-hidden="true" />
+        )}
+
+        {/* DeskX Floating Overlay Widget (clock-weather / analog / astronomy / quote) */}
+        {WALLPAPER_PRESETS.find((w) => w.id === wallpaper)?.isLive && deskxWidgetMode !== "off" && (
+          <button
+            type="button"
+            className="deskx-desktop-widget"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDesktopApp("deskx-engine");
+            }}
+            aria-label="DeskX Overlay Widget — Click to open DeskX Studio"
+          >
+            <div className="deskx-widget-brand">
+              <img src="/assets/deskx/deskx-logo.png" alt="" className="deskx-widget-brand-icon" />
+              DESKX ENGINE
+            </div>
+            {deskxWidgetMode === "analog-minimalist" ? (
+              <canvas
+                ref={analogCanvasRef}
+                width={72}
+                height={72}
+                className="deskx-analog-canvas"
+                aria-hidden="true"
+              />
+            ) : (
+              <>
+                <div className="deskx-widget-time">{clockLabel.split(" | ")[0]}</div>
+                <div className="deskx-widget-meta">
+                  {deskxWidgetMode === "astronomy" ? (
+                    <span>
+                      🌅 {english ? "Sunrise · Moonrise Tracker" : "सूर्योदय · चंद्रोदय"}
+                      <br />{clockLabel.split(" | ")[1]}
+                    </span>
+                  ) : deskxWidgetMode === "quote" ? (
+                    <span>{english ? "🛡️ Duty · Courage · Justice" : "🛡️ कर्तव्य · साहस · न्याय"}</span>
+                  ) : (
+                    <span>
+                      {english ? "Rajasthan Police · District Vault" : "राजस्थान पुलिस · जिला वॉल्ट"}
+                      <br />{clockLabel.split(" | ")[1]}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Decorative Bloom Overlay (shown on non-live wallpapers) */}
         <svg className="win11-bloom-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <defs>
             <radialGradient id="win11PetalA" cx="62%" cy="46%" r="48%">
@@ -1593,6 +1644,19 @@ export default function StorageVaultModule({
             {win.appId === "calculator" && <CalculatorApp />}
             {win.appId === "sticky-notes" && <StickyNotesApp language={language} />}
             {win.appId === "games" && <GamesApp />}
+            {win.appId === "deskx-engine" && (
+              <DeskXWallpaperApp
+                wallpaper={wallpaper}
+                onSelectWallpaper={changeWallpaper}
+                widgetMode={deskxWidgetMode}
+                onSelectWidgetMode={updateDeskxWidgetMode}
+                speed={deskxSpeed}
+                onSelectSpeed={updateDeskxSpeed}
+                blurEnabled={deskxBlur}
+                onToggleBlur={toggleDeskxBlur}
+                language={language}
+              />
+            )}
             {win.appId === "app-store" && (
               <AppStoreApp
                 installedApps={installedApps}
