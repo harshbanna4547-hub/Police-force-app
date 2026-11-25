@@ -113,9 +113,6 @@ export default function App() {
       />
       <div className={`app-main-content ${sidebarOpen ? "has-sidebar" : "is-expanded"}`}>
         <TopHeaderAndStats
-          portalData={portalData}
-          activeView={activeView}
-          setActiveView={setActiveView}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           currentDistrict={currentDistrict}
@@ -131,8 +128,10 @@ export default function App() {
           ) : (
             <PortalModuleContent
               activeView={activeView}
+              setActiveView={setActiveView}
               portalData={portalData}
               districtId={currentDistrict.id}
+              currentDistrict={currentDistrict}
               modules={modules}
               language={language}
             />

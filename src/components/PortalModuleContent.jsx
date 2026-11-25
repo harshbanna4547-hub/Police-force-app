@@ -6,8 +6,10 @@ import EmployeeEditModal from "../core/EmployeeEditModal";
  */
 export default function PortalModuleContent({
   activeView,
+  setActiveView,
   portalData,
   districtId,
+  currentDistrict,
   modules,
   language = "hi"
 }) {
@@ -22,6 +24,7 @@ export default function PortalModuleContent({
     setAttRecords,
     depRecords,
     setDepRecords,
+    totalSanc,
     plLeaveRows,
     setPlLeaveRows,
     sanctioned,
@@ -70,6 +73,11 @@ export default function PortalModuleContent({
       onSaveUnitRankSanc,
       onEditEmployee: openEmployeeEditor,
       onArchiveEmployee: removeEmployee,
+      totalSanc,
+      attCount: attRecords.length,
+      depCount: depRecords.length,
+      setActiveView,
+      currentDistrict: currentDistrict || { id: districtId, name: activeProfile },
       language
     },
     TRANSFER: {

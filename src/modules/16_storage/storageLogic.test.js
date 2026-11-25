@@ -5,11 +5,13 @@ import {
   canMoveItemToTarget,
   collectDescendantIds,
   extractWordBodyHtml,
+  formatIstClockDate,
   getOfficeEditorKind,
   getVaultItemPath,
   isStrengthVaultFolder,
   OFFICE_FONT_OPTIONS,
   RECYCLE_BIN_ID,
+  WINDOWS_11_DEFAULT_FOLDERS,
   wrapWordDocumentHtml
 } from "./storageLogic.js";
 
@@ -65,7 +67,7 @@ test("Explorer path, descendant tree, move guard, and copy subtree behave cleanl
     { id: "doc1", parentId: "f2", kind: "FILE", name: "Roster.xlsx", data: new Uint8Array([1, 2, 3]).buffer }
   ];
 
-  assert.equal(getVaultItemPath(sampleItems[3], sampleItems), "🖥️ Storage Desktop > 01. Strength > 2026 Orders");
+  assert.equal(getVaultItemPath(sampleItems[3], sampleItems), "This PC > District Vault > 01. Strength > 2026 Orders");
   assert.deepEqual(collectDescendantIds("f1", sampleItems).sort(), ["doc1", "f2"]);
   assert.equal(canMoveItemToTarget(sampleItems[0], "f2", sampleItems), false);
   assert.equal(canMoveItemToTarget(sampleItems[0], RECYCLE_BIN_ID, sampleItems), false);
@@ -75,4 +77,12 @@ test("Explorer path, descendant tree, move guard, and copy subtree behave cleanl
   assert.equal(copied.length, 2);
   assert.equal(copied[0].name, "2026 Orders - Copy");
   assert.equal(copied[1].parentId, copied[0].id);
+});
+
+test("WINDOWS_11_DEFAULT_FOLDERS lists all 14 standard folders and IST clock formats HH:mm | DD-MM-YYYY", () => {
+  assert.equal(WINDOWS_11_DEFAULT_FOLDERS.length, 14);
+  assert.equal(WINDOWS_11_DEFAULT_FOLDERS[0], "01. Strength");
+  assert.equal(WINDOWS_11_DEFAULT_FOLDERS[13], "14. Backup");
+  const formatted = formatIstClockDate(new Date("2026-11-25T15:51:00.000Z"));
+  assert.equal(formatted, "21:21 | 25-11-2026");
 });

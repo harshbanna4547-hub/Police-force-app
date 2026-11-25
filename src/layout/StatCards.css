@@ -1,6 +1,6 @@
 /* ==========================================================================
    EXECUTIVE ROYAL NAVY / SLATE KPI SHOWCASE BAND (शाही नेवी KPI सारांश बैंड)
-   Rendered strictly on the Home Dashboard; hidden inside all sub-modules.
+   Rendered strictly inside StrengthModule; omitted from Home Dashboard.
    ========================================================================== */
 
 .portal-kpi-showcase {

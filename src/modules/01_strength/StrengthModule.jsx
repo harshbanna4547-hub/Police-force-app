@@ -5,6 +5,7 @@ import { getBeltNo } from "../../shared/commonFunctions";
 import { openEmployeeServiceSlip } from "../../core/serviceSlip";
 import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
 import SmartEmployeeTable from "../../components/shared/SmartEmployeeTable";
+import StatCards from "../../layout/StatCards";
 import OfficePsStrength from "./OfficePsStrength";
 import { filterStrengthRecords, formatVacancy, POST_FILTER_TABS } from "./strengthLogic";
 import { translateCadreGroup, translateRankLabel } from "../../utils/i18n";
@@ -23,6 +24,11 @@ export default function StrengthModule({
   onSaveUnitRankSanc,
   onEditEmployee,
   onArchiveEmployee,
+  totalSanc,
+  attCount = 0,
+  depCount = 0,
+  setActiveView,
+  currentDistrict,
   language = "hi"
 }) {
   const [subTab, setSubTab] = useState("POST_WISE");
@@ -184,8 +190,31 @@ export default function StrengthModule({
     )
   ) : null;
 
+  const resolvedTotalSanc = typeof totalSanc === "number"
+    ? totalSanc
+    : Object.values(sanctioned || {}).reduce((sum, val) => sum + Number(val || 0), 0);
+
   return (
     <div className="strength-module">
+      {/* === COMPACT ROYAL-NAVY 4-KPI BANNER (केवल नफरी मॉड्यूल के शीर्ष पर) === */}
+      <div className="strength-kpi-banner">
+        <StatCards
+          totalSanc={resolvedTotalSanc}
+          activeCount={records.length}
+          attCount={attCount}
+          depCount={depCount}
+          setActiveView={(targetView) => {
+            if (targetView === "STRENGTH") {
+              setSubTab("POST_WISE");
+            } else {
+              setActiveView?.(targetView);
+            }
+          }}
+          currentDistrict={currentDistrict}
+          language={language}
+        />
+      </div>
+
       {/* === TOP UNIFIED TOOLBAR (ऊपरी टूलबार) === */}
       <ModuleHeaderToolbar
         title={`🛡️ ${toolbarTitle}`}

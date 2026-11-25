@@ -13,6 +13,50 @@
   box-shadow: var(--shadow-card);
 }
 
+/* === SLIM / COMPACT 4-KPI EXECUTIVE BANNER INSIDE STRENGTH MODULE === */
+.strength-kpi-banner {
+  margin-bottom: 14px;
+}
+
+.strength-kpi-banner .portal-kpi-showcase {
+  padding: 10px 16px;
+  border-radius: 16px;
+}
+
+.strength-kpi-banner .kpi-showcase-header {
+  margin-bottom: 8px;
+}
+
+.strength-kpi-banner .kpi-showcase-heading {
+  font-size: 0.9rem;
+}
+
+.strength-kpi-banner .portal-stat-cards {
+  gap: 10px;
+}
+
+.strength-kpi-banner .portal-stat-card {
+  padding: 8px 12px;
+  gap: 5px;
+  border-radius: 12px;
+}
+
+.strength-kpi-banner .portal-stat-icon {
+  width: 28px;
+  height: 28px;
+  font-size: 0.92rem;
+}
+
+.strength-kpi-banner .portal-stat-title {
+  font-size: 0.76rem;
+}
+
+.strength-kpi-banner .portal-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
 .strength-subtabs {
   display: flex;
   gap: 8px;

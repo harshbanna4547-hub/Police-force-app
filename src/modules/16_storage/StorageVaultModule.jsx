@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
-import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
 import InbuiltOfficeEditor from "../../components/shared/InbuiltOfficeEditor";
 import {
   getDistrictStorageBackupFolderId,
@@ -12,32 +11,16 @@ import {
   buildCopySubtree,
   canMoveItemToTarget,
   collectDescendantIds,
+  formatIstClockDate,
   getOfficeEditorKind,
   getStorageItemSummary,
   getVaultItemPath,
   isStrengthVaultFolder,
   RECYCLE_BIN_ID,
-  stripTrashMetadata
+  stripTrashMetadata,
+  WINDOWS_11_DEFAULT_FOLDERS
 } from "./storageLogic";
 import "./storage.css";
-
-const MODULE_DEFAULT_FOLDERS = [
-  "01. Strength (स्वीकृत एवं कार्यरत नफरी)",
-  "02. Transfer (स्थानांतरण एवं आदेश)",
-  "03. Posting (पदस्थापन सूची)",
-  "04. Bharti (नवीन भर्ती रिकॉर्ड)",
-  "05. Training (प्रशिक्षण एवं कोर्स)",
-  "09. Training (प्रशिक्षण पत्र एवं बेतार संदेश)",
-  "06. Leave (अवकाश खाता)",
-  "07. 300 PL Chart (उपार्जित अवकाश)",
-  "08. Increment (वार्षिक वेतन वृद्धि)",
-  "09. ACP (9-18-27 पात्रता)",
-  "10. Punishment (सज़ा व विभागीय जांच)",
-  "11. Promotion Exam (PCC व DPC)",
-  "12. Seniority (वरिष्ठता सूची)",
-  "13. Roster (मासिक थाना रोस्टर)",
-  "Backup"
-];
 
 function dateOnly(value) {
   const text = String(value || "");
@@ -47,6 +30,32 @@ function dateOnly(value) {
   return local ? `${String(local[1]).padStart(2, "0")}-${String(local[2]).padStart(2, "0")}-${local[3]}` : text.split(/[T ]/)[0];
 }
 
+function getFileIcon(item) {
+  if (!item) return "📄";
+  if (item.kind === "FOLDER") return "📁";
+  const n = String(item.name || "").toLowerCase();
+  if (/\.(xlsx?|xlsm|xlsb|xltx?|xltm|csv)$/i.test(n)) return "📊";
+  if (n.endsWith(".doc") || n.endsWith(".docx")) return "📝";
+  if (n.endsWith(".pdf")) return "📕";
+  if (/\.(jpg|jpeg|png|webp)$/i.test(n)) return "🖼️";
+  return "📄";
+}
+
+function hasRootPrefixMatch(existingRootFolders, targetName) {
+  const prefix = targetName.split(".")[0].trim();
+  const isBackup = targetName.toLowerCase().includes("backup");
+  return existingRootFolders.some((entry) => {
+    const name = String(entry.name || "");
+    if (name === targetName) return true;
+    if (isBackup && name.toLowerCase() === "backup") return true;
+    return prefix && name.startsWith(`${prefix}.`);
+  });
+}
+
+/**
+ * [MODULE] StorageVaultModule — Authentic Windows 11 Desktop & File Explorer Workspace
+ * Keeps all IndexedDB `drive_items` writes firing `police-vault-updated` for live OneDrive sync.
+ */
 export default function StorageVaultModule({
   activeProfile,
   records,
@@ -64,20 +73,47 @@ export default function StorageVaultModule({
 }) {
   const english = language === "en";
   const [items, setItems] = useState([]);
-  const [currentFolderId, setCurrentFolderId] = useState("ROOT");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("GRID"); // GRID | LIST
 
-  // Windows Explorer & Office Suite States
+  // Windows 11 Window Manager & Navigation History
+  const [explorerMode, setExplorerMode] = useState("CLOSED"); // CLOSED | NORMAL | MINIMIZED | MAXIMIZED
+  const [navHistory, setNavHistory] = useState(["ROOT"]);
+  const [navIndex, setNavIndex] = useState(0);
+  const currentFolderId = navHistory[navIndex] || "ROOT";
+
+  // Desktop & Explorer Selection, Start Menu, Clipboard, Context Menu, Office App
+  const [selectedId, setSelectedId] = useState(null);
+  const [startMenuOpen, setStartMenuOpen] = useState(false);
   const [officeItem, setOfficeItem] = useState(null);
-  const [clipboard, setClipboard] = useState(null); // { mode: "CUT" | "COPY", itemId: string, name: string }
+  const [clipboard, setClipboard] = useState(null); // { mode: "CUT" | "COPY", itemId, name }
   const [contextMenu, setContextMenu] = useState(null); // { x, y, type, item }
   const [renamingId, setRenamingId] = useState(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [moveTargetItem, setMoveTargetItem] = useState(null);
+  const [clockLabel, setClockLabel] = useState(() => formatIstClockDate());
 
   const fileInputRef = useRef(null);
   const contextMenuRef = useRef(null);
+
+  const navigateExplorerTo = useCallback((folderId) => {
+    setExplorerMode((prev) => (prev === "MAXIMIZED" ? "MAXIMIZED" : "NORMAL"));
+    setNavHistory((prev) => {
+      const sliced = prev.slice(0, navIndex + 1);
+      if (sliced[sliced.length - 1] === folderId) return sliced;
+      const next = [...sliced, folderId];
+      setNavIndex(next.length - 1);
+      return next;
+    });
+  }, [navIndex]);
+
+  const navigateBack = () => {
+    if (navIndex > 0) setNavIndex((idx) => idx - 1);
+  };
+
+  const navigateForward = () => {
+    if (navIndex < navHistory.length - 1) setNavIndex((idx) => idx + 1);
+  };
 
   const loadAllItems = useCallback(async () => {
     const db = await openDriveVaultDB();
@@ -85,21 +121,19 @@ export default function StorageVaultModule({
     const req = tx.objectStore("drive_items").getAll();
     req.onsuccess = async () => {
       const existing = getStorageItemSummary(req.result, activeProfile);
-      const rootFolderNames = new Set(
-        existing
-          .filter((x) => (x.parentId === "ROOT" || x.originalParentId === "ROOT") && x.kind === "FOLDER")
-          .map((x) => x.name)
+      const rootFolders = existing.filter(
+        (x) => (x.parentId === "ROOT" || x.originalParentId === "ROOT") && x.kind === "FOLDER"
       );
 
-      const missingFolders = MODULE_DEFAULT_FOLDERS.filter((name) => !rootFolderNames.has(name));
+      const missingFolders = WINDOWS_11_DEFAULT_FOLDERS.filter((name) => !hasRootPrefixMatch(rootFolders, name));
       if (missingFolders.length > 0) {
         const writeTx = db.transaction("drive_items", "readwrite");
         const store = writeTx.objectStore("drive_items");
+        const backupId = getDistrictStorageBackupFolderId(activeProfile);
         missingFolders.forEach((fName, idx) => {
+          const isBackup = fName.toLowerCase().includes("backup");
           store.put({
-            id: fName === "Backup"
-              ? getDistrictStorageBackupFolderId(activeProfile)
-              : `mod_fld_${idx}_${Date.now()}`,
+            id: isBackup ? backupId : `mod_fld_${idx}_${Date.now()}`,
             parentId: "ROOT",
             kind: "FOLDER",
             name: fName,
@@ -130,7 +164,13 @@ export default function StorageVaultModule({
     };
   }, [loadAllItems]);
 
-  // Dismiss context menu on outside click, Escape key, or scroll
+  // Live IST Date & Time Clock on Windows 11 Taskbar
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockLabel(formatIstClockDate()), 15000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  // Dismiss Context Menu cleanly on outside click, Escape, scroll, or blur
   useEffect(() => {
     if (!contextMenu) return undefined;
     const closeMenu = () => setContextMenu(null);
@@ -154,7 +194,7 @@ export default function StorageVaultModule({
     };
   }, [contextMenu]);
 
-  // Clamp context menu coordinates via ref cleanly (zero inline JSX styles)
+  // Clamp context menu coordinates via ref cleanly (Zero Inline JSX Styles)
   useLayoutEffect(() => {
     const el = contextMenuRef.current;
     if (!el || !contextMenu) return;
@@ -195,14 +235,17 @@ export default function StorageVaultModule({
 
   const saveItemToDB = async (item) => putItemsBatch([item]);
 
-  const targetCreateFolderId = currentFolderId === RECYCLE_BIN_ID ? "ROOT" : currentFolderId;
+  const activeWriteFolderId =
+    explorerMode !== "CLOSED" && explorerMode !== "MINIMIZED" && currentFolderId !== RECYCLE_BIN_ID
+      ? currentFolderId
+      : "ROOT";
 
-  const handleCreateFolder = async () => {
+  const handleCreateFolder = async (overrideParentId) => {
     const folderName = prompt(english ? "Enter new folder name:" : "नए फोल्डर का नाम लिखें:");
     if (!folderName || !folderName.trim()) return;
     await saveItemToDB({
       id: "fld_" + Date.now(),
-      parentId: targetCreateFolderId,
+      parentId: overrideParentId || activeWriteFolderId,
       kind: "FOLDER",
       name: folderName.trim(),
       district: activeProfile,
@@ -220,7 +263,7 @@ export default function StorageVaultModule({
       const buffer = await file.arrayBuffer();
       newItems.push({
         id: "fil_" + Date.now() + Math.random().toString(36).slice(2, 6),
-        parentId: targetCreateFolderId,
+        parentId: activeWriteFolderId,
         kind: "FILE",
         name: file.name,
         mime: file.type,
@@ -268,10 +311,11 @@ export default function StorageVaultModule({
     }
   };
 
-  const handleCreateNewDoc = async (docType) => {
+  const handleCreateNewDoc = async (docType, overrideParentId) => {
     const rawName = prompt(docType === "EXCEL" ? "नई Excel फ़ाइल का नाम लिखें:" : "नई Word फ़ाइल का नाम लिखें:");
     if (!rawName || !rawName.trim()) return;
 
+    const targetParent = overrideParentId || activeWriteFolderId;
     let createdItem;
     if (docType === "EXCEL") {
       const wb = XLSX.utils.book_new();
@@ -281,7 +325,7 @@ export default function StorageVaultModule({
       const fName = rawName.endsWith(".xlsx") ? rawName : `${rawName.trim()}.xlsx`;
       createdItem = {
         id: "fil_" + Date.now(),
-        parentId: targetCreateFolderId,
+        parentId: targetParent,
         kind: "FILE",
         name: fName,
         mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -298,7 +342,7 @@ export default function StorageVaultModule({
       const fName = rawName.endsWith(".doc") ? rawName : `${rawName.trim()}.doc`;
       createdItem = {
         id: "fil_" + Date.now(),
-        parentId: targetCreateFolderId,
+        parentId: targetParent,
         kind: "FILE",
         name: fName,
         mime: "application/msword",
@@ -314,7 +358,6 @@ export default function StorageVaultModule({
     setOfficeItem(createdItem);
   };
 
-  // [OFFICE SUITE] Save edits from Excel, Word, or PDF Editor back to IndexedDB + OneDrive Sync
   const handleSaveOfficeFile = async (updatedItem) => {
     const byteLength = updatedItem?.data?.byteLength ?? updatedItem?.data?.length ?? 0;
     const nextItem = {
@@ -338,7 +381,7 @@ export default function StorageVaultModule({
     const stamp = new Date().toISOString().slice(0, 10);
     await saveItemToDB({
       id: "fil_" + Date.now(),
-      parentId: currentFolderId === RECYCLE_BIN_ID ? "ROOT" : currentFolderId,
+      parentId: activeWriteFolderId,
       kind: "FILE",
       name: `${activeProfile}_Live_Backup_${stamp}.xlsx`,
       mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -378,7 +421,7 @@ export default function StorageVaultModule({
     URL.revokeObjectURL(url);
   };
 
-  // Cut / Copy / Paste / Move Operations
+  // Clipboard & Folder Move Actions
   const handleCutItem = (item) => {
     setClipboard({ mode: "CUT", itemId: item.id, name: item.name });
     setContextMenu(null);
@@ -403,11 +446,7 @@ export default function StorageVaultModule({
         alert(english ? "Cannot move a folder into itself or the same location." : "फ़ोल्डर को स्वयं के अंदर या उसी स्थान पर मूव नहीं किया जा सकता।");
         return;
       }
-      await saveItemToDB({
-        ...source,
-        parentId: targetFolderId,
-        updatedAt: new Date().toISOString()
-      });
+      await saveItemToDB({ ...source, parentId: targetFolderId, updatedAt: new Date().toISOString() });
       setClipboard(null);
     } else {
       const clones = buildCopySubtree(source, targetFolderId, items);
@@ -428,7 +467,7 @@ export default function StorageVaultModule({
     await loadAllItems();
   };
 
-  // Recycle Bin Actions (Soft Delete, Restore, Permanent Delete, Empty Bin)
+  // Recycle Bin Actions
   const handleMoveToRecycleBin = async (item) => {
     setContextMenu(null);
     const now = new Date().toISOString();
@@ -443,7 +482,7 @@ export default function StorageVaultModule({
         isTrashed: true,
         trashedAt: now,
         trashedRootId: item.id,
-        originalParentId: entry.id === item.id ? item.parentId : entry.parentId,
+        originalParentId: entry.parentId,
         originalPath: entry.id === item.id ? originalPath : getVaultItemPath(entry, items)
       }));
 
@@ -486,7 +525,6 @@ export default function StorageVaultModule({
   const trashedTopItems = useMemo(() => {
     const trashed = items.filter((i) => i.isTrashed);
     const trashedIdSet = new Set(trashed.map((i) => i.id));
-    // Show top-level trashed entries (whose parent wasn't also trashed inside the same delete action)
     return trashed.filter((i) => !i.trashedRootId || i.trashedRootId === i.id || !trashedIdSet.has(i.trashedRootId));
   }, [items]);
 
@@ -525,6 +563,15 @@ export default function StorageVaultModule({
     await loadAllItems();
   };
 
+  // Desktop Root Icons vs File Explorer Visible Items
+  const desktopRootItems = useMemo(() => {
+    const active = items.filter((i) => !i.isTrashed && i.parentId === "ROOT");
+    return [...active].sort((a, b) => {
+      if (a.kind !== b.kind) return a.kind === "FOLDER" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [items]);
+
   const breadcrumbs = useMemo(() => {
     if (currentFolderId === RECYCLE_BIN_ID) return [];
     const path = [];
@@ -538,7 +585,7 @@ export default function StorageVaultModule({
     return path;
   }, [items, currentFolderId]);
 
-  const visibleItems = useMemo(() => {
+  const explorerItems = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (currentFolderId === RECYCLE_BIN_ID) {
       const binList = q
@@ -547,10 +594,10 @@ export default function StorageVaultModule({
       return [...binList].sort((a, b) => String(b.trashedAt || "").localeCompare(String(a.trashedAt || "")));
     }
 
-    const activeItems = items.filter((i) => !i.isTrashed);
+    const active = items.filter((i) => !i.isTrashed);
     const list = q
-      ? activeItems.filter((i) => i.name.toLowerCase().includes(q))
-      : activeItems.filter((i) => i.parentId === currentFolderId);
+      ? active.filter((i) => i.name.toLowerCase().includes(q))
+      : active.filter((i) => i.parentId === currentFolderId);
 
     return [...list].sort((a, b) => {
       if (a.kind !== b.kind) return a.kind === "FOLDER" ? -1 : 1;
@@ -558,49 +605,29 @@ export default function StorageVaultModule({
     });
   }, [items, currentFolderId, search, trashedTopItems]);
 
-  const getFileIcon = (item) => {
-    if (item.kind === "FOLDER") return "📁";
-    const n = item.name.toLowerCase();
-    if (/\.(xlsx?|xlsm|xlsb|xltx?|xltm|csv)$/i.test(n)) return "📊";
-    if (n.endsWith(".doc") || n.endsWith(".docx")) return "📝";
-    if (n.endsWith(".pdf")) return "📕";
-    if (n.match(/\.(jpg|jpeg|png|webp)$/)) return "🖼️";
-    return "📄";
-  };
-
-  const storageExportRows = useMemo(() => visibleItems.map((item, idx) => ({
-    "S.N.": idx + 1,
-    Name: item.name,
-    Kind: item.kind,
-    Size: item.kind === "FOLDER" ? "-" : `${item.sizeKB} KB`,
-    Updated: dateOnly(item.trashedAt || item.updatedAt)
-  })), [visibleItems]);
-
-  const inStrengthFolder = useMemo(() => isStrengthVaultFolder(breadcrumbs), [breadcrumbs]);
   const inRecycleBin = currentFolderId === RECYCLE_BIN_ID;
-  const isAtRootDesktop = currentFolderId === "ROOT" && !search.trim();
+  const inStrengthFolder = useMemo(() => isStrengthVaultFolder(breadcrumbs), [breadcrumbs]);
+  const explorerVisible = explorerMode === "NORMAL" || explorerMode === "MAXIMIZED";
 
-  const navigateBackUp = () => {
+  const navigateUp = () => {
     if (search.trim()) {
       setSearch("");
       return;
     }
-    if (inRecycleBin) {
-      setCurrentFolderId("ROOT");
-      return;
-    }
-    if (breadcrumbs.length <= 1) {
-      setCurrentFolderId("ROOT");
+    if (inRecycleBin || breadcrumbs.length <= 1) {
+      navigateExplorerTo("ROOT");
     } else {
-      setCurrentFolderId(breadcrumbs[breadcrumbs.length - 2].id);
+      navigateExplorerTo(breadcrumbs[breadcrumbs.length - 2].id);
     }
   };
 
-  const openVaultItem = (item) => {
-    if (inRecycleBin || renamingId === item.id) return;
+  const openVaultItem = (item, allowRecycle = false) => {
+    if (renamingId === item.id) return;
+    if (!allowRecycle && item.isTrashed) return;
+    setSelectedId(item.id);
     if (item.kind === "FOLDER") {
-      setCurrentFolderId(item.id);
       setSearch("");
+      navigateExplorerTo(item.id);
       return;
     }
     if (getOfficeEditorKind(item.name, item.mime)) {
@@ -613,9 +640,25 @@ export default function StorageVaultModule({
   const openContextMenu = (e, type, item = null) => {
     e.preventDefault();
     e.stopPropagation();
+    setStartMenuOpen(false);
     const clientX = e.clientX ?? e.currentTarget.getBoundingClientRect().left;
     const clientY = e.clientY ?? e.currentTarget.getBoundingClientRect().bottom;
     setContextMenu({ x: clientX, y: clientY, type, item });
+  };
+
+  const handleTaskbarSearchChange = (value) => {
+    setSearch(value);
+    if (value.trim() && !explorerVisible) {
+      navigateExplorerTo("ROOT");
+    }
+  };
+
+  const toggleExplorerTaskbar = () => {
+    if (explorerVisible) {
+      setExplorerMode("MINIMIZED");
+    } else {
+      setExplorerMode("NORMAL");
+    }
   };
 
   const activeFolderDestinations = useMemo(
@@ -623,311 +666,435 @@ export default function StorageVaultModule({
     [items]
   );
 
+  const explorerWindowTitle = inRecycleBin
+    ? (english ? "Recycle Bin" : "Recycle Bin (रीसायकल बिन)")
+    : breadcrumbs.length > 0
+      ? breadcrumbs[breadcrumbs.length - 1].name
+      : `This PC — ${activeProfile} District Vault`;
+
   return (
-    <div className="storage-vault-module module-panel">
-      <ModuleHeaderToolbar
-        title={english ? "🖥️ Storage Desktop" : "🖥️ स्टोरेज डेस्कटॉप (Storage Vault)"}
-        search={search}
-        onSearchChange={setSearch}
-        rows={storageExportRows}
-        fileName="Storage_Vault_Index"
-        language={language}
-        searchPlaceholder={english ? "🔍 Search files or folders..." : "🔍 डेस्कटॉप में फ़ाइल/फोल्डर खोजें..."}
-        extraActions={(
-          <button
-            type="button"
-            onClick={() => setViewMode(viewMode === "GRID" ? "LIST" : "GRID")}
-            className="storage-view-toggle"
-          >
-            {viewMode === "GRID" ? "☰ List" : "⊞ Desktop Icons"}
-          </button>
-        )}
+    <section className="win11-desktop-shell" aria-label="Windows 11 Storage Desktop">
+      {/* Hidden Global Upload Input shared by Wallpaper Menu, Explorer Ribbon & Taskbar Start */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        onChange={handleUploadFiles}
+        className="win11-hidden-input"
       />
 
-      {/* [TOOLBAR] Main Storage Toolbar (केवल 4 सामान्य फ़ाइल बटन) */}
-      <div className="storage-action-bar">
-        <div className="storage-action-group">
-          <button type="button" onClick={handleCreateFolder} className="storage-btn storage-btn-navy">
-            📁 + New Folder
-          </button>
-
-          <label className="storage-btn storage-btn-green">
-            ⬆️ Upload Files
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              onChange={handleUploadFiles}
-              className="storage-hidden-input"
-            />
-          </label>
-
-          <button type="button" onClick={() => handleCreateNewDoc("EXCEL")} className="storage-btn storage-btn-emerald">
-            📊 + New Excel
-          </button>
-
-          <button type="button" onClick={() => handleCreateNewDoc("WORD")} className="storage-btn storage-btn-blue">
-            📝 + New Word
-          </button>
-        </div>
-
-        {clipboard && (
-          <div className="storage-clipboard-badge">
-            <span>
-              {clipboard.mode === "CUT" ? "✂️ Cut:" : "📋 Copied:"} {clipboard.name}
-            </span>
-            <button
-              type="button"
-              onClick={() => setClipboard(null)}
-              className="storage-clipboard-clear"
-              title="Clear Clipboard"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* [NAVIGATION] Back / Up Button + Breadcrumb Path Bar */}
-      <div className="storage-explorer-nav">
-        <button
-          type="button"
-          onClick={navigateBackUp}
-          disabled={currentFolderId === "ROOT" && !search.trim()}
-          className="storage-back-btn"
-        >
-          ⬅️ {english ? "Back / Up" : "वापस / ऊपर"}
-        </button>
-
-        <div className="storage-breadcrumbs">
-          <span
-            onClick={() => { setCurrentFolderId("ROOT"); setSearch(""); }}
-            className="storage-crumb-link"
-          >
-            🖥️ Storage Desktop
-          </span>
-
-          {inRecycleBin && (
-            <>
-              <span className="storage-crumb-sep">&gt;</span>
-              <span className="storage-crumb-link">🗑️ Recycle Bin</span>
-            </>
-          )}
-
-          {breadcrumbs.map((b) => (
-            <React.Fragment key={b.id}>
-              <span className="storage-crumb-sep">&gt;</span>
-              <span
-                onClick={() => { setCurrentFolderId(b.id); setSearch(""); }}
-                className="storage-crumb-link"
-              >
-                {b.name}
-              </span>
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      {/* [CONTEXTUAL BAR] 01. Strength Folder ONLY Master Excel Controls */}
-      {inStrengthFolder && (
-        <div className="storage-strength-master-bar">
-          <span className="storage-strength-master-label">
-            🛡️ {english ? "01. Strength Master Data Controls" : "01. Strength मास्टर डेटा प्रबंधन"}
-          </span>
-          <div className="storage-action-group">
-            {hasData && (
-              <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} className="storage-btn storage-btn-sky">
-                {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}
-              </button>
-            )}
-            {fileName && hasUnsavedChanges && (
-              <button type="button" onClick={onSaveToExcel} className="storage-btn storage-btn-purple">
-                💾 Save Excel Changes
-              </button>
-            )}
-            <label className="storage-btn storage-btn-sky">
-              📊 Upload Master Excel File
-              <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} className="storage-hidden-input" />
-            </label>
-            {fileName && (
-              <button type="button" onClick={onRemoveDistrictData} className="storage-btn storage-btn-danger-soft">
-                🗑️ Remove District Data
-              </button>
-            )}
-            <label className="storage-btn storage-btn-purple">
-              🔄 Restore Backup (.json)
-              <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} className="storage-hidden-input" />
-            </label>
-            <button type="button" onClick={handleSaveLivePortalBackup} className="storage-btn storage-btn-purple">
-              💾 Save Live Data Here
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* [CONTEXTUAL BAR] Recycle Bin Header Controls */}
-      {inRecycleBin && (
-        <div className="storage-recycle-bar">
-          <span className="storage-recycle-label">
-            🗑️ {english
-              ? `Recycle Bin (${trashedTopItems.length} item${trashedTopItems.length === 1 ? "" : "s"}) — Right-click any item to Restore or Delete`
-              : `रीसायकल बिन (${trashedTopItems.length} आइटम) — Restore या स्थायी Delete के लिए राइट-क्लिक या ⋮ दबाएं`}
-          </span>
-          <div className="storage-action-group">
-            <button
-              type="button"
-              onClick={handleRestoreAllRecycleBin}
-              disabled={!trashedTopItems.length}
-              className="storage-btn storage-btn-green"
-            >
-              ♻️ {english ? "Restore All" : "सभी Restore करें"}
-            </button>
-            <button
-              type="button"
-              onClick={handleEmptyRecycleBin}
-              disabled={!trashedTopItems.length}
-              className="storage-btn storage-btn-danger"
-            >
-              🧹 {english ? "Empty Recycle Bin" : "Recycle Bin खाली करें"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* [EXPLORER CANVAS] Supports Right-Click on Empty Space */}
+      {/* === 1. WINDOWS 11 BLOOM DESKTOP STAGE === */}
       <div
-        className="storage-desktop-canvas"
-        onContextMenu={(e) => {
-          if (inRecycleBin) {
-            openContextMenu(e, "RECYCLE_EMPTY");
-          } else {
-            openContextMenu(e, "EMPTY");
-          }
+        className="win11-desktop-stage"
+        onClick={() => {
+          setSelectedId(null);
+          setStartMenuOpen(false);
         }}
+        onContextMenu={(e) => openContextMenu(e, "EMPTY")}
       >
-        {visibleItems.length === 0 && !isAtRootDesktop ? (
-          <div className="storage-empty-state">
-            <div className="storage-empty-icon">{inRecycleBin ? "🗑️" : "📂"}</div>
-            <div className="storage-empty-title">
-              {inRecycleBin
-                ? (english ? "Recycle Bin is empty" : "Recycle Bin खाली है")
-                : (english ? "This folder is empty" : "यह फोल्डर खाली है")}
-            </div>
-            <small>
-              {inRecycleBin
-                ? (english ? "Deleted files & folders appear here safely before permanent deletion." : "हटाई गई फ़ाइलें और फ़ोल्डर स्थायी रूप से डिलीट होने से पहले यहाँ सुरक्षित रहते हैं।")
-                : (english ? "Right-click empty space or use the toolbar above to create folders, Excel, Word, or upload files." : "नया फोल्डर, Excel, Word बनाने या फ़ाइल अपलोड करने के लिए खाली जगह पर राइट-क्लिक करें।")}
-            </small>
+        {/* Decorative Windows 11 Blue Bloom Wallpaper SVG */}
+        <svg className="win11-bloom-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs>
+            <radialGradient id="win11PetalA" cx="62%" cy="46%" r="48%">
+              <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.62" />
+              <stop offset="55%" stopColor="#2563eb" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="#07193a" stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="win11PetalB" cx="48%" cy="54%" r="42%">
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.52" />
+              <stop offset="60%" stopColor="#1d4ed8" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#07193a" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <path d="M560,120 C760,70 980,220 930,430 C880,620 620,660 470,540 C340,430 370,170 560,120 Z" fill="url(#win11PetalA)" />
+          <path d="M460,180 C650,150 820,280 790,460 C760,610 530,620 420,490 C320,370 310,210 460,180 Z" fill="url(#win11PetalB)" />
+        </svg>
+
+        {/* Left-Aligned Top-to-Bottom Desktop Icons Grid */}
+        <div className="win11-desktop-icons">
+          {/* Pinned 1: 💻 This PC (District Vault) */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSearch("");
+              navigateExplorerTo("ROOT");
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setSearch("");
+              navigateExplorerTo("ROOT");
+            }}
+            onContextMenu={(e) => openContextMenu(e, "THIS_PC")}
+            className={`win11-desktop-tile${selectedId === "THIS_PC" ? " is-selected" : ""}`}
+          >
+            <span className="win11-tile-icon">💻</span>
+            <span className="win11-tile-label">This PC ({activeProfile})</span>
           </div>
-        ) : viewMode === "GRID" ? (
-          <div className="storage-grid">
-            {visibleItems.map((item) => {
-              const isFolder = item.kind === "FOLDER";
-              const isCut = clipboard?.mode === "CUT" && clipboard.itemId === item.id;
-              const isRenaming = renamingId === item.id;
 
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => openVaultItem(item)}
-                  onDoubleClick={() => openVaultItem(item)}
-                  onContextMenu={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
-                  className={`storage-card${isFolder ? " is-folder" : ""}${isCut ? " is-cut" : ""}`}
-                >
-                  <button
-                    type="button"
-                    aria-label="More options"
-                    onClick={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
-                    className="storage-card-menu-btn"
-                  >
-                    ⋮
-                  </button>
+          {/* Pinned 2: 🗑️ Recycle Bin */}
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSearch("");
+              navigateExplorerTo(RECYCLE_BIN_ID);
+            }}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setSearch("");
+              navigateExplorerTo(RECYCLE_BIN_ID);
+            }}
+            onContextMenu={(e) => openContextMenu(e, "RECYCLE_BIN")}
+            className={`win11-desktop-tile${selectedId === RECYCLE_BIN_ID ? " is-selected" : ""}`}
+          >
+            {trashedTopItems.length > 0 && (
+              <span className="win11-tile-badge">{trashedTopItems.length}</span>
+            )}
+            <button
+              type="button"
+              aria-label="Recycle Bin options"
+              onClick={(e) => openContextMenu(e, "RECYCLE_BIN")}
+              className="win11-tile-menu-btn"
+            >
+              ⋮
+            </button>
+            <span className="win11-tile-icon">🗑️</span>
+            <span className="win11-tile-label">Recycle Bin</span>
+          </div>
 
-                  <div className="storage-card-body">
-                    <div className="storage-card-icon">{getFileIcon(item)}</div>
-                    {isRenaming ? (
-                      <input
-                        type="text"
-                        autoFocus
-                        value={renameDraft}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => setRenameDraft(e.target.value)}
-                        onBlur={() => commitInlineRename(item)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") commitInlineRename(item);
-                          if (e.key === "Escape") setRenamingId(null);
-                        }}
-                        className="storage-rename-input"
-                      />
-                    ) : (
-                      <div className="storage-card-name">{item.name}</div>
-                    )}
-                    <div className="storage-card-meta">
-                      {inRecycleBin
-                        ? `${item.originalPath || "Desktop"} · ${dateOnly(item.trashedAt)}`
-                        : isFolder
-                          ? (english ? "Folder" : "फ़ोल्डर")
-                          : `${item.sizeKB} KB • ${dateOnly(item.updatedAt)}`}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Permanently Pinned Recycle Bin Icon on Storage Desktop */}
-            {isAtRootDesktop && (
+          {/* District Folders & Root User Files */}
+          {desktopRootItems.map((item) => {
+            const isCut = clipboard?.mode === "CUT" && clipboard.itemId === item.id;
+            const isRenaming = renamingId === item.id;
+            return (
               <div
-                onClick={() => { setCurrentFolderId(RECYCLE_BIN_ID); setSearch(""); }}
-                onDoubleClick={() => { setCurrentFolderId(RECYCLE_BIN_ID); setSearch(""); }}
-                onContextMenu={(e) => openContextMenu(e, "RECYCLE_BIN")}
-                className="storage-card is-recycle"
+                key={item.id}
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openVaultItem(item);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  openVaultItem(item);
+                }}
+                onContextMenu={(e) => openContextMenu(e, "ITEM", item)}
+                className={`win11-desktop-tile${selectedId === item.id ? " is-selected" : ""}${isCut ? " is-cut" : ""}`}
               >
-                <span className="storage-recycle-badge">{trashedTopItems.length}</span>
                 <button
                   type="button"
-                  aria-label="Recycle Bin options"
-                  onClick={(e) => openContextMenu(e, "RECYCLE_BIN")}
-                  className="storage-card-menu-btn"
+                  aria-label="Item options"
+                  onClick={(e) => openContextMenu(e, "ITEM", item)}
+                  className="win11-tile-menu-btn"
                 >
                   ⋮
                 </button>
-                <div className="storage-card-body">
-                  <div className="storage-card-icon">🗑️</div>
-                  <div className="storage-card-name">Recycle Bin</div>
-                  <div className="storage-card-meta">
-                    {trashedTopItems.length === 0
-                      ? (english ? "Empty" : "खाली")
-                      : `${trashedTopItems.length} ${english ? "items" : "आइटम"}`}
+                <span className="win11-tile-icon">{getFileIcon(item)}</span>
+                {isRenaming ? (
+                  <input
+                    type="text"
+                    autoFocus
+                    value={renameDraft}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => setRenameDraft(e.target.value)}
+                    onBlur={() => commitInlineRename(item)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitInlineRename(item);
+                      if (e.key === "Escape") setRenamingId(null);
+                    }}
+                    className="win11-rename-input"
+                  />
+                ) : (
+                  <span className="win11-tile-label">{item.name}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* === 2. WINDOWS 11 FILE EXPLORER WINDOW === */}
+        {explorerVisible && (
+          <div
+            role="dialog"
+            aria-label={explorerWindowTitle}
+            onClick={(e) => e.stopPropagation()}
+            className={`win11-explorer-window${explorerMode === "MAXIMIZED" ? " is-maximized" : ""}`}
+          >
+            {/* Window Title Bar */}
+            <header className="win11-window-titlebar">
+              <div className="win11-window-title-left">
+                <span>{inRecycleBin ? "🗑️" : currentFolderId === "ROOT" ? "💻" : "📁"}</span>
+                <h3 className="win11-window-title">{explorerWindowTitle}</h3>
+              </div>
+
+              <div className="win11-window-controls">
+                <button
+                  type="button"
+                  onClick={() => setViewMode(viewMode === "GRID" ? "LIST" : "GRID")}
+                  className="win11-cmd-btn"
+                >
+                  {viewMode === "GRID" ? "☰ List" : "⊞ Icons"}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Minimize Explorer"
+                  onClick={() => setExplorerMode("MINIMIZED")}
+                  className="win11-win-ctrl-btn"
+                >
+                  —
+                </button>
+                <button
+                  type="button"
+                  aria-label="Maximize or Restore Explorer"
+                  onClick={() => setExplorerMode(explorerMode === "MAXIMIZED" ? "NORMAL" : "MAXIMIZED")}
+                  className="win11-win-ctrl-btn"
+                >
+                  {explorerMode === "MAXIMIZED" ? "❐" : "□"}
+                </button>
+                <button
+                  type="button"
+                  aria-label="Close Explorer"
+                  onClick={() => {
+                    setExplorerMode("CLOSED");
+                    setSearch("");
+                  }}
+                  className="win11-win-ctrl-btn is-close"
+                >
+                  ✕
+                </button>
+              </div>
+            </header>
+
+            {/* Navigation Arrows + Breadcrumb Address Bar + Search */}
+            <div className="win11-explorer-navrow">
+              <div className="win11-nav-arrows">
+                <button
+                  type="button"
+                  aria-label="Back"
+                  disabled={navIndex <= 0}
+                  onClick={navigateBack}
+                  className="win11-nav-icon-btn"
+                >
+                  ⬅️
+                </button>
+                <button
+                  type="button"
+                  aria-label="Forward"
+                  disabled={navIndex >= navHistory.length - 1}
+                  onClick={navigateForward}
+                  className="win11-nav-icon-btn"
+                >
+                  ➡️
+                </button>
+                <button
+                  type="button"
+                  aria-label="Up One Level"
+                  disabled={currentFolderId === "ROOT" && !search.trim()}
+                  onClick={navigateUp}
+                  className="win11-nav-icon-btn"
+                >
+                  ⬆️
+                </button>
+              </div>
+
+              <div className="win11-address-bar">
+                <button
+                  type="button"
+                  onClick={() => { setSearch(""); navigateExplorerTo("ROOT"); }}
+                  className="win11-crumb-btn"
+                >
+                  💻 This PC
+                </button>
+                <span className="win11-crumb-sep">&gt;</span>
+                <button
+                  type="button"
+                  onClick={() => { setSearch(""); navigateExplorerTo("ROOT"); }}
+                  className="win11-crumb-btn"
+                >
+                  District Vault
+                </button>
+
+                {inRecycleBin && (
+                  <>
+                    <span className="win11-crumb-sep">&gt;</span>
+                    <button
+                      type="button"
+                      onClick={() => { setSearch(""); navigateExplorerTo(RECYCLE_BIN_ID); }}
+                      className="win11-crumb-btn"
+                    >
+                      🗑️ Recycle Bin
+                    </button>
+                  </>
+                )}
+
+                {breadcrumbs.map((b) => (
+                  <React.Fragment key={b.id}>
+                    <span className="win11-crumb-sep">&gt;</span>
+                    <button
+                      type="button"
+                      onClick={() => { setSearch(""); navigateExplorerTo(b.id); }}
+                      className="win11-crumb-btn"
+                    >
+                      {b.name}
+                    </button>
+                  </React.Fragment>
+                ))}
+              </div>
+
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={english ? "🔍 Search folder..." : "🔍 फ़ोल्डर में खोजें..."}
+                className="win11-explorer-search"
+              />
+            </div>
+
+            {/* Explorer Command Ribbon (or Recycle Bin Controls) */}
+            {inRecycleBin ? (
+              <div className="win11-recycle-bar">
+                <span className="win11-recycle-label">
+                  🗑️ {english
+                    ? `Recycle Bin (${trashedTopItems.length} items) — Right-click or ⋮ to Restore / Delete`
+                    : `रीसायकल बिन (${trashedTopItems.length} आइटम) — Restore या स्थायी Delete हेतु राइट-क्लिक करें`}
+                </span>
+                <div className="win11-cmd-group">
+                  <button
+                    type="button"
+                    disabled={!trashedTopItems.length}
+                    onClick={handleRestoreAllRecycleBin}
+                    className="win11-cmd-btn is-green"
+                  >
+                    ♻️ Restore All
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!trashedTopItems.length}
+                    onClick={handleEmptyRecycleBin}
+                    className="win11-cmd-btn is-danger"
+                  >
+                    🧹 Empty Recycle Bin
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="win11-command-bar">
+                <div className="win11-cmd-group">
+                  <button type="button" onClick={() => handleCreateFolder()} className="win11-cmd-btn is-primary">
+                    📁 + New Folder
+                  </button>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="win11-cmd-btn is-green">
+                    ⬆️ Upload Files
+                  </button>
+                  <button type="button" onClick={() => handleCreateNewDoc("EXCEL")} className="win11-cmd-btn">
+                    📊 + New Excel
+                  </button>
+                  <button type="button" onClick={() => handleCreateNewDoc("WORD")} className="win11-cmd-btn">
+                    📝 + New Word
+                  </button>
+                  {clipboard && (
+                    <button type="button" onClick={() => handlePasteInto(currentFolderId)} className="win11-cmd-btn">
+                      📥 Paste ({clipboard.name})
+                    </button>
+                  )}
+                </div>
+
+                {clipboard && (
+                  <div className="win11-clipboard-pill">
+                    <span>{clipboard.mode === "CUT" ? "✂️" : "📋"} {clipboard.name}</span>
+                    <button type="button" onClick={() => setClipboard(null)} className="win11-clipboard-clear">
+                      ✕
+                    </button>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Contextual 01. Strength Folder ONLY Master Excel Controls */}
+            {inStrengthFolder && !inRecycleBin && (
+              <div className="win11-strength-bar">
+                <span className="win11-strength-label">
+                  🛡️ {english ? "01. Strength Master Data Controls" : "01. Strength मास्टर डेटा प्रबंधन"}
+                </span>
+                <div className="win11-cmd-group">
+                  {hasData && (
+                    <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} className="win11-cmd-btn is-primary">
+                      {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}
+                    </button>
+                  )}
+                  {fileName && hasUnsavedChanges && (
+                    <button type="button" onClick={onSaveToExcel} className="win11-cmd-btn is-purple">
+                      💾 Save Excel Changes
+                    </button>
+                  )}
+                  <label className="win11-cmd-btn is-primary">
+                    📊 Upload Master Excel File
+                    <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} className="win11-hidden-input" />
+                  </label>
+                  <button type="button" onClick={handleSaveLivePortalBackup} className="win11-cmd-btn is-purple">
+                    💾 Save Live Data Here
+                  </button>
+                  <label className="win11-cmd-btn is-purple">
+                    🔄 Restore Backup (.json)
+                    <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} className="win11-hidden-input" />
+                  </label>
+                  {fileName && (
+                    <button type="button" onClick={onRemoveDistrictData} className="win11-cmd-btn is-danger">
+                      🗑️ Remove District Data
+                    </button>
+                  )}
                 </div>
               </div>
             )}
-          </div>
-        ) : (
-          <div className="module-table-wrap table-responsive-box">
-            <table className="module-table">
-              <thead>
-                <tr>
-                  <th className="module-cell-left">{english ? "Name" : "नाम (Name)"}</th>
-                  <th>{english ? "Type" : "प्रकार"}</th>
-                  <th>{inRecycleBin ? (english ? "Original Location" : "मूल स्थान") : (english ? "Size" : "साइज़")}</th>
-                  <th>{inRecycleBin ? (english ? "Deleted On" : "हटाने की तिथि") : (english ? "Updated" : "अपडेट दिनांक")}</th>
-                  <th>{english ? "Menu" : "विकल्प"}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleItems.map((item) => {
-                  const isFolder = item.kind === "FOLDER";
-                  const isRenaming = renamingId === item.id;
-                  return (
-                    <tr
-                      key={item.id}
-                      onContextMenu={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
-                    >
-                      <td
+
+            {/* Explorer Content Viewport (Supports Right-Click on Empty Canvas) */}
+            <div
+              className="win11-explorer-body"
+              onContextMenu={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_EMPTY" : "EMPTY_EXPLORER")}
+            >
+              {explorerItems.length === 0 ? (
+                <div className="win11-empty-state">
+                  <div className="win11-empty-icon">{inRecycleBin ? "🗑️" : "📂"}</div>
+                  <div className="win11-empty-title">
+                    {inRecycleBin
+                      ? (english ? "Recycle Bin is empty" : "Recycle Bin खाली है")
+                      : (english ? "This folder is empty" : "यह फ़ोल्डर खाली है")}
+                  </div>
+                  <small>
+                    {inRecycleBin
+                      ? (english ? "Deleted items appear here safely before permanent removal." : "हटाई गई फ़ाइलें स्थायी डिलीट से पहले यहाँ सुरक्षित रहती हैं।")
+                      : (english ? "Right-click empty space to create Folder, Excel, Word, or Upload files." : "नया फ़ोल्डर, Excel, Word बनाने या फ़ाइल अपलोड करने हेतु राइट-क्लिक करें।")}
+                  </small>
+                </div>
+              ) : viewMode === "GRID" ? (
+                <div className="win11-explorer-grid">
+                  {explorerItems.map((item) => {
+                    const isFolder = item.kind === "FOLDER";
+                    const isCut = clipboard?.mode === "CUT" && clipboard.itemId === item.id;
+                    const isRenaming = renamingId === item.id;
+                    return (
+                      <div
+                        key={item.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => openVaultItem(item)}
-                        className={`storage-list-name${isFolder ? " is-folder" : ""}`}
+                        onDoubleClick={() => openVaultItem(item)}
+                        onContextMenu={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
+                        className={`win11-explorer-card${isFolder ? " is-folder" : ""}${isCut ? " is-cut" : ""}`}
                       >
+                        <button
+                          type="button"
+                          aria-label="Item options"
+                          onClick={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
+                          className="win11-tile-menu-btn"
+                        >
+                          ⋮
+                        </button>
+                        <span className="win11-explorer-icon">{getFileIcon(item)}</span>
                         {isRenaming ? (
                           <input
                             type="text"
@@ -940,62 +1107,223 @@ export default function StorageVaultModule({
                               if (e.key === "Enter") commitInlineRename(item);
                               if (e.key === "Escape") setRenamingId(null);
                             }}
-                            className="storage-rename-input"
+                            className="win11-rename-input"
                           />
                         ) : (
-                          <>
-                            {getFileIcon(item)} &nbsp; {item.name}
-                          </>
+                          <div className="win11-explorer-name">{item.name}</div>
                         )}
-                      </td>
-                      <td className="module-cell-center">{item.kind}</td>
-                      <td className="module-cell-center module-cell-tnr">
-                        {inRecycleBin ? (item.originalPath || "Desktop") : isFolder ? "-" : `${item.sizeKB} KB`}
-                      </td>
-                      <td className="module-cell-center module-cell-tnr">
-                        {dateOnly(inRecycleBin ? item.trashedAt : item.updatedAt)}
-                      </td>
-                      <td className="module-cell-center">
-                        <button
-                          type="button"
-                          onClick={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
-                          className="storage-list-menu-btn"
-                        >
-                          ⋮
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-                {isAtRootDesktop && (
-                  <tr
-                    onClick={() => { setCurrentFolderId(RECYCLE_BIN_ID); setSearch(""); }}
-                    onContextMenu={(e) => openContextMenu(e, "RECYCLE_BIN")}
-                  >
-                    <td className="storage-list-name is-folder">
-                      🗑️ &nbsp; Recycle Bin ({trashedTopItems.length})
-                    </td>
-                    <td className="module-cell-center">SYSTEM</td>
-                    <td className="module-cell-center module-cell-tnr">-</td>
-                    <td className="module-cell-center module-cell-tnr">-</td>
-                    <td className="module-cell-center">
-                      <button
-                        type="button"
-                        onClick={(e) => openContextMenu(e, "RECYCLE_BIN")}
-                        className="storage-list-menu-btn"
-                      >
-                        ⋮
-                      </button>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                        <div className="win11-explorer-meta">
+                          {inRecycleBin
+                            ? `${item.originalPath || "This PC"} · ${dateOnly(item.trashedAt)}`
+                            : isFolder
+                              ? (english ? "File folder" : "फ़ोल्डर")
+                              : `${item.sizeKB} KB · ${dateOnly(item.updatedAt)}`}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="module-table-wrap table-responsive-box">
+                  <table className="module-table">
+                    <thead>
+                      <tr>
+                        <th className="module-cell-left">{english ? "Name" : "नाम (Name)"}</th>
+                        <th>{english ? "Type" : "प्रकार"}</th>
+                        <th>{inRecycleBin ? (english ? "Original Location" : "मूल स्थान") : (english ? "Size" : "साइज़")}</th>
+                        <th>{inRecycleBin ? (english ? "Deleted On" : "हटाने की तिथि") : (english ? "Modified" : "दिनांक")}</th>
+                        <th>⋮</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {explorerItems.map((item) => {
+                        const isFolder = item.kind === "FOLDER";
+                        const isRenaming = renamingId === item.id;
+                        return (
+                          <tr
+                            key={item.id}
+                            onContextMenu={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
+                          >
+                            <td
+                              onClick={() => openVaultItem(item)}
+                              className={`win11-list-name${isFolder ? " is-folder" : ""}`}
+                            >
+                              {isRenaming ? (
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={renameDraft}
+                                  onClick={(e) => e.stopPropagation()}
+                                  onChange={(e) => setRenameDraft(e.target.value)}
+                                  onBlur={() => commitInlineRename(item)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") commitInlineRename(item);
+                                    if (e.key === "Escape") setRenamingId(null);
+                                  }}
+                                  className="win11-rename-input"
+                                />
+                              ) : (
+                                <>
+                                  {getFileIcon(item)} &nbsp; {item.name}
+                                </>
+                              )}
+                            </td>
+                            <td className="module-cell-center">{item.kind}</td>
+                            <td className="module-cell-center module-cell-tnr">
+                              {inRecycleBin ? (item.originalPath || "This PC") : isFolder ? "-" : `${item.sizeKB} KB`}
+                            </td>
+                            <td className="module-cell-center module-cell-tnr">
+                              {dateOnly(inRecycleBin ? item.trashedAt : item.updatedAt)}
+                            </td>
+                            <td className="module-cell-center">
+                              <button
+                                type="button"
+                                onClick={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_ITEM" : "ITEM", item)}
+                                className="win11-cmd-btn"
+                              >
+                                ⋮
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Windows 11 Start / Quick Menu Popover */}
+        {startMenuOpen && (
+          <div
+            className="win11-start-menu"
+            role="menu"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="win11-start-header">
+              ⊞ {activeProfile} · {english ? "Quick Office Actions" : "त्वरित कार्य मेन्यू"}
+            </div>
+            <div className="win11-start-grid">
+              <button
+                type="button"
+                onClick={() => { setStartMenuOpen(false); handleCreateFolder(); }}
+                className="win11-start-tile"
+              >
+                📁 + New Folder
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStartMenuOpen(false); handleCreateNewDoc("EXCEL"); }}
+                className="win11-start-tile"
+              >
+                📊 + New Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStartMenuOpen(false); handleCreateNewDoc("WORD"); }}
+                className="win11-start-tile"
+              >
+                📝 + New Word
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStartMenuOpen(false); fileInputRef.current?.click(); }}
+                className="win11-start-tile"
+              >
+                ⬆️ Upload Files
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStartMenuOpen(false); navigateExplorerTo("ROOT"); }}
+                className="win11-start-tile"
+              >
+                💻 Open This PC
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStartMenuOpen(false); navigateExplorerTo(RECYCLE_BIN_ID); }}
+                className="win11-start-tile"
+              >
+                🗑️ Recycle Bin
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* [WINDOWS CONTEXT MENU PORTAL] */}
+      {/* === 4. BOTTOM GLASSMORPHIC WINDOWS 11 TASKBAR === */}
+      <footer className="win11-taskbar" onClick={(e) => e.stopPropagation()}>
+        <div className="win11-taskbar-left">
+          <button
+            type="button"
+            onClick={() => setStartMenuOpen((prev) => !prev)}
+            className={`win11-start-btn${startMenuOpen ? " is-active" : ""}`}
+          >
+            ⊞ Start
+          </button>
+
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => handleTaskbarSearchChange(e.target.value)}
+            placeholder={english ? "🔍 Search Files & Folders..." : "🔍 फ़ाइल व फ़ोल्डर खोजें..."}
+            aria-label="Search Files and Folders"
+            className="win11-taskbar-search"
+          />
+
+          <div className="win11-taskbar-pins">
+            <button
+              type="button"
+              onClick={toggleExplorerTaskbar}
+              className={`win11-task-app-btn${explorerMode !== "CLOSED" ? " is-open" : ""}`}
+            >
+              📁 File Explorer
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCreateNewDoc("EXCEL")}
+              className="win11-task-app-btn"
+            >
+              📊 New Excel
+            </button>
+            <button
+              type="button"
+              onClick={() => handleCreateNewDoc("WORD")}
+              className="win11-task-app-btn"
+            >
+              📝 New Word
+            </button>
+            <button
+              type="button"
+              onClick={() => navigateExplorerTo(RECYCLE_BIN_ID)}
+              className={`win11-task-app-btn${explorerVisible && inRecycleBin ? " is-open" : ""}`}
+            >
+              🗑️ Recycle Bin {trashedTopItems.length > 0 ? `(${trashedTopItems.length})` : ""}
+            </button>
+
+            {officeItem && (
+              <button
+                type="button"
+                onClick={() => setOfficeItem({ ...officeItem })}
+                className="win11-task-app-btn is-open"
+              >
+                {getFileIcon(officeItem)} {officeItem.name}
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="win11-taskbar-tray">
+          <span className="win11-sync-pill">
+            🟢 {activeProfile} · {english ? "OneDrive Ready" : "सिंक सक्रिय"}
+          </span>
+          <span className="win11-clock">{clockLabel}</span>
+        </div>
+      </footer>
+
+      {/* === 3. WINDOWS 11 CONTEXT MENU PORTAL === */}
       {contextMenu && createPortal(
         <div
           ref={contextMenuRef}
@@ -1003,6 +1331,27 @@ export default function StorageVaultModule({
           className="storage-context-menu"
           onContextMenu={(e) => e.preventDefault()}
         >
+          {contextMenu.type === "THIS_PC" && (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setContextMenu(null); navigateExplorerTo("ROOT"); }}
+                className="storage-context-item"
+              >
+                📂 Open This PC
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => { setContextMenu(null); loadAllItems(); }}
+                className="storage-context-item"
+              >
+                🔄 Refresh
+              </button>
+            </>
+          )}
+
           {contextMenu.type === "ITEM" && contextMenu.item && (
             <>
               <button
@@ -1061,7 +1410,7 @@ export default function StorageVaultModule({
                 role="menuitem"
                 disabled={!clipboard}
                 onClick={() => {
-                  const destFolderId = contextMenu.item.kind === "FOLDER" ? contextMenu.item.id : currentFolderId;
+                  const destFolderId = contextMenu.item.kind === "FOLDER" ? contextMenu.item.id : activeWriteFolderId;
                   handlePasteInto(destFolderId);
                 }}
                 className="storage-context-item"
@@ -1091,7 +1440,7 @@ export default function StorageVaultModule({
                 }}
                 className="storage-context-item"
               >
-                ⬇️ Download to PC
+                ⬇️ Download
               </button>
               <button
                 type="button"
@@ -1099,36 +1448,48 @@ export default function StorageVaultModule({
                 onClick={() => handleMoveToRecycleBin(contextMenu.item)}
                 className="storage-context-item is-danger"
               >
-                🗑️ Move to Recycle Bin
+                🗑️ Delete (Move to Recycle Bin)
               </button>
             </>
           )}
 
-          {contextMenu.type === "EMPTY" && (
+          {(contextMenu.type === "EMPTY" || contextMenu.type === "EMPTY_EXPLORER") && (
             <>
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setContextMenu(null); handleCreateFolder(); }}
+                onClick={() => {
+                  const dest = contextMenu.type === "EMPTY" ? "ROOT" : activeWriteFolderId;
+                  setContextMenu(null);
+                  handleCreateFolder(dest);
+                }}
                 className="storage-context-item"
               >
-                📁 + New Folder
+                📁 New Folder
               </button>
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setContextMenu(null); handleCreateNewDoc("EXCEL"); }}
+                onClick={() => {
+                  const dest = contextMenu.type === "EMPTY" ? "ROOT" : activeWriteFolderId;
+                  setContextMenu(null);
+                  handleCreateNewDoc("EXCEL", dest);
+                }}
                 className="storage-context-item"
               >
-                📊 + New Excel
+                📊 New Excel Sheet
               </button>
               <button
                 type="button"
                 role="menuitem"
-                onClick={() => { setContextMenu(null); handleCreateNewDoc("WORD"); }}
+                onClick={() => {
+                  const dest = contextMenu.type === "EMPTY" ? "ROOT" : activeWriteFolderId;
+                  setContextMenu(null);
+                  handleCreateNewDoc("WORD", dest);
+                }}
                 className="storage-context-item"
               >
-                📝 + New Word
+                📝 New Word Document
               </button>
               <button
                 type="button"
@@ -1146,10 +1507,21 @@ export default function StorageVaultModule({
                 type="button"
                 role="menuitem"
                 disabled={!clipboard}
-                onClick={() => handlePasteInto(currentFolderId)}
+                onClick={() => handlePasteInto(contextMenu.type === "EMPTY" ? "ROOT" : activeWriteFolderId)}
                 className="storage-context-item"
               >
                 📥 Paste {clipboard ? `(${clipboard.name})` : ""}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setContextMenu(null);
+                  loadAllItems();
+                }}
+                className="storage-context-item"
+              >
+                🔄 Refresh
               </button>
             </>
           )}
@@ -1162,7 +1534,7 @@ export default function StorageVaultModule({
                 onClick={() => handleRestoreItem(contextMenu.item)}
                 className="storage-context-item"
               >
-                ♻️ Restore
+                ♻️ Restore to Original Path
               </button>
               <button
                 type="button"
@@ -1183,8 +1555,8 @@ export default function StorageVaultModule({
                   role="menuitem"
                   onClick={() => {
                     setContextMenu(null);
-                    setCurrentFolderId(RECYCLE_BIN_ID);
                     setSearch("");
+                    navigateExplorerTo(RECYCLE_BIN_ID);
                   }}
                   className="storage-context-item"
                 >
@@ -1226,7 +1598,7 @@ export default function StorageVaultModule({
         >
           <div className="storage-move-modal" role="dialog" aria-modal="true" aria-label="Move to Folder">
             <h4 className="storage-move-title">
-              📁 Move "{moveTargetItem.name}" to:
+              📁 Move &ldquo;{moveTargetItem.name}&rdquo; to:
             </h4>
             <div className="storage-move-list">
               <button
@@ -1235,7 +1607,7 @@ export default function StorageVaultModule({
                 onClick={() => handleMoveToTarget("ROOT")}
                 className="storage-move-option"
               >
-                🖥️ Storage Desktop (Root)
+                💻 This PC (Desktop Root)
               </button>
               {activeFolderDestinations.map((folder) => {
                 const allowed = canMoveItemToTarget(moveTargetItem, folder.id, items);
@@ -1256,7 +1628,7 @@ export default function StorageVaultModule({
               <button
                 type="button"
                 onClick={() => setMoveTargetItem(null)}
-                className="storage-back-btn"
+                className="win11-cmd-btn"
               >
                 ✕ {english ? "Cancel" : "रद्द करें"}
               </button>
@@ -1274,6 +1646,6 @@ export default function StorageVaultModule({
           language={language}
         />
       )}
-    </div>
+    </section>
   );
 }

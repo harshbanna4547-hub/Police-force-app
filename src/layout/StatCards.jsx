@@ -1,7 +1,7 @@
 import "./StatCards.css";
 
 /**
- * [COMPONENT] StatCards — केवल होम डैशबोर्ड पर शाही नेवी / स्लेट KPI शोकेस बैंड
+ * [COMPONENT] StatCards — केवल StrengthModule के शीर्ष पर शाही नेवी / स्लेट KPI शोकेस बैंड
  */
 export default function StatCards({
   totalSanc,

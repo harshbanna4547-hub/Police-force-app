@@ -2,6 +2,39 @@
 
 export const RECYCLE_BIN_ID = "RECYCLE_BIN";
 
+// [WINDOWS 11 FOLDERS] Standard 14 district folders displayed neatly on the Desktop
+export const WINDOWS_11_DEFAULT_FOLDERS = [
+  "01. Strength",
+  "02. Posting",
+  "03. Transfer",
+  "04. Leave",
+  "05. ACP",
+  "06. Promotion",
+  "07. Seniority",
+  "08. Bharti",
+  "09. Increment",
+  "10. Training",
+  "11. Punishment",
+  "12. Roster",
+  "13. Reports",
+  "14. Backup"
+];
+
+export function formatIstClockDate(date = new Date()) {
+  const dt = date instanceof Date ? date : new Date(date);
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kolkata",
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour12: false
+  }).formatToParts(dt);
+  const pick = (type) => parts.find((p) => p.type === type)?.value || "00";
+  return `${pick("hour")}:${pick("minute")} | ${pick("day")}-${pick("month")}-${pick("year")}`;
+}
+
 export function isStorageItemForDistrict(item, districtName) {
   return String(item?.district || "") === String(districtName || "");
 }
@@ -22,7 +55,7 @@ export function getVaultItemPath(item, allItems = []) {
     parts.unshift(parent.name);
     currId = parent.parentId;
   }
-  return ["🖥️ Storage Desktop", ...parts].join(" > ");
+  return ["This PC", "District Vault", ...parts].join(" > ");
 }
 
 export function collectDescendantIds(parentId, allItems = []) {
