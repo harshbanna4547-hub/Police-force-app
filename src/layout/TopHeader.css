@@ -105,7 +105,8 @@
   }
 
   .header-emblem-badge {
-    display: none;
+    padding: 5px 9px;
+    font-size: 0.72rem;
   }
 
   .header-right-spacer {
@@ -113,12 +114,18 @@
   }
 
   .portal-main-title {
-    font-size: clamp(0.84rem, 3.3vw, 1.08rem);
+    font-size: clamp(0.84rem, 3.2vw, 1.08rem);
     line-height: 1.2;
     white-space: nowrap;
     text-overflow: ellipsis;
     overflow: hidden;
     max-width: 100%;
     justify-self: center;
+  }
+}
+
+@media (max-width: 540px) {
+  .header-emblem-badge {
+    display: none;
   }
 }

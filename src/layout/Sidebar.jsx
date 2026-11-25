@@ -15,7 +15,10 @@ export default function Sidebar({
   modules,
   activeProfile,
   currentDistrict,
+  theme = "light",
+  onThemeChange,
   language,
+  onLanguageChange,
   onOpenDistrictSwitcher
 }) {
   const [modulesOpen, setModulesOpen] = useState(false);
@@ -118,8 +121,29 @@ export default function Sidebar({
           )}
         </nav>
 
-        {/* === FOOTER & DEV SERVICES === */}
+        {/* === FOOTER: COMPACT THEME & LANGUAGE PILLS + DEV SERVICES === */}
         <div className="sidebar-footer-wrap">
+          <div className="sidebar-utility-pills" role="group" aria-label={english ? "Theme and language controls" : "थीम एवं भाषा नियंत्रण"}>
+            <button
+              type="button"
+              onClick={onThemeChange}
+              className="sidebar-utility-pill"
+              aria-label={english ? "Toggle light and dark mode" : "लाइट और डार्क मोड बदलें"}
+            >
+              <span aria-hidden="true">{theme === "light" ? "🌙" : "☀️"}</span>
+              <span>{theme === "light" ? "Dark" : "Light"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={onLanguageChange}
+              className="sidebar-utility-pill"
+              aria-label={english ? "Switch language" : "भाषा बदलें"}
+            >
+              <span aria-hidden="true">🌐</span>
+              <span>{language === "hi" ? "हिंदी" : "English"}</span>
+            </button>
+          </div>
+
           <button
             type="button"
             onClick={() => selectView("DEV_SERVICES")}
