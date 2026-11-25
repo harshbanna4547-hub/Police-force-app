@@ -5,6 +5,7 @@ import {
   buildInstituteWiseTrainingSummary,
   buildPostWiseTrainingSummary,
   buildYearWiseTrainingSummary,
+  getMandatoryPendingDueRows,
   getMissingTrainingCourses,
   isBeltRank
 } from "./trainingLogic.js";
@@ -66,4 +67,12 @@ test("post-wise, course-wise, institute-wise, and year-wise summaries aggregate 
   const yearRows = buildYearWiseTrainingSummary(history, "CALENDAR", 2020);
   assert.equal(yearRows.find((r) => r.period === "2024").completedCount, 1);
   assert.equal(yearRows.find((r) => r.period === "2025").completedCount, 1);
+
+  const dueRows = getMandatoryPendingDueRows(employees, history);
+  const fcDue = dueRows.find((r) => r["BELT NO"] === "10");
+  const siDue = dueRows.find((r) => r.CADER === "SI");
+  assert.ok(!fcDue["लंबित अनिवार्य कोर्स"].includes("PCC"));
+  assert.ok(fcDue["लंबित अनिवार्य कोर्स"].includes("BNS / BNSS / BSA"));
+  assert.ok(!siDue["लंबित अनिवार्य कोर्स"].includes("PCC"));
+  assert.ok(!siDue["लंबित अनिवार्य कोर्स"].includes("Cyber Crime"));
 });

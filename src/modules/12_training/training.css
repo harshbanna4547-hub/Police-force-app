@@ -19,7 +19,8 @@
 .training-primary-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  max-width: 100%;
   margin-bottom: 14px;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--border, #e2e8f0);
@@ -45,12 +46,19 @@
   box-shadow: 0 6px 16px rgba(30, 58, 138, 0.25);
 }
 
-/* === 5 SUB-TAB PILLS (5 सब-टैब पिल्स) === */
-.training-subtabs {
+/* === SUB-TAB & NOMINATION LIFECYCLE PILLS (सब-टैब एवं 4-चरण नामांकन पिल्स) === */
+.training-subtabs,
+.training-lifecycle-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  max-width: 100%;
   margin-bottom: 16px;
+}
+
+.training-lifecycle-tabs {
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border, #e2e8f0);
 }
 
 .training-subtab-btn {
@@ -448,6 +456,7 @@
 @media print {
   .training-primary-tabs,
   .training-subtabs,
+  .training-lifecycle-tabs,
   .training-generator-form,
   .training-add-form,
   .training-filter-row,

@@ -24,9 +24,10 @@ function documentShell(title, body) {
 
 export const TRAINING_DOCUMENTS = [
   { id: "WIRELESS", label: "बेतार / ई-मेल नामांकन संदेश" },
-  { id: "DISPATCH", label: "रवानगी आदेश" },
+  { id: "DISPATCH", label: "रवानगी आदेश (Dispatch)" },
   { id: "EXEMPTION", label: "मुक्ति पत्र (Exemption)" },
-  { id: "REPLACEMENT", label: "प्रतिस्थापन आदेश (Replacement)" }
+  { id: "REPLACEMENT", label: "प्रतिस्थापन आदेश (Replacement)" },
+  { id: "AMENDMENT", label: "संशोधन आदेश (Amendment)" }
 ];
 
 export function renderTrainingDocument(type, nomination, instructions = "") {
@@ -64,6 +65,11 @@ export function renderTrainingDocument(type, nomination, instructions = "") {
   if (type === "REPLACEMENT") {
     return documentShell("प्रतिस्थापन आदेश",
       `<h2 class="hindi">प्रशिक्षणार्थी प्रतिस्थापन आदेश</h2>${employeeTable}${courseDetails}<p class="hindi">प्रतिस्थापन / आदेश संबंधी विवरण: ${escapeHtml(instructions || "—")}</p><p style="margin-top:48px;text-align:right">पुलिस अधीक्षक</p>`
+    );
+  }
+  if (type === "AMENDMENT") {
+    return documentShell("संशोधन आदेश",
+      `<h2 class="hindi">कार्यालय पुलिस अधीक्षक</h2><h3 class="hindi">प्रशिक्षण संशोधन आदेश (Amendment)</h3>${employeeTable}${courseDetails}<p class="hindi">संशोधित विवरण / निर्देश: ${escapeHtml(instructions || "—")}</p><p style="margin-top:48px;text-align:right">पुलिस अधीक्षक</p>`
     );
   }
   throw new Error(`Unknown training document type: ${type}`);

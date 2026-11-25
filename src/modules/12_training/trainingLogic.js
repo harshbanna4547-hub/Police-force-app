@@ -11,7 +11,15 @@ export const TRAINING_SUBTABS = [
   { id: "POST_WISE", hi: "🎖️ Post-Wise Record (पदवार)", en: "🎖️ Post-Wise Record" },
   { id: "COURSE_WISE", hi: "📚 Training-Wise Record (कोर्सवार)", en: "📚 Training-Wise Record" },
   { id: "INSTITUTE_WISE", hi: "🏛️ Institute-Wise Record (संस्थानवार)", en: "🏛️ Institute-Wise Record" },
-  { id: "YEAR_WISE", hi: "📅 Year-Wise Record (वर्षवार)", en: "📅 Year-Wise Record" }
+  { id: "YEAR_WISE", hi: "📅 Year-Wise Record (वर्षवार)", en: "📅 Year-Wise Record" },
+  { id: "MANDATORY_DUE", hi: "⚠️ Mandatory / Pending Due (अपूर्ण अनिवार्य)", en: "⚠️ Mandatory / Pending Due" }
+];
+
+export const NOMINATION_LIFECYCLE_TABS = [
+  { id: "GENERATOR", hi: "📝 Letter & Wireless Generator", en: "📝 Letter & Wireless Generator" },
+  { id: "PENDING", hi: "⏳ Pending Training", en: "⏳ Pending Training" },
+  { id: "DONE", hi: "✅ Training Done", en: "✅ Training Done" },
+  { id: "NOT_DONE", hi: "❌ Nominated but Not Done", en: "❌ Nominated but Not Done" }
 ];
 
 export const NOMINATION_SUBTABS = [
@@ -37,6 +45,13 @@ export const REQUIRED_COURSES = [
   { label: "बुनियादी प्रशिक्षण", aliases: ["बुनियादी", "basic training", "basic course"] },
   { label: "साइबर", aliases: ["साइबर", "cyber"] },
   { label: "विशेष कोर्स", aliases: ["विशेष", "special course", "special training"] }
+];
+
+export const MANDATORY_DUE_COURSES = [
+  { label: "PCC", aliases: ["pcc"], ranks: ["FC", "HC"] },
+  { label: "BNS / BNSS / BSA", aliases: ["bns", "bnss", "bsa", "नए कानून", "आपराधिक कानून"] },
+  { label: "Cyber Crime", aliases: ["cyber", "साइबर"] },
+  { label: "Induction", aliases: ["induction", "इंडक्शन", "बुनियादी", "basic training"] }
 ];
 
 export const TRAINING_COURSE_CATALOG = [
@@ -216,6 +231,34 @@ export function getMissingTrainingCourses(records, trainingRows) {
       "अपूर्ण कोर्स": missing
     };
   });
+}
+
+/* === 6. MANDATORY / PENDING DUE ROWS (PCC केवल FC/HC + BNS/BNSS/BSA, Cyber, Induction) === */
+export function getMandatoryPendingDueRows(records, trainingRows) {
+  const historyByIdentity = groupHistoryByIdentity(trainingRows);
+  return getUniqueEmployees(records)
+    .map((record) => {
+      const belt = getBeltNo(record);
+      const rank = getRankCode(record);
+      const employeeRows = historyByIdentity.get(getIdentityForEmployee(record)) || [];
+      const pendingCourses = MANDATORY_DUE_COURSES
+        .filter((course) => !course.ranks || course.ranks.includes(rank))
+        .filter((course) => !employeeRows.some((row) => {
+          const courseName = String(row.COURSE_NAME || "").toLocaleLowerCase();
+          return course.aliases.some((alias) => courseName.includes(alias.toLocaleLowerCase()));
+        }))
+        .map((course) => course.label);
+      return {
+        employee: record,
+        "BELT NO": belt,
+        CADER: record.CADER || "",
+        NAME: record.NAME || "",
+        POSTING: record.POSTING || "",
+        "पूर्ण प्रशिक्षण संख्या": employeeRows.length,
+        "लंबित अनिवार्य कोर्स": pendingCourses
+      };
+    })
+    .filter((row) => row["लंबित अनिवार्य कोर्स"].length > 0);
 }
 
 /* === 2. POST-WISE SUMMARY (पदवार प्रशिक्षण रिपोर्ट) === */
