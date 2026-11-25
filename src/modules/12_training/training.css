@@ -1,4 +1,26 @@
-.training-module { min-width: 0; }
+.training-module {
+  min-width: 0;
+  background-color: var(--surface-raised, #fff);
+  border-radius: 12px;
+  padding: 18px;
+  border: 1px solid var(--border, #E2E8F0);
+}
+.training-match-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.training-match-pill {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  cursor: pointer;
+}
+.training-tnr-cell {
+  font-family: 'Times New Roman', Times, serif;
+}
 .training-section-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .training-module .module-table { min-width: 780px; }
 .training-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }

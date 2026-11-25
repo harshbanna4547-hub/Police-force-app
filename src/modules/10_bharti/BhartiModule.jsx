@@ -7,6 +7,9 @@ import { formatDateOnly } from "../../shared/commonFunctions";
 import { getProbationDetails, getVacantBelts } from "./bhartiLogic";
 import "./bharti.css";
 
+/**
+ * [COMPONENT] BhartiModule — नवीन भर्ती पंजीयन, रिक्रूट सूची एवं स्थायीकरण आदेश
+ */
 export default function BhartiModule({ records = [], setRecords, allSheets = {}, setAllSheets, language = "hi" }) {
   const [subTab, setSubTab] = useState("FORM"); // FORM | RT_LIST | CONFIRMATION
   const [search, setSearch] = useState("");
@@ -103,7 +106,7 @@ export default function BhartiModule({ records = [], setRecords, allSheets = {},
     : recruitExportRows;
 
   return (
-    <div className="bharti-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="bharti-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "⚡ Recruitment (Bharti) & Confirmation" : "⚡ भर्ती एवं स्थायीकरण"}
         search={search}
@@ -115,89 +118,89 @@ export default function BhartiModule({ records = [], setRecords, allSheets = {},
         language={language}
       />
 
-      <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
-        <button type="button" onClick={() => setSubTab("FORM")} style={{ padding: "8px 14px", borderRadius: "6px", border: "none", fontWeight: "bold", cursor: "pointer", backgroundColor: subTab === "FORM" ? "#0B1E3D" : "#E2E8F0", color: subTab === "FORM" ? "#FACC15" : "#1E293B" }}>
+      <div className="module-tab-bar">
+        <button type="button" onClick={() => setSubTab("FORM")} className={`module-tab-btn ${subTab === "FORM" ? "is-active" : ""}`}>
           ➕ {english ? `New Recruitment Form (Vacant Belts: ${vacantBelts.length})` : `नवीन भर्ती पंजीयन फॉर्म (खाली बेल्ट: ${vacantBelts.length})`}
         </button>
-        <button type="button" onClick={() => setSubTab("RT_LIST")} style={{ padding: "8px 14px", borderRadius: "6px", border: "none", fontWeight: "bold", cursor: "pointer", backgroundColor: subTab === "RT_LIST" ? "#0B1E3D" : "#E2E8F0", color: subTab === "RT_LIST" ? "#FACC15" : "#1E293B" }}>
+        <button type="button" onClick={() => setSubTab("RT_LIST")} className={`module-tab-btn ${subTab === "RT_LIST" ? "is-active" : ""}`}>
           ⚡ {english ? `All Recruits (RT) (${rtList.length})` : `सभी रिक्रूट (RT) सूची (${rtList.length})`}
         </button>
-        <button type="button" onClick={() => setSubTab("CONFIRMATION")} style={{ padding: "8px 14px", borderRadius: "6px", border: "none", fontWeight: "bold", cursor: "pointer", backgroundColor: subTab === "CONFIRMATION" ? "#0B1E3D" : "#E2E8F0", color: subTab === "CONFIRMATION" ? "#FACC15" : "#1E293B" }}>
+        <button type="button" onClick={() => setSubTab("CONFIRMATION")} className={`module-tab-btn ${subTab === "CONFIRMATION" ? "is-active" : ""}`}>
           ✅ {english ? "Confirmation Orders" : "स्थायीकरण आदेश"}
         </button>
       </div>
 
       {subTab === "FORM" ? (
-        <form onSubmit={handleSave} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "12px", maxWidth: "850px" }}>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "Post (CADER)" : "पद (CADER)"}</label>
-            <select value={form.CADER} onChange={(e) => setForm({ ...form, CADER: e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }}>
+        <form onSubmit={handleSave} className="bharti-form-grid">
+          <div className="bharti-field">
+            <label>{english ? "Post (CADER)" : "पद (CADER)"}</label>
+            <select value={form.CADER} onChange={(e) => setForm({ ...form, CADER: e.target.value })}>
               {["FC (RT)", "FC (MT_RT)", "FC", "HC", "ASI", "SI"].map((c) => <option key={c}>{c}</option>)}
             </select>
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "Select Vacant Belt No." : "खाली बेल्ट नं. चुनें"}</label>
-            <select value={form["BELT NO"]} onChange={(e) => setForm({ ...form, "BELT NO": e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }}>
+          <div className="bharti-field">
+            <label>{english ? "Select Vacant Belt No." : "खाली बेल्ट नं. चुनें"}</label>
+            <select value={form["BELT NO"]} onChange={(e) => setForm({ ...form, "BELT NO": e.target.value })}>
               <option value="">{english ? "-- Select Belt No. --" : "-- बेल्ट नं. चुनें --"}</option>
               {vacantBelts.slice(0, 200).map((b) => <option key={b} value={b}>{b}</option>)}
             </select>
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "Name *" : "नाम *"}</label>
-            <input type="text" required value={form.NAME} onChange={(e) => setForm({ ...form, NAME: e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }} />
+          <div className="bharti-field">
+            <label>{english ? "Name *" : "नाम *"}</label>
+            <input type="text" required value={form.NAME} onChange={(e) => setForm({ ...form, NAME: e.target.value })} />
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "Father Name" : "पिता का नाम"}</label>
-            <input type="text" value={form["FATHER NAME"]} onChange={(e) => setForm({ ...form, "FATHER NAME": e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }} />
+          <div className="bharti-field">
+            <label>{english ? "Father Name" : "पिता का नाम"}</label>
+            <input type="text" value={form["FATHER NAME"]} onChange={(e) => setForm({ ...form, "FATHER NAME": e.target.value })} />
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "DOB (DD-MM-YYYY)" : "जन्म तिथि (DD-MM-YYYY)"}</label>
-            <input type="text" value={form["DATE OF BIRTH"]} onChange={(e) => setForm({ ...form, "DATE OF BIRTH": e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }} />
+          <div className="bharti-field">
+            <label>{english ? "DOB (DD-MM-YYYY)" : "जन्म तिथि (DD-MM-YYYY)"}</label>
+            <input type="text" value={form["DATE OF BIRTH"]} onChange={(e) => setForm({ ...form, "DATE OF BIRTH": e.target.value })} />
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "DOJ (DD-MM-YYYY)" : "नियुक्ति तिथि (DD-MM-YYYY)"}</label>
-            <input type="text" value={form["DATE OF JOINING"]} onChange={(e) => setForm({ ...form, "DATE OF JOINING": e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }} />
+          <div className="bharti-field">
+            <label>{english ? "DOJ (DD-MM-YYYY)" : "नियुक्ति तिथि (DD-MM-YYYY)"}</label>
+            <input type="text" value={form["DATE OF JOINING"]} onChange={(e) => setForm({ ...form, "DATE OF JOINING": e.target.value })} />
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "Mobile No." : "मोबाइल नं."}</label>
-            <input type="text" value={form["MOBILE NO 1"]} onChange={(e) => setForm({ ...form, "MOBILE NO 1": e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }} />
+          <div className="bharti-field">
+            <label>{english ? "Mobile No." : "मोबाइल नं."}</label>
+            <input type="text" value={form["MOBILE NO 1"]} onChange={(e) => setForm({ ...form, "MOBILE NO 1": e.target.value })} />
           </div>
-          <div>
-            <label style={{ fontWeight: "bold", fontSize: "0.85rem" }}>{english ? "Home District" : "गृह जिला"}</label>
-            <input type="text" value={form.DISTRICT} onChange={(e) => setForm({ ...form, DISTRICT: e.target.value })} style={{ width: "100%", padding: "8px", marginTop: "4px" }} />
+          <div className="bharti-field">
+            <label>{english ? "Home District" : "गृह जिला"}</label>
+            <input type="text" value={form.DISTRICT} onChange={(e) => setForm({ ...form, DISTRICT: e.target.value })} />
           </div>
-          <div style={{ gridColumn: "1 / -1" }}>
-            <button type="submit" style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "10px 22px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+          <div className="bharti-submit-row">
+            <button type="submit" className="module-btn-success">
               ✅ {english ? "Save New Recruit" : "नया रिक्रूट सेव करें"}
             </button>
           </div>
         </form>
       ) : subTab === "RT_LIST" ? (
         <div className="table-responsive-box">
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+          <table className="module-table">
             <thead>
-              <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-                <th style={{ padding: "8px" }}>{english ? "Joining Year" : "JOINING YEAR"}</th>
-                <th style={{ padding: "8px" }}>{english ? "Belt No." : "बेल्ट नं."}</th>
-                <th style={{ padding: "8px" }}>{english ? "Post" : "पद"}</th>
-                <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "नाम"}</th>
-                <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Father Name" : "पिता का नाम"}</th>
-                <th style={{ padding: "8px" }}>{english ? "DOJ" : "नियुक्ति तिथि"}</th>
-                <th style={{ padding: "8px" }}>{english ? "Probation End" : "परिवीक्षा पूर्ण"}</th>
-                <th style={{ padding: "8px" }}>{english ? "Status" : "स्थिति"}</th>
+              <tr>
+                <th>{english ? "Joining Year" : "JOINING YEAR"}</th>
+                <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+                <th>{english ? "Post" : "पद"}</th>
+                <th>{english ? "Name" : "नाम"}</th>
+                <th>{english ? "Father Name" : "पिता का नाम"}</th>
+                <th>{english ? "DOJ" : "नियुक्ति तिथि"}</th>
+                <th>{english ? "Probation End" : "परिवीक्षा पूर्ण"}</th>
+                <th>{english ? "Status" : "स्थिति"}</th>
               </tr>
             </thead>
             <tbody>
               {joiningYearRows.map((r, i) => (
                 <tr key={r._uid || i}>
-                  <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["JOINING YEAR"]}</td>
-                  <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
-                  <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
-                  <td style={{ padding: "7px", border: "1px solid #E2E8F0", fontWeight: "bold" }}><HindiText text={r["NAME"]} /></td>
-                  <td style={{ padding: "7px", border: "1px solid #E2E8F0" }}><HindiText text={r["FATHER NAME"]} /></td>
-                  <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF JOINING"])}</td>
-                  <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["PROBATION END"]}</td>
-                  <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0" }}>{r["PROBATION STATUS"]}</td>
+                  <td className="module-cell-center english-cell">{r["JOINING YEAR"]}</td>
+                  <td className="module-cell-center english-cell">{r["BELT NO"]}</td>
+                  <td className="module-cell-center english-cell">{r["CADER"]}</td>
+                  <td className="module-cell-bold"><HindiText text={r["NAME"]} /></td>
+                  <td><HindiText text={r["FATHER NAME"]} /></td>
+                  <td className="module-cell-center english-cell">{formatDateOnly(r["DATE OF JOINING"])}</td>
+                  <td className="module-cell-center english-cell">{r["PROBATION END"]}</td>
+                  <td className="module-cell-center">{r["PROBATION STATUS"]}</td>
                 </tr>
               ))}
             </tbody>
@@ -205,45 +208,45 @@ export default function BhartiModule({ records = [], setRecords, allSheets = {},
         </div>
       ) : (
         <>
-          <form onSubmit={saveConfirmation} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", maxWidth: "900px", marginBottom: "18px" }}>
-            <select required value={confirmationBelt} onChange={(event) => setConfirmationBelt(event.target.value)} style={{ padding: "8px" }}>
+          <form onSubmit={saveConfirmation} className="module-form-card">
+            <select required value={confirmationBelt} onChange={(event) => setConfirmationBelt(event.target.value)}>
               <option value="">{english ? "Select Recruit" : "भर्ती कर्मचारी चुनें"}</option>
               {rtList.map((record) => (
                 <option
                   key={record._uid || record["BELT NO"]}
                   value={String(record["BELT NO"] || "").trim().toUpperCase()}
-                  style={isDevlysText(record.NAME) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                  className={isDevlysText(record.NAME) ? "devlys-text" : undefined}
                 >
                   {record["BELT NO"]} — {record.NAME}
                 </option>
               ))}
             </select>
-            <input required type="text" placeholder={english ? "Confirmation Date (DD-MM-YYYY)" : "स्थायीकरण दिनांक (DD-MM-YYYY)"} value={confirmationDate} onChange={(event) => setConfirmationDate(event.target.value)} style={{ padding: "8px" }} />
-            <input required type="text" placeholder={english ? "Confirmation Order No." : "स्थायीकरण आदेश नं."} value={confirmationOrder} onChange={(event) => setConfirmationOrder(event.target.value)} style={{ padding: "8px" }} />
-            <button type="submit" style={{ background: "#16A34A", color: "#fff", border: 0, borderRadius: "6px", padding: "8px 14px", fontWeight: "bold", cursor: "pointer" }}>
+            <input required type="text" placeholder={english ? "Confirmation Date (DD-MM-YYYY)" : "स्थायीकरण दिनांक (DD-MM-YYYY)"} value={confirmationDate} onChange={(event) => setConfirmationDate(event.target.value)} />
+            <input required type="text" placeholder={english ? "Confirmation Order No." : "स्थायीकरण आदेश नं."} value={confirmationOrder} onChange={(event) => setConfirmationOrder(event.target.value)} />
+            <button type="submit" className="module-btn-success">
               ✅ {english ? "Save Confirmation" : "स्थायीकरण दर्ज करें"}
             </button>
           </form>
           <h3>{english ? "Recorded Confirmation Orders" : "दर्ज स्थायीकरण आदेश"}</h3>
           <div className="table-responsive-box">
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+            <table className="module-table">
               <thead>
-                <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-                  <th style={{ padding: "8px" }}>{english ? "Belt No." : "बेल्ट नं."}</th>
-                  <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "नाम"}</th>
-                  <th style={{ padding: "8px" }}>{english ? "Order No." : "आदेश नं."}</th>
-                  <th style={{ padding: "8px" }}>{english ? "Date" : "दिनांक"}</th>
+                <tr>
+                  <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+                  <th>{english ? "Name" : "नाम"}</th>
+                  <th>{english ? "Order No." : "आदेश नं."}</th>
+                  <th>{english ? "Date" : "दिनांक"}</th>
                 </tr>
               </thead>
               <tbody>
                 {(allSheets.Posting_History || [])
                   .filter((row) => String(row.POSTING_PLACE || "").includes("[Confirmation]"))
                   .map((row, index) => (
-                    <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                      <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
-                      <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.NAME} /></td>
-                      <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_NO_DATE}</td>
-                      <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row.ORDER_DATE)}</td>
+                    <tr key={`${row["BELT NO"]}-${index}`}>
+                      <td className="module-cell-center english-cell">{row["BELT NO"]}</td>
+                      <td className="module-cell-bold"><HindiText text={row.NAME} /></td>
+                      <td className="module-cell-center english-cell">{row.ORDER_NO_DATE}</td>
+                      <td className="module-cell-center english-cell">{formatDateOnly(row.ORDER_DATE)}</td>
                     </tr>
                   ))}
               </tbody>

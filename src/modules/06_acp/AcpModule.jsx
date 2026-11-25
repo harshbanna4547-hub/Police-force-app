@@ -7,6 +7,9 @@ import { filterEmployeesByGender, matchesEmployeeSearch } from "../../forceLogic
 import { getAcpServiceStage } from "./acpLogic";
 import "./acp.css";
 
+/**
+ * [COMPONENT] AcpModule — 9 / 18 / 27 वर्ष एसीपी सेवा-अवधि समीक्षा एवं आदेश प्रविष्टि
+ */
 export default function AcpModule({ records = [], allSheets = {}, setAllSheets, language = "hi" }) {
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("ALL");
@@ -85,7 +88,7 @@ export default function AcpModule({ records = [], allSheets = {}, setAllSheets, 
   };
 
   return (
-    <div className="acp-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="acp-module module-panel">
       <ModuleHeaderToolbar
         title={english ? `🎖️ 9 / 18 / 27 Years ACP Service Review (${acpEligibleList.length})` : `🎖️ 9 / 18 / 27 वर्ष ACP सेवा-अवधि सूची (${acpEligibleList.length})`}
         search={search}
@@ -97,60 +100,62 @@ export default function AcpModule({ records = [], allSheets = {}, setAllSheets, 
         language={language}
       />
 
-      <p style={{ color: "#92400E" }}>
+      <p className="module-notice-warn">
         {english
           ? "Review punishment/departmental records manually before approving ACP."
           : "ACP स्वीकृति से पहले दर्ज सजा/विभागीय रिकॉर्ड की समीक्षा करें। सजा रिकॉर्ड अपने-आप अयोग्यता नहीं बनाता।"}
       </p>
 
-      <form onSubmit={saveApprovalOrder} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "16px", padding: "12px", background: "#F8FAFC", borderRadius: "8px" }}>
-        <select required value={selectedBelt} onChange={(event) => setSelectedBelt(event.target.value)} style={{ padding: "8px" }}>
+      <form onSubmit={saveApprovalOrder} className="module-form-card">
+        <select required value={selectedBelt} onChange={(event) => setSelectedBelt(event.target.value)}>
           <option value="">{english ? "Select Employee from ACP List" : "ACP सेवा-अवधि सूची से कर्मचारी चुनें"}</option>
           {acpEligibleList.map((row, idx) => (
             <option
               key={`${row.belt}-${row.stage}-${idx}`}
               value={String(row.belt || "").trim().toUpperCase()}
-              style={isDevlysText(row.name) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+              className={isDevlysText(row.name) ? "devlys-text" : undefined}
             >
               {row.belt} — {row.name} — {row.stage}
             </option>
           ))}
         </select>
-        <input required value={orderNo} onChange={(event) => setOrderNo(event.target.value)} placeholder={english ? "ACP Approval Order No." : "ACP स्वीकृति आदेश नं."} style={{ padding: "8px" }} />
-        <input required value={orderDate} onChange={(event) => setOrderDate(event.target.value)} placeholder={english ? "Order Date (DD-MM-YYYY)" : "आदेश दिनांक (DD-MM-YYYY)"} style={{ padding: "8px" }} />
-        <button type="submit" disabled={!selectedEmployee} style={{ padding: "8px 14px", border: 0, borderRadius: "6px", color: "#fff", background: "#16A34A", fontWeight: "bold", cursor: "pointer" }}>
+        <input required value={orderNo} onChange={(event) => setOrderNo(event.target.value)} placeholder={english ? "ACP Approval Order No." : "ACP स्वीकृति आदेश नं."} />
+        <input required value={orderDate} onChange={(event) => setOrderDate(event.target.value)} placeholder={english ? "Order Date (DD-MM-YYYY)" : "आदेश दिनांक (DD-MM-YYYY)"} />
+        <button type="submit" disabled={!selectedEmployee} className="module-btn-success">
           ✅ {english ? "Record ACP Order" : "ACP आदेश दर्ज करें"}
         </button>
       </form>
 
-      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px" }}>{english ? "Belt No." : "BELT NO"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Post" : "CADER"}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "NAME"}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Posting" : "POSTING"}</th>
-              <th style={{ padding: "8px" }}>{english ? "DOJ" : "नियुक्ति तिथि"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Service Yrs" : "कुल सेवा (वर्ष)"}</th>
-              <th style={{ padding: "8px" }}>{english ? "ACP Stage" : "ACP श्रेणी"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Punishment Review" : "सजा रिकॉर्ड समीक्षा"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Select" : "चयन"}</th>
+            <tr>
+              <th>{english ? "Belt No." : "BELT NO"}</th>
+              <th>{english ? "Post" : "CADER"}</th>
+              <th>{english ? "Name" : "NAME"}</th>
+              <th>{english ? "Posting" : "POSTING"}</th>
+              <th>{english ? "DOJ" : "नियुक्ति तिथि"}</th>
+              <th>{english ? "Service Yrs" : "कुल सेवा (वर्ष)"}</th>
+              <th>{english ? "ACP Stage" : "ACP श्रेणी"}</th>
+              <th>{english ? "Punishment Review" : "सजा रिकॉर्ड समीक्षा"}</th>
+              <th>{english ? "Select" : "चयन"}</th>
             </tr>
           </thead>
           <tbody>
             {acpEligibleList.slice(0, 150).map((r, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r.belt}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r.cader}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={r.name} /></td>
-                <td style={{ padding: "6px" }}><HindiText text={r.posting} /></td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r.doj}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", fontFamily: "'Times New Roman', Times, serif" }}>{r.yrs}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#0369A1", fontFamily: "'Times New Roman', Times, serif" }}>{r.stage}</td>
-                <td style={{ padding: "6px", textAlign: "center", color: r.punishmentReview.includes("(") ? "#B45309" : "#15803D" }}>{r.punishmentReview}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>
-                  <button type="button" onClick={() => setSelectedBelt(String(r.belt || "").trim().toUpperCase())}>
+              <tr key={i}>
+                <td className="module-cell-center english-cell">{r.belt}</td>
+                <td className="module-cell-center english-cell">{r.cader}</td>
+                <td className="module-cell-bold"><HindiText text={r.name} /></td>
+                <td><HindiText text={r.posting} /></td>
+                <td className="module-cell-center english-cell">{r.doj}</td>
+                <td className="module-cell-center module-cell-bold english-cell">{r.yrs}</td>
+                <td className="module-cell-center module-cell-accent-cyan english-cell">{r.stage}</td>
+                <td className={`module-cell-center ${r.punishmentReview.includes("(") ? "module-cell-accent-amber" : "module-cell-accent-green"}`}>
+                  {r.punishmentReview}
+                </td>
+                <td className="module-cell-center">
+                  <button type="button" className="module-btn-small" onClick={() => setSelectedBelt(String(r.belt || "").trim().toUpperCase())}>
                     {english ? "Select" : "चुनें"}
                   </button>
                 </td>

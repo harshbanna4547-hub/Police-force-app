@@ -9,6 +9,9 @@ import "./leave.css";
 
 const LEAVE_TYPES = ["PL", "CL", "Medical", "Maternity", "Paternity"];
 
+/**
+ * [COMPONENT] LeaveModule — अवकाश प्रविष्टि एवं उपार्जित अवकाश (PL) लेखा प्रबंधन
+ */
 export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows, setAllSheets, language = "hi" }) {
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("ALL");
@@ -22,6 +25,7 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
   const [remark, setRemark] = useState("");
   const english = language === "en";
 
+  // [FILTER] Gender & search filter on employee records
   const filteredRecords = useMemo(() => {
     const byGender = filterEmployeesByGender(records, gender);
     if (!search.trim()) return byGender;
@@ -87,7 +91,7 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
   }));
 
   return (
-    <div className="leave-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="leave-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "🏖️ Leave & Earned PL Account" : "🏖️ अवकाश एवं उपार्जित अवकाश लेखा"}
         search={search}
@@ -99,43 +103,44 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
         language={language}
       />
 
-      <form onSubmit={handleAddLeave} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", marginBottom: "16px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <select required value={belt} onChange={(event) => setBelt(event.target.value)} style={{ padding: "8px" }}>
+      <form onSubmit={handleAddLeave} className="module-form-card">
+        <select required value={belt} onChange={(event) => setBelt(event.target.value)}>
           <option value="">{english ? "Select Employee / Belt" : "कर्मचारी / बेल्ट चुनें"}</option>
           {records.map((record) => (
             <option
               key={record._uid || record["BELT NO"]}
               value={String(record["BELT NO"] || "").trim().toUpperCase()}
-              style={isDevlysText(record.NAME) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+              className={isDevlysText(record.NAME) ? "devlys-text" : undefined}
             >
               {record["BELT NO"]} — {record.NAME}
             </option>
           ))}
         </select>
-        <select value={leaveType} onChange={(event) => setLeaveType(event.target.value)} style={{ padding: "8px" }}>
+        <select value={leaveType} onChange={(event) => setLeaveType(event.target.value)}>
           {LEAVE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
         </select>
-        <input type="number" min="2000" max="2200" placeholder={english ? "Year" : "वर्ष"} value={year} onChange={(event) => setYear(event.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder={english ? "From (DD-MM-YYYY)" : "कब से (DD-MM-YYYY)"} value={fromDt} onChange={(event) => setFromDt(event.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder={english ? "To (DD-MM-YYYY)" : "कब तक (DD-MM-YYYY)"} value={toDt} onChange={(event) => setToDt(event.target.value)} style={{ padding: "8px" }} />
-        <input type="number" required min="1" placeholder={english ? "Total Days" : "कुल दिन"} value={days} onChange={(event) => setDays(event.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder={english ? "Order No." : "स्वीकृति आदेश नं."} value={orderNo} onChange={(event) => setOrderNo(event.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder={english ? "Remark" : "रिमार्क"} value={remark} onChange={(event) => setRemark(event.target.value)} style={{ padding: "8px" }} />
-        <button type="submit" style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+        <input type="number" min="2000" max="2200" placeholder={english ? "Year" : "वर्ष"} value={year} onChange={(event) => setYear(event.target.value)} />
+        <input type="text" placeholder={english ? "From (DD-MM-YYYY)" : "कब से (DD-MM-YYYY)"} value={fromDt} onChange={(event) => setFromDt(event.target.value)} />
+        <input type="text" placeholder={english ? "To (DD-MM-YYYY)" : "कब तक (DD-MM-YYYY)"} value={toDt} onChange={(event) => setToDt(event.target.value)} />
+        <input type="number" required min="1" placeholder={english ? "Total Days" : "कुल दिन"} value={days} onChange={(event) => setDays(event.target.value)} />
+        <input type="text" placeholder={english ? "Order No." : "स्वीकृति आदेश नं."} value={orderNo} onChange={(event) => setOrderNo(event.target.value)} />
+        <input type="text" placeholder={english ? "Remark" : "रिमार्क"} value={remark} onChange={(event) => setRemark(event.target.value)} />
+        <button type="submit" className="module-btn-success">
           ✅ {english ? "Save Leave" : "स्वीकृति दर्ज करें"}
         </button>
       </form>
 
       {selectedBalance && (
-        <p style={{ fontWeight: "bold", color: "#0369A1" }}>
+        <p className="module-cell-accent-cyan">
           <HindiText text={employee.NAME} /> — {english ? "Earned PL" : "अर्जित PL"}: {selectedBalance["कुल अर्जित PL"]}, {english ? "Used" : "ली गई PL"}: {selectedBalance["कुल ली गई PL"]}, {english ? "Balance" : "शेष"}: {selectedBalance["शेष PL (Max 300)"]}
         </p>
       )}
+
       <h3>{english ? "PL Account" : "PL खाता"} ({plAccount.length})</h3>
-      <div className="table-responsive-box" style={{ overflowX: "auto", marginBottom: "18px" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box leave-account-wrap">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Name" : "नाम",
@@ -143,28 +148,29 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
                 english ? "Total Earned PL" : "कुल अर्जित PL",
                 english ? "Used PL" : "कुल ली गई PL",
                 english ? "Balance PL (Max 300)" : "शेष PL (अधिकतम 300)"
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {plAccount.map((row, index) => (
               <tr key={row._uid || `${row["BELT NO"]}-${index}`}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.NAME} /></td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.CADER}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["कुल अर्जित PL"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["कुल ली गई PL"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", fontFamily: "'Times New Roman', Times, serif" }}>{row["शेष PL (Max 300)"]}</td>
+                <td className="module-cell-center english-cell">{row["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={row.NAME} /></td>
+                <td className="module-cell-center english-cell">{row.CADER}</td>
+                <td className="module-cell-center english-cell">{row["कुल अर्जित PL"]}</td>
+                <td className="module-cell-center english-cell">{row["कुल ली गई PL"]}</td>
+                <td className="module-cell-center module-cell-bold english-cell">{row["शेष PL (Max 300)"]}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
       <h3>{english ? "Leave Approval Entries" : "अवकाश स्वीकृति / प्रविष्टि आदेश"} ({ledger.length})</h3>
-      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Name" : "नाम",
@@ -173,19 +179,19 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
                 english ? "Duration" : "अवधि",
                 english ? "Days" : "दिन",
                 english ? "Order No." : "आदेश नं."
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {leaveRows.map((row, index) => (
-              <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.NAME} /></td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row["अवकाश प्रकार"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["वर्ष"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["अवधि"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["दिन"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["आदेश नं."]}</td>
+              <tr key={`${row["BELT NO"]}-${index}`}>
+                <td className="module-cell-center english-cell">{row["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={row.NAME} /></td>
+                <td className="module-cell-center">{row["अवकाश प्रकार"]}</td>
+                <td className="module-cell-center english-cell">{row["वर्ष"]}</td>
+                <td className="module-cell-center english-cell">{row["अवधि"]}</td>
+                <td className="module-cell-center english-cell">{row["दिन"]}</td>
+                <td className="module-cell-center english-cell">{row["आदेश नं."]}</td>
               </tr>
             ))}
           </tbody>

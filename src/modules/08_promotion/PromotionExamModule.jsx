@@ -13,6 +13,9 @@ const EXAM_PATHS = {
   "DPC Promotion (SI to CI)": { source: "SI", target: "CI" }
 };
 
+/**
+ * [COMPONENT] PromotionExamModule — PCC एवं DPC पदोन्नति परीक्षा पात्रता समीक्षा
+ */
 export default function PromotionExamModule({ records = [], setRecords, allSheets = {}, setAllSheets, language = "hi" }) {
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("ALL");
@@ -113,7 +116,7 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
   };
 
   return (
-    <div className="promotion-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="promotion-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "🎓 Promotion & Exam Eligibility Review" : "🎓 पदोन्नति एवं परीक्षा पात्रता समीक्षा"}
         search={search}
@@ -125,30 +128,30 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
         language={language}
       />
 
-      <p style={{ color: "#92400E" }}>
+      <p className="module-notice-warn">
         {english
           ? "Service and education filters narrow the list; verify final eligibility manually."
           : "सेवा-अवधि और शिक्षा फ़िल्टर सूची को सीमित करते हैं; विभागीय नियमों के अनुसार अंतिम पात्रता मैनुअल रूप से सत्यापित करें।"}
       </p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "12px" }}>
-        <select value={examType} onChange={(event) => { setExamType(event.target.value); setBelt(""); }} style={{ padding: "8px" }}>
+      <div className="promotion-filter-grid">
+        <select value={examType} onChange={(event) => { setExamType(event.target.value); setBelt(""); }} className="module-select-control">
           {Object.keys(EXAM_PATHS).map((type) => <option key={type}>{type}</option>)}
         </select>
-        <label style={{ display: "grid", gap: "4px" }}>
-          {english ? "Minimum Service Years" : "न्यूनतम सेवा वर्ष"}
-          <input type="number" min="0" step="0.5" value={minimumService} onChange={(event) => setMinimumService(event.target.value)} style={{ padding: "8px" }} />
+        <label className="promotion-service-label">
+          <span>{english ? "Minimum Service Years" : "न्यूनतम सेवा वर्ष"}</span>
+          <input type="number" min="0" step="0.5" value={minimumService} onChange={(event) => setMinimumService(event.target.value)} className="module-select-control" />
         </label>
-        <select value={educationFilter} onChange={(event) => setEducationFilter(event.target.value)} style={{ padding: "8px" }}>
+        <select value={educationFilter} onChange={(event) => setEducationFilter(event.target.value)} className="module-select-control">
           <option value="ALL">{english ? "Education — All" : "शिक्षा — सभी"}</option>
           {educationOptions.map((education) => <option key={education} value={education}>{education}</option>)}
         </select>
       </div>
 
-      <div className="table-responsive-box" style={{ overflowX: "auto", marginBottom: "16px" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box promotion-table-wrap">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Post" : "पद",
@@ -158,21 +161,21 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
                 english ? "Service Yrs" : "सेवा वर्ष",
                 english ? "Punishments" : "सजा रिकॉर्ड",
                 english ? "Select" : "चयन"
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {candidates.map((row) => (
-              <tr key={row.record._uid || row.belt} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.belt}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.cader}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.name} /></td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row.education}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.joiningDate}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.serviceYears}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row.punishmentCount ? `${row.punishmentCount} ${english ? "Review" : "रिकॉर्ड — समीक्षा"}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>
-                  <button type="button" onClick={() => setBelt(String(row.belt || "").trim().toUpperCase())}>
+              <tr key={row.record._uid || row.belt}>
+                <td className="module-cell-center english-cell">{row.belt}</td>
+                <td className="module-cell-center english-cell">{row.cader}</td>
+                <td className="module-cell-bold"><HindiText text={row.name} /></td>
+                <td className="module-cell-center">{row.education}</td>
+                <td className="module-cell-center english-cell">{row.joiningDate}</td>
+                <td className="module-cell-center english-cell">{row.serviceYears}</td>
+                <td className="module-cell-center">{row.punishmentCount ? `${row.punishmentCount} ${english ? "Review" : "रिकॉर्ड — समीक्षा"}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>
+                <td className="module-cell-center">
+                  <button type="button" className="module-btn-small" onClick={() => setBelt(String(row.belt || "").trim().toUpperCase())}>
                     {english ? "Select" : "चुनें"}
                   </button>
                 </td>
@@ -182,46 +185,46 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
         </table>
       </div>
 
-      <form onSubmit={handlePromote} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "18px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <div style={{ padding: "8px", border: "1px solid #CBD5E1", borderRadius: "6px", background: "#fff", display: "flex", alignItems: "center", gap: "6px" }}>
+      <form onSubmit={handlePromote} className="module-form-card">
+        <div className="promotion-selected-box">
           {selectedEmployee ? (
             <>
-              <span>{selectedEmployee["BELT NO"]} — </span>
+              <span className="english-cell">{selectedEmployee["BELT NO"]} — </span>
               <HindiText text={selectedEmployee.NAME} />
             </>
           ) : (
-            <span style={{ color: "#64748B" }}>{english ? "Select employee above" : "ऊपर सूची से कर्मचारी चुनें"}</span>
+            <span className="module-muted-text">{english ? "Select employee above" : "ऊपर सूची से कर्मचारी चुनें"}</span>
           )}
         </div>
-        <input required type="text" placeholder={english ? "DOB / Order No." : "DOB / आदेश नं."} value={orderNo} onChange={(event) => setOrderNo(event.target.value)} style={{ padding: "8px" }} />
-        <input required type="text" placeholder={english ? "Order Date (DD-MM-YYYY)" : "आदेश दिनांक (DD-MM-YYYY)"} value={orderDate} onChange={(event) => setOrderDate(event.target.value)} style={{ padding: "8px" }} />
-        <button type="submit" disabled={!selectedEmployee} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+        <input required type="text" placeholder={english ? "DOB / Order No." : "DOB / आदेश नं."} value={orderNo} onChange={(event) => setOrderNo(event.target.value)} />
+        <input required type="text" placeholder={english ? "Order Date (DD-MM-YYYY)" : "आदेश दिनांक (DD-MM-YYYY)"} value={orderDate} onChange={(event) => setOrderDate(event.target.value)} />
+        <button type="submit" disabled={!selectedEmployee} className="module-btn-success">
           ✅ {english ? `Promote to ${targetRank}` : `स्वीकृति के बाद पद अपडेट करें (${targetRank})`}
         </button>
       </form>
 
       <h3>{english ? "Recorded Promotion Orders" : "दर्ज पदोन्नति आदेश"} ({history.length})</h3>
       <div className="table-responsive-box">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem", marginTop: "10px" }}>
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Name" : "नाम",
                 english ? "Exam / Promotion" : "परीक्षा / पदोन्नति",
                 english ? "Order No." : "आदेश नं.",
                 english ? "Date" : "दिनांक"
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {history.map((row, index) => (
-              <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.NAME} /></td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row.POSTING_PLACE}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row.ORDER_NO_DATE}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row.ORDER_DATE)}</td>
+              <tr key={`${row["BELT NO"]}-${index}`}>
+                <td className="module-cell-center english-cell">{row["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={row.NAME} /></td>
+                <td className="module-cell-center">{row.POSTING_PLACE}</td>
+                <td className="module-cell-center english-cell">{row.ORDER_NO_DATE}</td>
+                <td className="module-cell-center english-cell">{formatDateOnly(row.ORDER_DATE)}</td>
               </tr>
             ))}
           </tbody>

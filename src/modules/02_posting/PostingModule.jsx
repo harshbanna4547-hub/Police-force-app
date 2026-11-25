@@ -24,13 +24,13 @@ function SummaryTable({
       {!hideTitle && title && <h3 className="posting-summary-heading">{title}</h3>}
       {rows.map(([unit, employees]) => (
         <details key={unit} className="posting-unit-card">
-          <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
+          <summary className="posting-unit-summary">
             {translateUnitName(unit, language)} — {employees.length} {english ? "Working" : "कार्यरत"}
           </summary>
-          <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", marginTop: "8px" }}>
+          <div className="table-responsive-box posting-unit-table-wrap">
             <table className="module-table">
               <thead>
-                <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+                <tr>
                   <th>{english ? "Post" : "पद"}</th>
                   <th>{english ? "Sanctioned" : "स्वीकृत"}</th>
                   <th>{english ? "Working" : "कार्यरत"}</th>
@@ -42,11 +42,11 @@ function SummaryTable({
                   const list = employees.filter((employee) => rankOf(employee) === rank);
                   const sancVal = Number(sanctioned[unit]?.[rank] || 0);
                   return [
-                    <tr key={`${unit}-${rank}-total`} style={{ backgroundColor: "#F8FAFC", fontWeight: "bold" }}>
-                      <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{rank}</td>
-                      <td style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{sancVal}</td>
-                      <td style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif", color: "#15803D" }}>{list.length}</td>
-                      <td style={{ textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{list.length || "—"}</td>
+                    <tr key={`${unit}-${rank}-total`} className="posting-rank-summary-row">
+                      <td className="english-cell">{rank}</td>
+                      <td className="module-cell-center english-cell">{sancVal}</td>
+                      <td className="module-cell-center english-cell module-cell-accent-green">{list.length}</td>
+                      <td className="module-cell-center english-cell">{list.length || "—"}</td>
                     </tr>,
                     ...list.map((employee, index) => (
                       <EmployeeActionMenu
@@ -57,14 +57,12 @@ function SummaryTable({
                         language={language}
                         onAction={onAction}
                       >
-                        <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{rank}</td>
-                        <td style={{ textAlign: "center" }}>—</td>
-                        <td style={{ textAlign: "center" }}>—</td>
+                        <td className="english-cell">{rank}</td>
+                        <td className="module-cell-center">—</td>
+                        <td className="module-cell-center">—</td>
                         <td>
                           <HindiText text={employee.NAME} />{" "}
-                          <span style={{ fontFamily: "'Times New Roman', Times, serif" }}>
-                            ({getBeltNo(employee)})
-                          </span>
+                          <span className="english-cell">({getBeltNo(employee)})</span>
                         </td>
                       </EmployeeActionMenu>
                     ))
@@ -79,6 +77,9 @@ function SummaryTable({
   );
 }
 
+/**
+ * [COMPONENT] PostingModule — समस्त इकाइयों, CO वृत्त एवं थानों की पदस्थापन सूची
+ */
 export default function PostingModule({
   records = [],
   sanctioned = {},
@@ -94,6 +95,7 @@ export default function PostingModule({
   const [selectedCircle, setSelectedCircle] = useState(Object.keys(CO_PS_MAP)[0] || "");
   const english = language === "en";
 
+  // [MAPPING] Filter & group employees by official unit
   const { filtered, placeMap, sections } = useMemo(
     () => buildPostingGroups(records, search, gender),
     [records, search, gender]
@@ -184,7 +186,7 @@ export default function PostingModule({
               <h3 className="posting-summary-heading">{groupTitle}</h3>
               {Object.entries(CO_PS_MAP).map(([circle, stations]) => (
                 <details key={circle} className="posting-unit-card">
-                  <summary style={{ cursor: "pointer", fontWeight: "bold" }}>
+                  <summary className="posting-unit-summary">
                     {translateUnitName(circle, language)} — {(placeMap[circle] || []).length} {english ? "CO Staff" : "CO कर्मचारी"}
                   </summary>
                   <SummaryTable
@@ -236,9 +238,9 @@ export default function PostingModule({
             ))}
           </div>
           {selectedSection === "SEC_CO" && (
-            <label style={{ display: "block", marginBottom: "12px", fontWeight: "bold" }}>
+            <label className="posting-co-picker-label">
               {english ? "CO Circle" : "वृत्त कार्यालय"}
-              <select value={selectedCircle} onChange={(event) => setSelectedCircle(event.target.value)} style={{ marginLeft: "8px", padding: "6px 10px", borderRadius: "6px" }}>
+              <select value={selectedCircle} onChange={(event) => setSelectedCircle(event.target.value)} className="posting-co-picker-select">
                 {Object.keys(CO_PS_MAP).map((circle) => (
                   <option key={circle} value={circle}>{translateUnitName(circle, language)}</option>
                 ))}

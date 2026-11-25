@@ -1,3 +1,4 @@
+/* === POSTING MODULE (पदस्थापन सूची स्टाइल) === */
 .posting-module {
   background: var(--surface-raised, #fff);
   border: 1px solid var(--border, #e2e8f0);
@@ -54,6 +55,33 @@
   border-radius: 8px;
   padding: 8px 12px;
   background: var(--surface-raised, #fff);
+}
+
+.posting-unit-summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.posting-unit-table-wrap {
+  margin-top: 8px;
+}
+
+.posting-rank-summary-row {
+  background-color: #f8fafc;
+  font-weight: bold;
+}
+
+.posting-co-picker-label {
+  display: block;
+  margin-bottom: 12px;
+  font-weight: bold;
+}
+
+.posting-co-picker-select {
+  margin-left: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
 }
 
 .posting-footer-summary {

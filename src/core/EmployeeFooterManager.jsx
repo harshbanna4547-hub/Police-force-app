@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import NewEmployeeSmartForm from "./NewEmployeeSmartForm";
 import HindiText from "./HindiText";
 import { matchesEmployeeSearch } from "../forceLogic";
+import "./EmployeeFooterManager.css";
 
 const REMOVE_REASONS = [
   "Retirement",
@@ -38,6 +39,9 @@ function getBeltNumber(employee) {
   return String(employee.NAME || "").match(/\d{2,}/)?.[0] || "-";
 }
 
+/**
+ * [COMPONENT] EmployeeFooterManager — कर्मचारी जोड़ने, हटाने व त्वरित खोज की प्रबंधन पट्टी
+ */
 export default function EmployeeFooterManager({
   records,
   activeProfile,
@@ -56,6 +60,7 @@ export default function EmployeeFooterManager({
   const [removeReason, setRemoveReason] = useState(REMOVE_REASONS[0]);
   const english = language === "en";
 
+  // [FILTER] Search and post filter for quick picker modal
   const searchResults = useMemo(() => {
     const query = search.trim();
     return records.filter((employee) => {
@@ -88,35 +93,27 @@ export default function EmployeeFooterManager({
 
   return (
     <>
-      <div className="employee-quick-management" style={{ margin: "0 0 18px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(115deg, #0B1E3D, #173D73)", boxShadow: "0 8px 22px rgba(11,30,61,0.18)", color: "#fff" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+      <div className="employee-quick-management">
+        <div className="quick-mgmt-row">
           <div>
-            <strong style={{ display: "block", fontSize: "0.98rem" }}>
+            <strong className="quick-mgmt-title">
               👮 {english ? "Employee Quick Management" : "कर्मचारी त्वरित प्रबंधन"}
             </strong>
-            <span style={{ display: "block", marginTop: "3px", color: "#BFDBFE", fontSize: "0.8rem" }}>
+            <span className="quick-mgmt-subtitle">
               {records.length} {english ? "employees • Quick actions" : "कर्मचारी • तेज़ी से प्रबंधन करें"}
             </span>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            <button
-              type="button"
-              onClick={onDirectExcelConnect}
-              style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#0EA5E9", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
-            >
+          <div className="quick-mgmt-actions">
+            <button type="button" onClick={onDirectExcelConnect} className="quick-btn quick-btn-sky">
               📂 {fileName ? (english ? "Replace Master Sheet" : "Master Sheet बदलें") : (english ? "Upload Master Sheet" : "Master Sheet अपलोड करें")}
             </button>
-            <button
-              type="button"
-              onClick={() => setIsSmartFormOpen(true)}
-              style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#16A34A", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
-            >
+            <button type="button" onClick={() => setIsSmartFormOpen(true)} className="quick-btn quick-btn-green">
               ➕ {english ? "Add New Employee" : "नया कर्मचारी जोड़ें"}
             </button>
-            <button type="button" onClick={() => openPicker("REMOVE")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#DC2626", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
+            <button type="button" onClick={() => openPicker("REMOVE")} className="quick-btn quick-btn-red">
               🗑️ {english ? "Remove Employee" : "कर्मचारी हटाएं"}
             </button>
-            <button type="button" onClick={() => openPicker("SEARCH")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#2563EB", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
+            <button type="button" onClick={() => openPicker("SEARCH")} className="quick-btn quick-btn-blue">
               🔍 {english ? "Quick Search & Edit" : "खोजें एवं संपादित करें"}
             </button>
           </div>
@@ -127,16 +124,16 @@ export default function EmployeeFooterManager({
         <div
           role="presentation"
           onMouseDown={(event) => { if (event.target === event.currentTarget) setPickerMode(null); }}
-          style={{ position: "fixed", inset: 0, zIndex: 1100, background: "rgba(15,23,42,0.58)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+          className="picker-backdrop"
         >
-          <section style={{ width: "100%", maxWidth: "620px", maxHeight: "85vh", overflowY: "auto", background: "#fff", borderRadius: "12px", padding: "18px", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-              <h2 style={{ margin: 0, color: "#0B1E3D", fontSize: "1.1rem" }}>
+          <section className="picker-dialog">
+            <div className="picker-header">
+              <h2 className="picker-title">
                 {pickerMode === "REMOVE"
                   ? (english ? "🗑️ Remove Employee" : "🗑️ कर्मचारी हटाएं")
                   : (english ? "🔍 Search & Edit Employee" : "🔍 कर्मचारी खोजें और संपादित करें")}
               </h2>
-              <button type="button" onClick={() => setPickerMode(null)} aria-label="Close" style={{ border: 0, background: "transparent", fontSize: "1.35rem", cursor: "pointer", color: "#475569" }}>✕</button>
+              <button type="button" onClick={() => setPickerMode(null)} aria-label="Close" className="picker-close">✕</button>
             </div>
             <input
               autoFocus
@@ -144,39 +141,30 @@ export default function EmployeeFooterManager({
               value={search}
               onChange={(event) => { setSearch(event.target.value); setEmployeeToRemove(null); }}
               placeholder={english ? "Search by name or belt no..." : "नाम या बेल्ट नं. से खोजें..."}
-              style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "0.95rem", marginBottom: "10px" }}
+              className="picker-search"
             />
-            <div role="group" aria-label="Filter by post" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+            <div role="group" aria-label="Filter by post" className="picker-filter-row">
               {POST_FILTERS.map((filter) => (
                 <button
                   type="button"
                   key={filter}
                   aria-pressed={postFilter === filter}
                   onClick={() => { setPostFilter(filter); setEmployeeToRemove(null); }}
-                  style={{
-                    padding: "6px 10px",
-                    border: `1px solid ${postFilter === filter ? "#1D63DC" : "#CBD5E1"}`,
-                    borderRadius: "16px",
-                    background: postFilter === filter ? "#1D63DC" : "#fff",
-                    color: postFilter === filter ? "#fff" : "#334155",
-                    fontSize: "0.78rem",
-                    fontWeight: "bold",
-                    cursor: "pointer"
-                  }}
+                  className={`picker-filter-chip ${postFilter === filter ? "is-active" : ""}`}
                 >
                   {filter}
                 </button>
               ))}
             </div>
             {pickerMode === "REMOVE" && (
-              <label style={{ display: "block", marginBottom: "10px", color: "#334155", fontWeight: "bold", fontSize: "0.88rem" }}>
+              <label className="picker-reason-label">
                 {english ? "Reason" : "हटाने का कारण"}
-                <select value={removeReason} onChange={(event) => setRemoveReason(event.target.value)} style={{ display: "block", width: "100%", marginTop: "5px", padding: "9px", border: "1px solid #CBD5E1", borderRadius: "7px", background: "#fff" }}>
+                <select value={removeReason} onChange={(event) => setRemoveReason(event.target.value)} className="picker-reason-select">
                   {REMOVE_REASONS.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
                 </select>
               </label>
             )}
-            <div style={{ maxHeight: "42vh", overflowY: "auto", border: "1px solid #E2E8F0", borderRadius: "8px" }}>
+            <div className="picker-results-box">
               {searchResults.length ? searchResults.map((employee, index) => {
                 const belt = getBeltNumber(employee);
                 const cader = getCader(employee);
@@ -196,35 +184,29 @@ export default function EmployeeFooterManager({
                         setEmployeeToRemove(employee);
                       }
                     }}
-                    style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", width: "100%", textAlign: "left", padding: "9px 11px", border: 0, borderBottom: "1px solid #E2E8F0", background: selected ? "#DBEAFE" : "#fff", cursor: "pointer" }}
+                    className={`picker-result-row ${selected ? "is-selected" : ""}`}
                   >
-                    <span style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", minWidth: 0 }}>
-                      <strong style={{ padding: "3px 7px", borderRadius: "5px", background: "#E0E7FF", color: "#3730A3", fontSize: "0.76rem", whiteSpace: "nowrap" }}>
-                        {cader || "—"}
-                      </strong>
-                      {showBelt && (
-                        <strong style={{ padding: "3px 7px", borderRadius: "5px", background: "#FEF3C7", color: "#92400E", fontSize: "0.76rem", whiteSpace: "nowrap" }}>
-                          {belt}
-                        </strong>
-                      )}
-                      <span style={{ minWidth: 0 }}>
-                        <strong style={{ display: "block", color: "#0F172A" }}><HindiText text={employee.NAME} /></strong>
-                        <small style={{ display: "block", color: "#64748B" }}>
+                    <span className="picker-result-meta">
+                      <strong className="picker-badge-cader">{cader || "—"}</strong>
+                      {showBelt && <strong className="picker-badge-belt">{belt}</strong>}
+                      <span className="picker-name-wrap">
+                        <strong className="picker-name-text"><HindiText text={employee.NAME} /></strong>
+                        <small className="picker-posting-text">
                           {english ? "Posting" : "पदस्थापन"}: <HindiText text={employee.POSTING} />
                         </small>
                       </span>
                     </span>
-                    <span style={{ color: selected ? "#1D4ED8" : "#15803D", fontWeight: "bold", whiteSpace: "nowrap" }}>
+                    <span className={`picker-action-tag ${selected ? "is-selected" : ""}`}>
                       {pickerMode === "SEARCH" ? (english ? "✏️ Select" : "✏️ चुनें") : selected ? (english ? "✓ Selected" : "✓ चुना गया") : (english ? "Select" : "चुनें")}
                     </span>
                   </button>
                 );
-              }) : <p style={{ margin: 0, padding: "16px", color: "#64748B", textAlign: "center" }}>{english ? "No employee found." : "कोई कर्मचारी नहीं मिला।"}</p>}
+              }) : <p className="picker-empty">{english ? "No employee found." : "कोई कर्मचारी नहीं मिला।"}</p>}
             </div>
             {pickerMode === "REMOVE" && (
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "14px" }}>
-                <button type="button" onClick={() => setPickerMode(null)} style={{ padding: "8px 14px", border: "1px solid #CBD5E1", borderRadius: "7px", background: "#fff", cursor: "pointer" }}>{english ? "Cancel" : "रद्द करें"}</button>
-                <button type="button" onClick={handleRemoveEmployee} disabled={!employeeToRemove} style={{ padding: "8px 14px", border: 0, borderRadius: "7px", background: employeeToRemove ? "#DC2626" : "#94A3B8", color: "#fff", fontWeight: "bold", cursor: employeeToRemove ? "pointer" : "not-allowed" }}>🗑️ {english ? "Confirm Remove" : "हटाने की पुष्टि करें"}</button>
+              <div className="picker-footer">
+                <button type="button" onClick={() => setPickerMode(null)} className="picker-cancel-btn">{english ? "Cancel" : "रद्द करें"}</button>
+                <button type="button" onClick={handleRemoveEmployee} disabled={!employeeToRemove} className="picker-confirm-btn">🗑️ {english ? "Confirm Remove" : "हटाने की पुष्टि करें"}</button>
               </div>
             )}
           </section>

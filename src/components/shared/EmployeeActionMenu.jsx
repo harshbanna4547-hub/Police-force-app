@@ -14,7 +14,6 @@ export default function EmployeeActionMenu({
   employee,
   onAction,
   children,
-  style,
   responsiveDetails = false,
   nameCellIndex = 1,
   language = "hi"

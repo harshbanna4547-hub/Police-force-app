@@ -2,6 +2,7 @@ import { useState } from "react";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
 import { isDevlysText } from "./isDevlysText";
 import HindiText from "./HindiText";
+import "./EmployeeEditModal.css";
 
 const POSTING_OPTIONS = [
   ...new Set([...OFFICE_CO_PS_LIST, ...Object.values(PS_CHOWKI_MAP).flat()])
@@ -150,15 +151,9 @@ function createForm(employee) {
   return values;
 }
 
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "9px 10px",
-  border: "1px solid #CBD5E1",
-  borderRadius: "6px",
-  fontSize: "0.95rem"
-};
-
+/**
+ * [COMPONENT] EmployeeEditModal — कर्मचारी का विवरण संपादित / स्थानांतरण अद्यतन करने का मोडल
+ */
 export default function EmployeeEditModal({ employee, isNew = false, initialTab = FIELD_GROUPS[0].id, onSave, onClose }) {
   const [form, setForm] = useState(() => createForm(employee));
   const [saving, setSaving] = useState(false);
@@ -201,52 +196,58 @@ export default function EmployeeEditModal({ employee, isNew = false, initialTab 
     <div
       role="presentation"
       onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: 1200, background: "rgba(15,23,42,0.62)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}
+      className="edit-modal-backdrop"
     >
-      <form onSubmit={save} style={{ background: "#fff", borderRadius: "12px", width: "100%", maxWidth: "760px", maxHeight: "90vh", overflowY: "auto", padding: "20px", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", marginBottom: "14px" }}>
+      <form onSubmit={save} className="edit-modal-form">
+        <div className="edit-modal-header">
           <div>
-            <h2 style={{ margin: 0, color: "#0B1E3D", fontSize: "1.2rem" }}>{isNew ? "➕ नया कर्मचारी जोड़ें" : "✏️ कर्मचारी विवरण संपादित करें"}</h2>
-            <div style={{ marginTop: "4px", color: "#475569", fontSize: "0.9rem" }}><HindiText text={getStoredValue(employee, "NAME")} /></div>
+            <h2 className="edit-modal-title">{isNew ? "➕ नया कर्मचारी जोड़ें" : "✏️ कर्मचारी विवरण संपादित करें"}</h2>
+            <div className="edit-modal-subtitle"><HindiText text={getStoredValue(employee, "NAME")} /></div>
           </div>
-          <button type="button" onClick={onClose} aria-label="बंद करें" style={{ border: 0, background: "transparent", fontSize: "1.4rem", cursor: "pointer", color: "#475569" }}>✕</button>
+          <button type="button" onClick={onClose} aria-label="बंद करें" className="edit-modal-close">✕</button>
         </div>
 
-        <nav aria-label="कर्मचारी विवरण टैब" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+        <nav aria-label="कर्मचारी विवरण टैब" className="edit-modal-tabs">
           {FIELD_GROUPS.map((group) => (
-            <button key={group.id} type="button" onClick={() => setActiveTab(group.id)} style={{ padding: "8px 10px", border: "1px solid #CBD5E1", borderRadius: "8px", background: activeTab === group.id ? "#1D63DC" : "#F8FAFC", color: activeTab === group.id ? "#fff" : "#334155", fontWeight: "bold", cursor: "pointer" }}>
+            <button
+              key={group.id}
+              type="button"
+              onClick={() => setActiveTab(group.id)}
+              className={`edit-modal-tab ${activeTab === group.id ? "is-active" : ""}`}
+            >
               {group.title}
             </button>
           ))}
         </nav>
+
         {FIELD_GROUPS.filter((group) => group.id === activeTab).map((group) => (
-          <fieldset key={group.title} style={{ border: "1px solid #E2E8F0", borderRadius: "8px", margin: "0 0 14px", padding: "12px" }}>
-            <legend style={{ padding: "0 6px", color: "#1D63DC", fontWeight: "bold" }}>{group.title}</legend>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" }}>
+          <fieldset key={group.title} className="edit-modal-fieldset">
+            <legend className="edit-modal-legend">{group.title}</legend>
+            <div className="edit-modal-grid">
               {group.fields.map(({ key, label, type }) => {
                 const currentValue = form[key] ?? "";
                 const options = type === "office" ? [...new Set([...POSTING_OPTIONS, String(currentValue).trim()].filter(Boolean))] : [];
                 const rawVal = String(currentValue ?? "");
-                const isLegacyDevlys = type === "legacy-text" || (key === "POSTING" && isDevlysText(rawVal)) || isDevlysText(rawVal);
-                const fontFamily = type === "legacy-text" || (key === "POSTING" && isLegacyDevlys)
-                  ? (/[\u0900-\u097F]/.test(rawVal) ? "'Noto Sans Devanagari', sans-serif" : "'DevLys 010', sans-serif")
-                  : "'Times New Roman', Times, serif";
-                const textStyle = { ...inputStyle, marginTop: "5px", fontFamily, fontSize: type === "legacy-text" ? "1.15rem" : inputStyle.fontSize };
+                const isLegacyDevlys = type === "legacy-text" || isDevlysText(rawVal);
+                const fontClass = (type === "legacy-text" || (key === "POSTING" && isLegacyDevlys))
+                  ? (/[\u0900-\u097F]/.test(rawVal) ? "is-unicode" : "is-devlys")
+                  : "is-english";
+
                 return (
-                  <label key={key} style={{ display: "block", color: "#334155", fontSize: "0.88rem", fontWeight: 600 }}>
+                  <label key={key} className="edit-modal-field">
                     {label}
                     {type === "office" ? (
-                      <select value={currentValue} onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))} style={{ ...textStyle, background: "#fff" }}>
+                      <select value={currentValue} onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))} className={`edit-modal-input ${fontClass}`}>
                         <option value="">कार्यालय / थाना चुनें</option>
                         {options.map((place) => <option key={place} value={place}>{displayValue(place)}</option>)}
                       </select>
                     ) : type === "cader" ? (
-                      <select value={currentValue} onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))} style={{ ...textStyle, background: "#fff" }}>
+                      <select value={currentValue} onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))} className="edit-modal-input is-english">
                         {!currentValue && <option value="">पद चुनें</option>}
                         {[...new Set([...CADER_OPTIONS, String(currentValue).trim()].filter(Boolean))].map((cader) => <option key={cader} value={cader}>{cader}</option>)}
                       </select>
                     ) : type === "category" ? (
-                      <select value={currentValue} onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))} style={{ ...textStyle, background: "#fff" }}>
+                      <select value={currentValue} onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))} className="edit-modal-input is-english">
                         {!currentValue && <option value="">श्रेणी चुनें</option>}
                         {[...new Set(["GEN", "OBC", "SC", "ST", "MBC", "EWS", String(currentValue).trim()].filter(Boolean))].map((category) => <option key={category} value={category}>{category}</option>)}
                       </select>
@@ -256,7 +257,7 @@ export default function EmployeeEditModal({ employee, isNew = false, initialTab 
                         required={isNew && key === "NAME"}
                         value={currentValue}
                         onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))}
-                        style={textStyle}
+                        className={`edit-modal-input ${fontClass}`}
                       />
                     )}
                   </label>
@@ -266,9 +267,9 @@ export default function EmployeeEditModal({ employee, isNew = false, initialTab 
           </fieldset>
         ))}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-          <button type="button" onClick={onClose} style={{ padding: "9px 16px", border: "1px solid #CBD5E1", borderRadius: "6px", background: "#fff", cursor: "pointer" }}>रद्द करें</button>
-          <button type="submit" disabled={saving} style={{ padding: "9px 18px", border: 0, borderRadius: "6px", background: "#15803D", color: "#fff", fontWeight: "bold", cursor: saving ? "wait" : "pointer" }}>
+        <div className="edit-modal-footer">
+          <button type="button" onClick={onClose} className="edit-modal-cancel">रद्द करें</button>
+          <button type="submit" disabled={saving} className="edit-modal-save">
             {saving ? "सेव हो रहा है..." : "✅ सेव करें"}
           </button>
         </div>

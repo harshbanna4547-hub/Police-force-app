@@ -1,0 +1,257 @@
+/* === EMPLOYEE QUICK MANAGEMENT BAR & PICKER MODAL === */
+.employee-quick-management {
+  margin: 0 0 18px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(115deg, #0B1E3D, #173D73);
+  box-shadow: 0 8px 22px rgba(11, 30, 61, 0.18);
+  color: #ffffff;
+}
+
+.quick-mgmt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.quick-mgmt-title {
+  display: block;
+  font-size: 0.98rem;
+}
+
+.quick-mgmt-subtitle {
+  display: block;
+  margin-top: 3px;
+  color: #BFDBFE;
+  font-size: 0.8rem;
+}
+
+.quick-mgmt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.quick-btn-sky { background: #0EA5E9; }
+.quick-btn-green { background: #16A34A; }
+.quick-btn-red { background: #DC2626; }
+.quick-btn-blue { background: #2563EB; }
+
+.picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(15, 23, 42, 0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.picker-dialog {
+  width: 100%;
+  max-width: 620px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.picker-title {
+  margin: 0;
+  color: #0B1E3D;
+  font-size: 1.1rem;
+}
+
+.picker-close {
+  border: 0;
+  background: transparent;
+  font-size: 1.35rem;
+  cursor: pointer;
+  color: #475569;
+}
+
+.picker-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 10px;
+}
+
+.picker-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.picker-filter-chip {
+  padding: 6px 10px;
+  border: 1px solid #CBD5E1;
+  border-radius: 16px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.picker-filter-chip.is-active {
+  border-color: #1D63DC;
+  background: #1D63DC;
+  color: #ffffff;
+}
+
+.picker-reason-label {
+  display: block;
+  margin-bottom: 10px;
+  color: #334155;
+  font-weight: bold;
+  font-size: 0.88rem;
+}
+
+.picker-reason-select {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  padding: 9px;
+  border: 1px solid #CBD5E1;
+  border-radius: 7px;
+  background: #ffffff;
+}
+
+.picker-results-box {
+  max-height: 42vh;
+  overflow-y: auto;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+}
+
+.picker-result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 9px 11px;
+  border: 0;
+  border-bottom: 1px solid #E2E8F0;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.picker-result-row.is-selected {
+  background: #DBEAFE;
+}
+
+.picker-result-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.picker-badge-cader {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #E0E7FF;
+  color: #3730A3;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.picker-badge-belt {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.picker-name-wrap {
+  min-width: 0;
+}
+
+.picker-name-text {
+  display: block;
+  color: #0F172A;
+}
+
+.picker-posting-text {
+  display: block;
+  color: #64748B;
+}
+
+.picker-action-tag {
+  color: #15803D;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.picker-action-tag.is-selected {
+  color: #1D4ED8;
+}
+
+.picker-empty {
+  margin: 0;
+  padding: 16px;
+  color: #64748B;
+  text-align: center;
+}
+
+.picker-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.picker-cancel-btn {
+  padding: 8px 14px;
+  border: 1px solid #CBD5E1;
+  border-radius: 7px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.picker-confirm-btn {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #DC2626;
+  color: #ffffff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.picker-confirm-btn:disabled {
+  background: #94A3B8;
+  cursor: not-allowed;
+}

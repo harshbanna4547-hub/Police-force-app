@@ -10,6 +10,9 @@ import {
 } from "./archiveLogic";
 import "./archive.css";
 
+/**
+ * [COMPONENT] EmployeeArchiveModule — वर्ष-वार सेवानिवृत्ति / रिलीव / मृत्यु / प्रतिनियुक्ति अभिलेख
+ */
 export default function EmployeeArchiveModule({
   records = [],
   allSheets = {},
@@ -72,9 +75,9 @@ export default function EmployeeArchiveModule({
   })), [visibleRows]);
 
   const yearFilterControl = (
-    <label style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: 600, fontSize: "0.85rem" }}>
+    <label className="archive-year-filter">
       <span>{english ? "Year" : "वर्ष"}</span>
-      <select value={year} onChange={(event) => setYear(event.target.value)} style={{ minHeight: "38px", padding: "7px 10px", border: "1px solid #cbd5e1", borderRadius: "7px" }}>
+      <select value={year} onChange={(event) => setYear(event.target.value)} className="module-select-control">
         <option value="">{english ? "All Years" : "सभी वर्ष"}</option>
         {years.map((item) => <option key={item} value={item}>{item}</option>)}
       </select>
@@ -98,8 +101,9 @@ export default function EmployeeArchiveModule({
         extraActions={yearFilterControl}
       />
 
+      {/* === QUICK-SELECT PILLS & ARCHIVE ENTRY FORM === */}
       <section className="archive-entry-panel">
-        <h3 style={{ marginTop: 0 }}>
+        <h3 className="archive-entry-heading">
           {english ? "Search Employee & Record Archive Entry" : "कर्मचारी खोजें और अभिलेख दर्ज करें"}
         </h3>
         <div className="archive-pill-list">
@@ -111,7 +115,7 @@ export default function EmployeeArchiveModule({
               className={`archive-pill-btn ${selectedUid === employee._uid ? "is-selected" : ""}`}
             >
               <HindiText text={employee.NAME} />
-              <span style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+              <span className="english-cell">
                 · {employee.CADER || "-"} · {getBeltNo(employee)}
               </span>
             </button>
@@ -130,13 +134,14 @@ export default function EmployeeArchiveModule({
         )}
       </section>
 
+      {/* === YEAR-WISE ARCHIVE TABLES === */}
       {Object.entries(grouped).map(([groupYear, rows]) => (
-        <section key={groupYear} style={{ marginTop: "16px" }}>
+        <section key={groupYear} className="archive-year-section">
           <h3>{groupYear}</h3>
-          <div className="table-responsive-box" style={{ overflowX: "auto" }}>
+          <div className="table-responsive-box">
             <table className="module-table">
               <thead>
-                <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+                <tr>
                   {[
                     english ? "Name" : "नाम",
                     english ? "Father Name" : "पिता का नाम",
@@ -153,10 +158,10 @@ export default function EmployeeArchiveModule({
                   <tr key={row._uid || `${row.NAME}-${index}`}>
                     <td><HindiText text={row.NAME} /></td>
                     <td><HindiText text={row["FATHER NAME"]} /></td>
-                    <td style={{ fontFamily: "'Times New Roman', Times, serif", textAlign: "center" }}>{row.CADER || "-"}</td>
-                    <td style={{ fontFamily: "'Times New Roman', Times, serif", textAlign: "center" }}>{getBeltNo(row)}</td>
-                    <td style={{ textAlign: "center" }}>{row.EVENT_TYPE || row.REASON || "-"}</td>
-                    <td style={{ fontFamily: "'Times New Roman', Times, serif", textAlign: "center" }}>{formatArchiveDay(row.EVENT_DATE)}</td>
+                    <td className="english-cell module-cell-center">{row.CADER || "-"}</td>
+                    <td className="english-cell module-cell-center">{getBeltNo(row)}</td>
+                    <td className="module-cell-center">{row.EVENT_TYPE || row.REASON || "-"}</td>
+                    <td className="english-cell module-cell-center">{formatArchiveDay(row.EVENT_DATE)}</td>
                     <td><HindiText text={row.POSTING} /></td>
                   </tr>
                 ))}
@@ -166,7 +171,7 @@ export default function EmployeeArchiveModule({
         </section>
       ))}
       {archiveRows.length === 0 && (
-        <p style={{ color: "#64748B" }}>
+        <p className="module-muted-text">
           {english ? "No year-wise archive records yet." : "अभी कोई वर्ष-वार अभिलेख नहीं है।"}
         </p>
       )}

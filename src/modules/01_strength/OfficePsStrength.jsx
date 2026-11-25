@@ -1,4 +1,3 @@
-// src/modules/01_strength/OfficePsStrength.jsx
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { OFFICE_SECTIONS, PS_CHOWKI_MAP, CO_PS_MAP } from "../../data/officeUnits";
 import { resolveUnitAndChowki } from "../../core/postingResolver";
@@ -16,6 +15,9 @@ const getOfficeRankCode = (cader) => {
   return rank === "OTHER" ? "FC" : rank;
 };
 
+/**
+ * [COMPONENT] OfficePsStrength — कार्यालय, शाखा, वृत्त (CO) और थाना/चौकी-वार नफरी तालिका
+ */
 export default function OfficePsStrength({
   records = [],
   search = "",
@@ -36,6 +38,7 @@ export default function OfficePsStrength({
   const [modalTab, setModalTab] = useState("ALL");
   const english = language === "en";
 
+  // [MAPPING] Map active employees to official units & chowkis via dual DevLys/Unicode matching
   const workingMap = useMemo(() => {
     const map = {};
     const makeEmpty = () => ({ total: 0, list: [], byRank: { ASP: [], DYSP: [], CI: [], SI: [], ASI: [], HC: [], FC: [], "FC(DR)": [] }, chowkis: {} });
@@ -209,8 +212,8 @@ export default function OfficePsStrength({
   let sn = 1;
   return (
     <div className="office-ps-strength">
-      <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+      <div className="office-ps-topbar">
+        <div className="office-ps-filter-pills">
           {[
             ["ALL", english ? "All" : "सभी"],
             ["SEC_SPO", english ? "SP Office" : "SP कार्यालय"],
@@ -224,44 +227,34 @@ export default function OfficePsStrength({
               type="button"
               key={id}
               onClick={() => setSecFilter(id)}
-              style={{
-                padding: "5px 12px",
-                borderRadius: "18px",
-                border: "1px solid #CBD5E1",
-                cursor: "pointer",
-                fontWeight: "bold",
-                backgroundColor: secFilter === id ? "#1D63DC" : "#fff",
-                color: secFilter === id ? "#fff" : "#1E293B"
-              }}
+              className={`office-ps-filter-pill ${secFilter === id ? "is-active" : ""}`}
             >
               {lbl}
             </button>
           ))}
         </div>
-        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+        <div>
           {!editing ? (
-            <button type="button" onClick={() => setEditing(true)} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+            <button type="button" onClick={() => setEditing(true)} className="module-btn-primary">
               ✏️ {english ? "Edit Sanctioned" : "स्वीकृत भरें"}
             </button>
           ) : (
-            <button type="button" onClick={saveUnitSanc} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+            <button type="button" onClick={saveUnitSanc} className="module-btn-success">
               ✅ {english ? "Save" : "सेव करें"}
             </button>
           )}
         </div>
       </div>
 
-      <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box">
+        <table className="office-ps-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px", border: "1px solid #CBD5E1", width: "55px" }}>{english ? "S.N." : "क्र.सं."}</th>
-              <th style={{ padding: "8px", textAlign: "left", border: "1px solid #CBD5E1" }}>
-                {english ? "Office / Branch / CO / Police Station" : "कार्यालय / शाखा / CO / थाना का नाम"}
-              </th>
-              <th style={{ padding: "8px", border: "1px solid #CBD5E1", width: "110px" }}>{english ? "Sanctioned" : "स्वीकृत"}</th>
-              <th style={{ padding: "8px", border: "1px solid #CBD5E1", width: "110px" }}>{english ? "Working" : "कार्यरत"}</th>
-              <th style={{ padding: "8px", border: "1px solid #CBD5E1", width: "110px" }}>{english ? "Vacant / Surplus" : "रिक्त / अधिक"}</th>
+            <tr>
+              <th className="office-ps-col-sn">{english ? "S.N." : "क्र.सं."}</th>
+              <th>{english ? "Office / Branch / CO / Police Station" : "कार्यालय / शाखा / CO / थाना का नाम"}</th>
+              <th className="office-ps-col-num">{english ? "Sanctioned" : "स्वीकृत"}</th>
+              <th className="office-ps-col-num">{english ? "Working" : "कार्यरत"}</th>
+              <th className="office-ps-col-num">{english ? "Vacant / Surplus" : "रिक्त / अधिक"}</th>
             </tr>
           </thead>
           <tbody>
@@ -272,12 +265,12 @@ export default function OfficePsStrength({
 
               return (
                 <React.Fragment key={sec.id}>
-                  <tr onClick={() => setOpenSec((p) => ({ ...p, [sec.id]: !p[sec.id] }))} style={{ backgroundColor: "#D8E4F0", fontWeight: "bold", cursor: "pointer" }}>
-                    <td style={{ padding: "7px", textAlign: "center", border: "1px solid #CBD5E1" }}>•</td>
-                    <td style={{ padding: "7px 10px", border: "1px solid #CBD5E1" }}>{translateSectionTitle(sec.id, sec.title, language)}</td>
-                    <td style={{ padding: "7px", textAlign: "center", border: "1px solid #CBD5E1" }}>{sSum}</td>
-                    <td style={{ padding: "7px", textAlign: "center", border: "1px solid #CBD5E1", color: "#15803D" }}>{wSum}</td>
-                    <td style={{ padding: "7px", textAlign: "center", border: "1px solid #CBD5E1" }}>{fmtVac(sSum, wSum)}</td>
+                  <tr onClick={() => setOpenSec((p) => ({ ...p, [sec.id]: !p[sec.id] }))} className="office-ps-sec-row">
+                    <td className="module-cell-center">•</td>
+                    <td>{translateSectionTitle(sec.id, sec.title, language)}</td>
+                    <td className="module-cell-center english-cell">{sSum}</td>
+                    <td className="module-cell-center english-cell module-cell-accent-green">{wSum}</td>
+                    <td className="module-cell-center english-cell">{fmtVac(sSum, wSum)}</td>
                   </tr>
 
                   {isSecOpen && sec.units.map((u) => {
@@ -296,41 +289,43 @@ export default function OfficePsStrength({
                     return (
                       <React.Fragment key={u}>
                         <tr>
-                          <td style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0" }}>{sn++}</td>
-                          <td onClick={() => setOpenUnit((p) => ({ ...p, [u]: !p[u] }))} style={{ padding: "6px 14px", border: "1px solid #E2E8F0", fontWeight: "bold", cursor: "pointer" }}>
+                          <td className="module-cell-center english-cell">{sn++}</td>
+                          <td onClick={() => setOpenUnit((p) => ({ ...p, [u]: !p[u] }))} className="office-ps-unit-name">
                             {translateUnitName(u, language)}
                           </td>
-                          <td style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0" }}>{totalSanc}</td>
-                          <td onClick={() => wObj.total > 0 && openUnitModal(translateUnitName(u, language), u, "ALL")} style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0", color: "#15803D", fontWeight: "bold", cursor: wObj.total > 0 ? "pointer" : "default" }}>
+                          <td className="module-cell-center english-cell">{totalSanc}</td>
+                          <td
+                            onClick={() => wObj.total > 0 && openUnitModal(translateUnitName(u, language), u, "ALL")}
+                            className={`module-cell-center english-cell ${wObj.total > 0 ? "strength-working-cell" : "module-cell-accent-green"}`}
+                          >
                             {wObj.total}
                           </td>
-                          <td style={{ padding: "6px", textAlign: "center", border: "1px solid #E2E8F0", color: String(totalVac).startsWith("+") || totalVac === 0 ? "#15803D" : "#DC2626", fontWeight: "bold" }}>
+                          <td className={`module-cell-center english-cell ${String(totalVac).startsWith("+") || totalVac === 0 ? "strength-vac-ok" : "strength-vac-deficit"}`}>
                             {totalVac}
                           </td>
                         </tr>
 
                         {isOpen && (
-                          <tr style={{ backgroundColor: "#F8FAFC" }}>
-                            <td style={{ border: "1px solid #CBD5E1" }}></td>
-                            <td colSpan="4" style={{ padding: "10px", border: "1px solid #CBD5E1" }}>
+                          <tr>
+                            <td></td>
+                            <td colSpan="4" className="office-ps-unit-detail-cell">
                               {chowkis.length > 0 && (
-                                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+                                <div className="office-chowki-tabs">
                                   <button
                                     type="button"
                                     onClick={() => setSelectedSubTab((p) => ({ ...p, [u]: "TOTAL" }))}
-                                    style={{ padding: "5px 10px", borderRadius: "6px", border: "1px solid #1D63DC", cursor: "pointer", fontWeight: "bold", fontSize: "0.78rem", backgroundColor: activeSub === "TOTAL" ? "#1D63DC" : "#EFF6FF", color: activeSub === "TOTAL" ? "#FFFFFF" : "#1E3A8A" }}
+                                    className={`office-chowki-total-btn ${activeSub === "TOTAL" ? "is-active" : ""}`}
                                   >
                                     {english ? "Total (PS + Chowkis)" : "कुल योग (थाना + चौकियाँ)"}: {wObj.total}
                                   </button>
                                   {chowkis.map((ck) => {
                                     const cd = wObj.chowkis[ck] || { total: 0 };
-                                    const isCkActive = activeSub === ck;
                                     return (
                                       <button
                                         type="button"
                                         key={ck}
                                         onClick={() => setSelectedSubTab((p) => ({ ...p, [u]: ck }))}
-                                        style={{ padding: "5px 10px", borderRadius: "6px", border: "1px solid #93C5FD", cursor: "pointer", fontWeight: "bold", fontSize: "0.78rem", backgroundColor: isCkActive ? "#0B1E3D" : "#FFFFFF", color: isCkActive ? "#FFD700" : "#1E293B" }}
+                                        className={`office-chowki-btn ${activeSub === ck ? "is-active" : ""}`}
                                       >
                                         {translateUnitName(ck, language)}: {cd.total}
                                       </button>
@@ -338,51 +333,51 @@ export default function OfficePsStrength({
                                   })}
                                 </div>
                               )}
-                              <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: "#0B1E3D", marginBottom: "5px" }}>
+                              <div className="office-subtable-caption">
                                 📊 {activeSub === "TOTAL" ? `${translateUnitName(u, language)} — ${english ? "Total" : "कुल योग"}` : `${translateUnitName(u, language)} ➔ ${translateUnitName(activeSub, language)}`}
                               </div>
 
-                              <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-                                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem", backgroundColor: "#fff" }}>
+                              <div className="table-responsive-box">
+                                <table className="office-rank-table">
                                   <thead>
-                                    <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
-                                      <th style={{ padding: "5px", border: "1px solid #CBD5E1" }}>{english ? "Particulars" : "विवरण"}</th>
-                                      {RANKS.map((rk) => <th key={rk} style={{ padding: "5px", border: "1px solid #CBD5E1" }}>{rk}</th>)}
-                                      <th style={{ padding: "5px", border: "1px solid #CBD5E1" }}>{english ? "Total" : "योग"}</th>
+                                    <tr>
+                                      <th>{english ? "Particulars" : "विवरण"}</th>
+                                      {RANKS.map((rk) => <th key={rk}>{rk}</th>)}
+                                      <th>{english ? "Total" : "योग"}</th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     <tr>
-                                      <td style={{ padding: "5px", fontWeight: "bold", border: "1px solid #CBD5E1" }}>{english ? "Sanctioned" : "स्वीकृत"}</td>
+                                      <td>{english ? "Sanctioned" : "स्वीकृत"}</td>
                                       {RANKS.map((rk) => {
                                         const val = chowkis.length > 0 && activeSub === "TOTAL"
                                           ? (chowkis.reduce((a, ck) => a + Number(unitRankSanc[`${u}::${ck}`]?.[rk] || 0), 0) || Number(unitRankSanc[u]?.[rk] || 0))
                                           : Number(unitRankSanc[activeSancKey]?.[rk] || 0);
                                         return (
-                                          <td key={rk} style={{ padding: "4px", textAlign: "center", border: "1px solid #CBD5E1" }}>
+                                          <td key={rk} className="english-cell">
                                             {editing && !(chowkis.length > 0 && activeSub === "TOTAL") ? (
                                               <input
                                                 type="number"
                                                 min="0"
                                                 value={unitRankSanc[activeSancKey]?.[rk] || 0}
                                                 onChange={(e) => setUnitRankSanc((p) => ({ ...p, [activeSancKey]: { ...(p[activeSancKey] || {}), [rk]: Number(e.target.value) } }))}
-                                                style={{ width: "42px", textAlign: "center" }}
+                                                className="office-rank-input"
                                               />
                                             ) : val}
                                           </td>
                                         );
                                       })}
-                                      <td style={{ padding: "5px", textAlign: "center", fontWeight: "bold", border: "1px solid #CBD5E1" }}>{activeSanc}</td>
+                                      <td className="english-cell module-cell-bold">{activeSanc}</td>
                                     </tr>
                                     <tr>
-                                      <td style={{ padding: "5px", fontWeight: "bold", border: "1px solid #CBD5E1", color: "#15803D" }}>{english ? "Working" : "कार्यरत"}</td>
+                                      <td className="module-cell-accent-green">{english ? "Working" : "कार्यरत"}</td>
                                       {RANKS.map((rk) => {
                                         const list = activeData.byRank?.[rk] || [];
                                         return (
                                           <td
                                             key={rk}
                                             onClick={() => list.length > 0 && openUnitModal(`${translateUnitName(activeSub === "TOTAL" ? u : activeSub, language)} (${rk})`, u, activeSub === "TOTAL" ? "ALL" : activeSub, rk)}
-                                            style={{ padding: "5px", textAlign: "center", border: "1px solid #CBD5E1", color: "#15803D", fontWeight: "bold", cursor: list.length > 0 ? "pointer" : "default" }}
+                                            className={`english-cell ${list.length > 0 ? "strength-working-cell" : "module-cell-accent-green"}`}
                                           >
                                             {list.length}
                                           </td>
@@ -390,32 +385,36 @@ export default function OfficePsStrength({
                                       })}
                                       <td
                                         onClick={() => activeData.total > 0 && openUnitModal(translateUnitName(u, language), u, activeSub === "TOTAL" ? "ALL" : activeSub)}
-                                        style={{ padding: "5px", textAlign: "center", fontWeight: "bold", border: "1px solid #CBD5E1", color: "#15803D", cursor: activeData.total > 0 ? "pointer" : "default" }}
+                                        className={`english-cell ${activeData.total > 0 ? "strength-working-cell" : "module-cell-accent-green"}`}
                                       >
                                         {activeData.total}
                                       </td>
                                     </tr>
                                     <tr>
-                                      <td style={{ padding: "5px", fontWeight: "bold", border: "1px solid #CBD5E1" }}>{english ? "Vacant / Surplus" : "रिक्त/अधिक"}</td>
+                                      <td>{english ? "Vacant / Surplus" : "रिक्त/अधिक"}</td>
                                       {RANKS.map((rk) => {
                                         const sVal = chowkis.length > 0 && activeSub === "TOTAL"
                                           ? (chowkis.reduce((a, ck) => a + Number(unitRankSanc[`${u}::${ck}`]?.[rk] || 0), 0) || Number(unitRankSanc[u]?.[rk] || 0))
                                           : Number(unitRankSanc[activeSancKey]?.[rk] || 0);
                                         const v = fmtVac(sVal, activeData.byRank?.[rk]?.length || 0);
-                                        return <td key={rk} style={{ padding: "5px", textAlign: "center", fontWeight: "bold", border: "1px solid #CBD5E1", color: String(v).startsWith("+") || v === 0 ? "#15803D" : "#DC2626" }}>{v}</td>;
+                                        return (
+                                          <td key={rk} className={`english-cell ${String(v).startsWith("+") || v === 0 ? "strength-vac-ok" : "strength-vac-deficit"}`}>
+                                            {v}
+                                          </td>
+                                        );
                                       })}
-                                      <td style={{ padding: "5px", textAlign: "center", fontWeight: "bold", border: "1px solid #CBD5E1" }}>{activeVac}</td>
+                                      <td className="english-cell module-cell-bold">{activeVac}</td>
                                     </tr>
                                   </tbody>
                                 </table>
                               </div>
 
                               {CO_PS_MAP[u] && (
-                                <div style={{ marginTop: "10px" }}>
-                                  <div style={{ fontSize: "0.8rem", fontWeight: "bold", color: "#0B1E3D", marginBottom: "6px" }}>
+                                <div className="office-co-ps-wrap">
+                                  <div className="office-co-ps-title">
                                     🏛️ {english ? "Police Stations under this CO Circle:" : "इस वृत्त (CO) के अधीन आने वाले पुलिस थाने:"}
                                   </div>
-                                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                                  <div className="office-co-ps-list">
                                     {CO_PS_MAP[u].map((psName) => {
                                       const psData = workingMap[psName] || { total: 0, list: [] };
                                       return (
@@ -423,9 +422,9 @@ export default function OfficePsStrength({
                                           type="button"
                                           key={psName}
                                           onClick={() => openUnitModal(`${translateUnitName(psName, language)} (${translateUnitName(u, language)})`, psName, "ALL")}
-                                          style={{ padding: "5px 12px", borderRadius: "20px", border: "1px solid #93C5FD", backgroundColor: "#EFF6FF", color: "#1E3A8A", fontWeight: "bold", fontSize: "0.78rem", cursor: "pointer" }}
+                                          className="office-co-ps-chip"
                                         >
-                                          🚔 {translateUnitName(psName, language)}: <span style={{ color: "#15803D" }}>{psData.total}</span>
+                                          🚔 {translateUnitName(psName, language)}: <span className="module-cell-accent-green">{psData.total}</span>
                                         </button>
                                       );
                                     })}
@@ -442,41 +441,38 @@ export default function OfficePsStrength({
               );
             })}
             <tr className="strength-grand-total-row">
-              <td style={{ padding: "9px", textAlign: "center", border: "1px solid #334155" }}>Σ</td>
-              <td style={{ padding: "9px 10px", border: "1px solid #334155" }}>{english ? "GRAND TOTAL" : "महायोग (GRAND TOTAL)"}</td>
-              <td style={{ padding: "9px", textAlign: "center", border: "1px solid #334155" }}>{grandTotals.sanctioned}</td>
-              <td style={{ padding: "9px", textAlign: "center", border: "1px solid #334155" }}>{grandTotals.working}</td>
-              <td style={{ padding: "9px", textAlign: "center", border: "1px solid #334155" }}>{grandTotals.vacancy}</td>
+              <td className="module-cell-center">Σ</td>
+              <td>{english ? "GRAND TOTAL" : "महायोग (GRAND TOTAL)"}</td>
+              <td className="module-cell-center english-cell">{grandTotals.sanctioned}</td>
+              <td className="module-cell-center english-cell">{grandTotals.working}</td>
+              <td className="module-cell-center english-cell">{grandTotals.vacancy}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
       {modal && (
-        <div className="strength-working-modal" style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "16px" }}>
-          <div style={{ backgroundColor: "#fff", borderRadius: "12px", width: "100%", maxWidth: "960px", maxHeight: "84vh", overflowY: "auto", padding: "14px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-              <b style={{ fontSize: "1rem", color: "#0B1E3D" }}>🏢 {modal.title} ({displayList.length})</b>
-              <button type="button" onClick={() => setModal(null)} style={{ backgroundColor: "#DC2626", color: "#fff", border: "none", padding: "5px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold" }}>
+        <div className="strength-working-modal">
+          <div className="strength-working-modal-card">
+            <div className="strength-modal-header">
+              <b className="strength-modal-title">🏢 {modal.title} ({displayList.length})</b>
+              <button type="button" onClick={() => setModal(null)} className="module-btn-danger">
                 ✕ {english ? "Close" : "बंद करें"}
               </button>
             </div>
 
             {modalTabs.length > 0 && (
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px", padding: "8px", backgroundColor: "#F8FAFC", borderRadius: "8px", border: "1px solid #CBD5E1" }}>
-                {modalTabs.map((tb) => {
-                  const active = modalTab === tb.id;
-                  return (
-                    <button
-                      type="button"
-                      key={tb.id}
-                      onClick={() => setModalTab(tb.id)}
-                      style={{ padding: "5px 11px", borderRadius: "6px", border: active ? "1px solid #1D63DC" : "1px solid #CBD5E1", cursor: "pointer", fontWeight: "bold", fontSize: "0.78rem", backgroundColor: active ? "#1D63DC" : "#FFFFFF", color: active ? "#FFFFFF" : "#1E293B" }}
-                    >
-                      {tb.label}
-                    </button>
-                  );
-                })}
+              <div className="strength-modal-tabs">
+                {modalTabs.map((tb) => (
+                  <button
+                    type="button"
+                    key={tb.id}
+                    onClick={() => setModalTab(tb.id)}
+                    className={`strength-modal-tab ${modalTab === tb.id ? "is-active" : ""}`}
+                  >
+                    {tb.label}
+                  </button>
+                ))}
               </div>
             )}
 

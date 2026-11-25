@@ -1,2 +1,28 @@
 .bharti-module { min-width: 0; }
 .bharti-module .module-table { min-width: 760px; }
+
+.bharti-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  max-width: 850px;
+}
+
+.bharti-field label {
+  display: block;
+  font-weight: bold;
+  font-size: 0.85rem;
+}
+
+.bharti-field input,
+.bharti-field select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+}
+
+.bharti-submit-row {
+  grid-column: 1 / -1;
+}

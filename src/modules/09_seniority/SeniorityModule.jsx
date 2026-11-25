@@ -6,6 +6,9 @@ import { formatDateOnly } from "../../shared/commonFunctions";
 import { sortSeniorityRows } from "./seniorityLogic";
 import "./seniority.css";
 
+/**
+ * [COMPONENT] SeniorityModule — संवर्ग-वार वरिष्ठता सूची
+ */
 export default function SeniorityModule({ seniorityList = [], records = [], language = "hi" }) {
   const [caderFilter, setCaderFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -32,7 +35,7 @@ export default function SeniorityModule({ seniorityList = [], records = [], lang
   const exportRows = filtered.map((row, index) => ({ ...row, "वरिष्ठता क्र.": index + 1 }));
 
   const cadreSelector = (
-    <select value={caderFilter} onChange={(e) => setCaderFilter(e.target.value)} style={{ minHeight: "38px", padding: "7px 10px", borderRadius: "7px", border: "1px solid #cbd5e1" }}>
+    <select value={caderFilter} onChange={(e) => setCaderFilter(e.target.value)} className="module-select-control">
       <option value="ALL">{english ? `All Cadres (${seniorityList.length})` : `सभी संवर्ग (${seniorityList.length})`}</option>
       <option value="CI">{english ? "CI (Inspector)" : "CI (निरीक्षक)"}</option>
       <option value="SI">{english ? "SI (Sub Inspector)" : "SI (उप निरीक्षक)"}</option>
@@ -43,7 +46,7 @@ export default function SeniorityModule({ seniorityList = [], records = [], lang
   );
 
   return (
-    <div className="seniority-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="seniority-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "📋 Cadre-Wise Seniority List" : "📋 संवर्ग-वार वरिष्ठता सूची"}
         search={search}
@@ -56,33 +59,33 @@ export default function SeniorityModule({ seniorityList = [], records = [], lang
         extraActions={cadreSelector}
       />
 
-      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem" }}>
+      <div className="table-responsive-box">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px" }}>{english ? "Seniority No." : "वरिष्ठता क्र."}</th>
-              <th style={{ padding: "8px" }}>{english ? "Post" : "CADER"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Belt No." : "BELT NO"}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "NAME"}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Father Name" : "FATHER NAME"}</th>
-              <th style={{ padding: "8px" }}>{english ? "DOB" : "जन्म तिथि"}</th>
-              <th style={{ padding: "8px" }}>{english ? "DOJ" : "नियुक्ति तिथि"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Confirmation" : "स्थायीकरण"}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Posting" : "POSTING"}</th>
+            <tr>
+              <th>{english ? "Seniority No." : "वरिष्ठता क्र."}</th>
+              <th>{english ? "Post" : "CADER"}</th>
+              <th>{english ? "Belt No." : "BELT NO"}</th>
+              <th>{english ? "Name" : "NAME"}</th>
+              <th>{english ? "Father Name" : "FATHER NAME"}</th>
+              <th>{english ? "DOB" : "जन्म तिथि"}</th>
+              <th>{english ? "DOJ" : "नियुक्ति तिथि"}</th>
+              <th>{english ? "Confirmation" : "स्थायीकरण"}</th>
+              <th>{english ? "Posting" : "POSTING"}</th>
             </tr>
           </thead>
           <tbody>
             {filtered.slice(0, 150).map((r, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", fontFamily: "'Times New Roman', Times, serif" }}>{i + 1}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={r["NAME"]} /></td>
-                <td style={{ padding: "6px" }}><HindiText text={r["FATHER NAME"]} /></td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF BIRTH"])}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", color: "#1D63DC", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF JOINING"])}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["DATE OF CONFIRMATION"])}</td>
-                <td style={{ padding: "6px" }}><HindiText text={r["POSTING"]} /></td>
+              <tr key={i}>
+                <td className="module-cell-center module-cell-bold english-cell">{i + 1}</td>
+                <td className="module-cell-center english-cell">{r["CADER"]}</td>
+                <td className="module-cell-center english-cell">{r["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={r["NAME"]} /></td>
+                <td><HindiText text={r["FATHER NAME"]} /></td>
+                <td className="module-cell-center english-cell">{formatDateOnly(r["DATE OF BIRTH"])}</td>
+                <td className="module-cell-center module-cell-accent-blue english-cell">{formatDateOnly(r["DATE OF JOINING"])}</td>
+                <td className="module-cell-center english-cell">{formatDateOnly(r["DATE OF CONFIRMATION"])}</td>
+                <td><HindiText text={r["POSTING"]} /></td>
               </tr>
             ))}
           </tbody>

@@ -7,6 +7,9 @@ import { appendRowToSheet, calculateServiceYears, formatDateDDMMYYYY, formatDate
 import { getNextIncrementDate, isIncrementEligible } from "./incrementLogic";
 import "./increment.css";
 
+/**
+ * [COMPONENT] IncrementModule — 1 जुलाई वार्षिक वेतन वृद्धि पात्रता समीक्षा एवं आदेश
+ */
 export default function IncrementModule({ records = [], allSheets = {}, setAllSheets, language = "hi" }) {
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("ALL");
@@ -78,7 +81,7 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
   };
 
   return (
-    <div className="increment-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="increment-module module-panel">
       <ModuleHeaderToolbar
         title={english ? `📈 Annual Increment — 1 July (${incDate})` : `📈 वार्षिक वेतन वृद्धि — 1 जुलाई (${incDate})`}
         search={search}
@@ -90,37 +93,37 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
         language={language}
       />
 
-      <p style={{ color: "#92400E" }}>
+      <p className="module-notice-warn">
         {english
           ? "LWP and punishment records are shown for review; final decision rests with the competent authority."
           : "LWP और सजा रिकॉर्ड समीक्षा के लिए दिखाए जाते हैं; वे स्वतः वेतन वृद्धि नहीं रोकते। अंतिम निर्णय सक्षम अधिकारी द्वारा करें।"}
       </p>
 
-      <form onSubmit={handleSave} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginBottom: "16px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <select required value={belt} onChange={(event) => setBelt(event.target.value)} style={{ padding: "8px" }}>
+      <form onSubmit={handleSave} className="module-form-card">
+        <select required value={belt} onChange={(event) => setBelt(event.target.value)}>
           <option value="">{english ? "Select Employee" : "कर्मचारी चुनें"}</option>
           {candidates.map(({ record }) => (
             <option
               key={record._uid || record["BELT NO"]}
               value={String(record["BELT NO"] || "").trim().toUpperCase()}
-              style={isDevlysText(record.NAME) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+              className={isDevlysText(record.NAME) ? "devlys-text" : undefined}
             >
               {record["BELT NO"]} — {record.NAME}
             </option>
           ))}
         </select>
-        <input type="text" placeholder={english ? "Pay Level / Matrix" : "Pay Level / वेतन मैट्रिक्स"} value={payLevel} onChange={(event) => setPayLevel(event.target.value)} style={{ padding: "8px" }} />
-        <input type="text" required placeholder={english ? "Order No." : "आदेश नं."} value={orderNo} onChange={(event) => setOrderNo(event.target.value)} style={{ padding: "8px" }} />
-        <button type="submit" style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+        <input type="text" placeholder={english ? "Pay Level / Matrix" : "Pay Level / वेतन मैट्रिक्स"} value={payLevel} onChange={(event) => setPayLevel(event.target.value)} />
+        <input type="text" required placeholder={english ? "Order No." : "आदेश नं."} value={orderNo} onChange={(event) => setOrderNo(event.target.value)} />
+        <button type="submit" className="module-btn-success">
           ✅ {english ? "Record Increment Order" : "वृद्धि आदेश दर्ज करें"}
         </button>
       </form>
 
       <h3>{english ? `1 July Increment Eligibility Review (${candidates.length})` : `1 जुलाई के लिए कर्मचारी एवं सेवा रिकॉर्ड समीक्षा (${candidates.length})`}</h3>
-      <div className="table-responsive-box" style={{ overflowX: "auto", marginBottom: "18px" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box increment-table-wrap">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Post" : "पद",
@@ -129,19 +132,19 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
                 english ? "Service Yrs" : "सेवा वर्ष",
                 english ? "LWP Record" : "LWP रिकॉर्ड",
                 english ? "Punishment Record" : "सजा रिकॉर्ड"
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {candidates.map(({ record, belt: employeeBelt, name, cader, posting, serviceYears, lwpReview, punishmentReview }) => (
-              <tr key={record._uid || employeeBelt} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{employeeBelt}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{cader}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={name} /></td>
-                <td style={{ padding: "6px" }}><HindiText text={posting} /></td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{serviceYears}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{lwpReview ? `${lwpReview}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{punishmentReview ? `${punishmentReview}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>
+              <tr key={record._uid || employeeBelt}>
+                <td className="module-cell-center english-cell">{employeeBelt}</td>
+                <td className="module-cell-center english-cell">{cader}</td>
+                <td className="module-cell-bold"><HindiText text={name} /></td>
+                <td><HindiText text={posting} /></td>
+                <td className="module-cell-center english-cell">{serviceYears}</td>
+                <td className="module-cell-center">{lwpReview ? `${lwpReview}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>
+                <td className="module-cell-center">{punishmentReview ? `${punishmentReview}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>
               </tr>
             ))}
           </tbody>
@@ -149,27 +152,27 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
       </div>
 
       <h3>{english ? "Recorded Increment Orders" : "दर्ज वृद्धि आदेश"} ({rows.length})</h3>
-      <div className="table-responsive-box" style={{ overflowX: "auto", marginTop: "10px" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="table-responsive-box">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Name" : "नाम",
                 english ? "Details" : "विवरण",
                 english ? "Date" : "दिनांक",
                 english ? "Order No." : "आदेश नं."
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {rows.map((row, index) => (
-              <tr key={`${row["BELT NO"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row.NAME} /></td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row["POSTING_PLACE"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row["FROM_DATE"])}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(row["ORDER_NO_DATE"])}</td>
+              <tr key={`${row["BELT NO"]}-${index}`}>
+                <td className="module-cell-center english-cell">{row["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={row.NAME} /></td>
+                <td className="module-cell-center">{row["POSTING_PLACE"]}</td>
+                <td className="module-cell-center english-cell">{formatDateOnly(row["FROM_DATE"])}</td>
+                <td className="module-cell-center english-cell">{formatDateOnly(row["ORDER_NO_DATE"])}</td>
               </tr>
             ))}
           </tbody>

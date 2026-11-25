@@ -1,2 +1,30 @@
 .promotion-module { min-width: 0; }
 .promotion-module .module-table { min-width: 820px; }
+
+.promotion-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.promotion-service-label {
+  display: grid;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.promotion-table-wrap {
+  margin-bottom: 16px;
+}
+
+.promotion-selected-box {
+  padding: 8px 10px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

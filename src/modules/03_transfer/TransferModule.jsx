@@ -24,8 +24,6 @@ import {
 } from "./transferLogic";
 import "./transfer.css";
 
-const ENGLISH_CELL_STYLE = { fontFamily: "'Times New Roman', Times, serif" };
-
 const TAB_ITEMS = [
   { id: "CREATE", hi: "नया स्थानांतरण आदेश", en: "New Transfer Order" },
   { id: "TENURE", hi: "कार्यकाल / Overstay जाँच", en: "Tenure / Overstay Check" },
@@ -628,7 +626,7 @@ export default function TransferModule({
                       <option
                         key={station}
                         value={station}
-                        style={isDevlysText(station) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                        className={isDevlysText(station) ? "devlys-text" : undefined}
                       >
                         {station}
                       </option>
@@ -659,8 +657,8 @@ export default function TransferModule({
                             onChange={(event) => toggleSelected(key, event.target.checked)}
                           />
                         </td>
-                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, identityText) || rank}</td>
-                        <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, identityText)}</td>
+                        <td className="english-cell">{getTransferDisplayCader(employee, identityText) || rank}</td>
+                        <td className="english-cell">{getTransferDisplayBeltNumber(employee, identityText)}</td>
                         <td><HindiText text={employee.NAME || ""} /></td>
                         <td><HindiText text={employee.POSTING || "—"} /></td>
                       </tr>
@@ -697,7 +695,7 @@ export default function TransferModule({
                         <tr key={key}>
                           <td>
                             <strong><HindiText text={employee.NAME || ""} /></strong>
-                            <small style={ENGLISH_CELL_STYLE}>
+                            <small className="english-cell">
                               {getTransferDisplayBeltNumber(employee, identityText)} · {getTransferDisplayCader(employee, identityText)}
                             </small>
                           </td>
@@ -791,7 +789,7 @@ export default function TransferModule({
                     <option
                       key={station}
                       value={station}
-                      style={isDevlysText(station) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                      className={isDevlysText(station) ? "devlys-text" : undefined}
                     >
                       {station}
                     </option>
@@ -828,11 +826,11 @@ export default function TransferModule({
                           })}
                         />
                       </td>
-                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, identityText) || rank}</td>
-                      <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, identityText)}</td>
+                      <td className="english-cell">{getTransferDisplayCader(employee, identityText) || rank}</td>
+                      <td className="english-cell">{getTransferDisplayBeltNumber(employee, identityText)}</td>
                       <td><HindiText text={employee.NAME || ""} /></td>
                       <td><HindiText text={employee.POSTING || ""} /></td>
-                      <td style={ENGLISH_CELL_STYLE}><HindiText text={employee["POSTING DOB NO"] || ""} /></td>
+                      <td className="english-cell"><HindiText text={employee["POSTING DOB NO"] || ""} /></td>
                       <td><strong>{years} {english ? "Yrs" : "वर्ष"}</strong></td>
                     </tr>
                   ))}
@@ -907,13 +905,13 @@ export default function TransferModule({
                         <tbody>
                           {currentOrder.rows.map((employee, index) => (
                             <tr key={`${currentOrder.id}-${employee["BELT NO"] || employee.NAME}-${index}`}>
-                              <td style={ENGLISH_CELL_STYLE}>{index + 1}</td>
-                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayCader(employee, identityText)}</td>
-                              <td style={ENGLISH_CELL_STYLE}>{getTransferDisplayBeltNumber(employee, identityText)}</td>
+                              <td className="english-cell">{index + 1}</td>
+                              <td className="english-cell">{getTransferDisplayCader(employee, identityText)}</td>
+                              <td className="english-cell">{getTransferDisplayBeltNumber(employee, identityText)}</td>
                               <td><HindiText text={employee.NAME || ""} /></td>
                               <td><HindiText text={employee.OLD_POSTING || "—"} /></td>
                               <td><HindiText text={employee.POSTING_PLACE || ""} /></td>
-                              <td style={ENGLISH_CELL_STYLE}>{`${currentOrder.orderNo} / ${currentOrder.orderDate}`}</td>
+                              <td className="english-cell">{`${currentOrder.orderNo} / ${currentOrder.orderDate}`}</td>
                               <td>
                                 <button
                                   type="button"
@@ -976,7 +974,7 @@ export default function TransferModule({
                       <option
                         key={key}
                         value={key}
-                        style={isDevlysText(employee.NAME) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+                        className={isDevlysText(employee.NAME) ? "devlys-text" : undefined}
                       >
                         {employee["BELT NO"] || "-"} · {employee.NAME || ""}
                       </option>
@@ -1057,7 +1055,7 @@ export default function TransferModule({
               {dutyEmployee && (
                 <p className="transfer-duty-employee">
                   {english ? "Selected Employee" : "चयनित कर्मचारी"}: <strong><HindiText text={dutyEmployee.NAME || ""} /></strong>
-                  {" · "}<span style={ENGLISH_CELL_STYLE}>{dutyEmployee["BELT NO"] || "-"}</span>
+                  {" · "}<span className="english-cell">{dutyEmployee["BELT NO"] || "-"}</span>
                   {" · "}{english ? "Current Posting" : "वर्तमान पदस्थापन"}: <HindiText text={dutyEmployee.POSTING || "—"} />
                 </p>
               )}

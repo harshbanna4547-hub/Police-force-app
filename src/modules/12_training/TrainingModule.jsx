@@ -501,7 +501,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
     }));
 
   return (
-    <div className="training-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="training-module">
       <ModuleHeaderToolbar
         title={english ? "🎓 Training & Nomination Management" : "🎓 प्रशिक्षण एवं नामांकन प्रबंधन"}
         search={missingSearch}
@@ -540,9 +540,9 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
           <label>{english ? "Search Employee (Name / Belt / Post)" : "कर्मचारी खोजें (नाम / बेल्ट नं. / पद)"}
             <input type="search" value={employeeQuery} onChange={(event) => { setEmployeeQuery(event.target.value); setEmployee(null); }} />
           </label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+          <div className="training-match-pills">
             {employeeMatches.map((item) => (
-              <button type="button" key={item._uid} onClick={() => setEmployee(item)} style={{ padding: "6px 10px", borderRadius: "6px", border: "1px solid #cbd5e1", background: "#fff", cursor: "pointer" }}>
+              <button type="button" key={item._uid} onClick={() => setEmployee(item)} className="training-match-pill">
                 <HindiText text={item.NAME} /> · {item["BELT NO"] || "-"} · {item.CADER}
               </button>
             ))}
@@ -736,9 +736,9 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
               <thead><tr><th>{english ? "S.N." : "क्र.सं."}</th><th>{english ? "Post" : "पद (Post)"}</th><th>{english ? "Belt No." : "बेल्ट नं."}</th><th>{english ? "Name" : "नाम"}</th><th>{english ? "Current Posting" : "वर्तमान पदस्थापन"}</th><th>{english ? "Completed" : "पूर्ण प्रशिक्षण संख्या"}</th><th>{english ? "Pending Courses" : "लंबित आवश्यक प्रशिक्षण"}</th></tr></thead>
               <tbody>{pagedMissingRows.map((row, index) => (
                 <tr key={getTrainingEmployeeKey(row.employee)}>
-                  <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{missingPage * pageSize + index + 1}</td>
-                  <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{row.CADER || "-"}</td>
-                  <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{isBeltRank(row.employee) ? row["BELT NO"] : "-"}</td>
+                  <td className="training-tnr-cell">{missingPage * pageSize + index + 1}</td>
+                  <td className="training-tnr-cell">{row.CADER || "-"}</td>
+                  <td className="training-tnr-cell">{isBeltRank(row.employee) ? row["BELT NO"] : "-"}</td>
                   <td><button type="button" className="training-name-button" onClick={() => {
                     setDetailEmployee(row.employee);
                     setNewCourse(REQUIRED_COURSES[0].label);
@@ -747,7 +747,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
                     setNewInstitute("");
                   }}><HindiText text={row.NAME} /></button></td>
                   <td><HindiText text={row.POSTING} /></td>
-                  <td style={{ fontFamily: "'Times New Roman', Times, serif" }}>{row["पूर्ण प्रशिक्षण संख्या"]}</td>
+                  <td className="training-tnr-cell">{row["पूर्ण प्रशिक्षण संख्या"]}</td>
                   <td>{row["अपूर्ण कोर्स"].join(", ") || (english ? "All Completed" : "सभी आवश्यक प्रशिक्षण पूर्ण")}</td>
                 </tr>
               ))}</tbody>

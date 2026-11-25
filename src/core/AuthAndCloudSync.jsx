@@ -1,6 +1,10 @@
 import { useState } from "react";
 import { createDistrictSelection, DISTRICT_OPTIONS } from "./districtAuth.js";
+import "./AuthAndCloudSync.css";
 
+/**
+ * [COMPONENT] DistrictSwitcherModal — जिला चयन एवं बदलने हेतु मोडल संवाद
+ */
 export function DistrictSwitcherModal({ currentDistrict, onClose, onSelect }) {
   const [districtName, setDistrictName] = useState(currentDistrict.name);
 
@@ -26,18 +30,18 @@ export function DistrictSwitcherModal({ currentDistrict, onClose, onSelect }) {
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
-      style={{ position: "fixed", inset: 0, zIndex: 1100, display: "grid", placeItems: "center", padding: "20px", background: "rgba(15,23,42,0.5)" }}
+      className="district-modal-backdrop"
     >
       <form
         role="dialog"
         aria-modal="true"
         aria-labelledby="district-switch-title"
         onSubmit={applyTypedDistrict}
-        style={{ width: "min(100%, 380px)", display: "grid", gap: "14px", padding: "22px", borderRadius: "14px", background: "#fff", boxShadow: "0 18px 48px rgba(15,23,42,0.24)" }}
+        className="district-modal-dialog"
       >
         <div>
-          <h2 id="district-switch-title" style={{ margin: 0, color: "#0B1E3D", fontSize: "1.1rem" }}>जिला बदलें</h2>
-          <p style={{ margin: "6px 0 0", color: "#64748B", fontSize: "0.88rem" }}>सूची से चुनें या नया जिला नाम टाइप करें।</p>
+          <h2 id="district-switch-title" className="district-modal-title">जिला बदलें</h2>
+          <p className="district-modal-subtitle">सूची से चुनें या नया जिला नाम टाइप करें।</p>
         </div>
         <input
           autoFocus
@@ -47,7 +51,7 @@ export function DistrictSwitcherModal({ currentDistrict, onClose, onSelect }) {
           aria-label="जिला नाम"
           placeholder="जैसे Udaipur"
           maxLength={100}
-          style={{ width: "100%", boxSizing: "border-box", padding: "11px 12px", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "1rem" }}
+          className="district-modal-input"
         />
         <datalist id="rajasthan-districts">
           {DISTRICT_OPTIONS.map((district) => (
@@ -57,9 +61,9 @@ export function DistrictSwitcherModal({ currentDistrict, onClose, onSelect }) {
             <option key={`${district.code}-hindi`} value={district.hindiName} label={`${district.hindiName} (${district.name})`} />
           ))}
         </datalist>
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
-          <button type="button" onClick={onClose} style={{ padding: "9px 13px", border: "1px solid #CBD5E1", borderRadius: "8px", background: "#fff", color: "#334155", cursor: "pointer" }}>रद्द करें</button>
-          <button type="submit" disabled={!districtName.trim()} style={{ padding: "9px 13px", border: "none", borderRadius: "8px", background: "#1D63DC", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>जिला खोलें</button>
+        <div className="district-modal-actions">
+          <button type="button" onClick={onClose} className="district-modal-cancel">रद्द करें</button>
+          <button type="submit" disabled={!districtName.trim()} className="district-modal-submit">जिला खोलें</button>
         </div>
       </form>
     </div>

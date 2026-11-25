@@ -1,3 +1,4 @@
+/* === ARCHIVE MODULE (सेवानिवृत्ति / रिलीव अभिलेख स्टाइल) === */
 .employee-archive {
   background: var(--surface-raised, #fff);
   border: 1px solid var(--border, #e2e8f0);
@@ -11,6 +12,10 @@
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 10px;
   margin: 12px 0;
+}
+
+.archive-entry-heading {
+  margin-top: 0;
 }
 
 .archive-pill-list {
@@ -59,4 +64,16 @@
   color: #fff;
   font-weight: bold;
   cursor: pointer;
+}
+
+.archive-year-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.archive-year-section {
+  margin-top: 16px;
 }
