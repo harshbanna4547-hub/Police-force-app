@@ -7,9 +7,9 @@
   color-scheme: light;
 
   /* --- Typography (फ़ॉन्ट व्यवस्था: आधुनिक UI + DevLys 010 + Times New Roman) --- */
-  --font-ui: "Plus Jakarta Sans", "Inter", "Noto Sans Devanagari", system-ui, sans-serif;
-  --font-devlys: "DevLys 010", sans-serif;
-  --font-numeric: "Times New Roman", Times, serif;
+  --font-ui: "Plus Jakarta Sans", "Inter", "Noto Sans Devanagari", "Arimo", system-ui, sans-serif;
+  --font-devlys: "DevLys 010", "Kruti Dev 010", sans-serif;
+  --font-numeric: "Times New Roman", "Tinos", Times, serif;
 
   /* --- Surfaces & Backgrounds (पृष्ठ एवं कार्ड रंग) --- */
   --page: #f1f5f9;

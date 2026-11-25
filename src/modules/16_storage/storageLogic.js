@@ -51,26 +51,86 @@ export function extractWordBodyHtml(arrayBuffer) {
   return `<p>${escaped}</p>`;
 }
 
+// [OFFICE FONTS] Pre-bundled Hindi & English Office Fonts (DevLys 010 & Times New Roman as primary defaults)
+export const OFFICE_FONT_OPTIONS = [
+  {
+    value: "DevLys 010",
+    label: "DevLys 010 (Default Hindi)",
+    className: "office-font-devlys",
+    stack: "'DevLys 010', 'Kruti Dev 010', sans-serif",
+    size: "16pt"
+  },
+  {
+    value: "Times New Roman",
+    label: "Times New Roman (Default English)",
+    className: "office-font-tnr",
+    stack: "'Times New Roman', 'Tinos', Times, serif",
+    size: "13pt"
+  },
+  {
+    value: "Kruti Dev 010",
+    label: "Kruti Dev 010",
+    className: "office-font-kruti",
+    stack: "'Kruti Dev 010', 'DevLys 010', sans-serif",
+    size: "16pt"
+  },
+  {
+    value: "Noto Sans Devanagari",
+    label: "Noto Sans Devanagari (Unicode)",
+    className: "office-font-noto",
+    stack: "'Noto Sans Devanagari', 'Noto Serif Devanagari', sans-serif",
+    size: "13pt"
+  },
+  {
+    value: "Calibri",
+    label: "Calibri",
+    className: "office-font-calibri",
+    stack: "'Calibri', 'Carlito', sans-serif",
+    size: "12pt"
+  },
+  {
+    value: "Arial",
+    label: "Arial",
+    className: "office-font-arial",
+    stack: "'Arial', 'Arimo', sans-serif",
+    size: "12pt"
+  },
+  {
+    value: "Georgia",
+    label: "Georgia",
+    className: "office-font-georgia",
+    stack: "'Georgia', 'Noto Serif Devanagari', serif",
+    size: "13pt"
+  }
+];
+
+export function getOfficeFontMeta(fontName = "DevLys 010") {
+  return OFFICE_FONT_OPTIONS.find((f) => f.value === fontName) || OFFICE_FONT_OPTIONS[0];
+}
+
 export function wrapWordDocumentHtml(bodyHtml, title = "Police Office Document", defaultFont = "DevLys 010") {
-  const fontStack = defaultFont === "Times New Roman"
-    ? "'Times New Roman', Times, serif"
-    : "'DevLys 010', 'Kruti Dev 010', sans-serif";
-  const fontSize = defaultFont === "Times New Roman" ? "13pt" : "16pt";
+  const fontMeta = getOfficeFontMeta(defaultFont);
 
   return `<!doctype html>
 <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" lang="hi">
 <head>
 <meta charset="utf-8" />
 <title>${String(title || "").replace(/</g, "&lt;")}</title>
+<link href="https://fonts.googleapis.com/css2?family=Arimo:wght@400;700&family=Carlito:wght@400;700&family=Noto+Sans+Devanagari:wght@400;600;700&family=Noto+Serif+Devanagari:wght@400;600;700&family=Tinos:wght@400;700&display=swap" rel="stylesheet" />
 <style>
   @font-face {
     font-family: 'DevLys 010';
-    src: url('/fonts/DevLys010.ttf') format('truetype');
+    src: url('/fonts/DevLys010.ttf') format('truetype'), local('DevLys 010'), local('Devlys_010');
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Kruti Dev 010';
+    src: url('/fonts/KrutiDev010.ttf') format('truetype'), local('Kruti Dev 010'), local('KrutiDev010');
     font-display: swap;
   }
   body {
-    font-family: ${fontStack};
-    font-size: ${fontSize};
+    font-family: ${fontMeta.stack};
+    font-size: ${fontMeta.size};
     line-height: 1.5;
     color: #111827;
     padding: 24px;

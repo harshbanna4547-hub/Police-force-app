@@ -235,7 +235,7 @@
   padding: 6px 8px;
   background: transparent;
   color: var(--text, #0f172a);
-  font-family: "Times New Roman", Times, serif;
+  font-family: "Times New Roman", "Tinos", Times, serif;
   font-size: 13px;
 }
 
@@ -245,10 +245,42 @@
   background: #eff6ff;
 }
 
-.office-cell-input.is-devlys {
-  font-family: "DevLys 010", "Kruti Dev 010", sans-serif;
-  font-size: 17px;
-  line-height: 1.35;
+/* === PRE-BUNDLED OFFICE FONT UTILITY CLASSES (Zero Inline Styles) === */
+.office-font-devlys {
+  font-family: "DevLys 010", "Kruti Dev 010", sans-serif !important;
+  font-size: 17px !important;
+  line-height: 1.4;
+}
+
+.office-font-kruti {
+  font-family: "Kruti Dev 010", "DevLys 010", sans-serif !important;
+  font-size: 17px !important;
+  line-height: 1.4;
+}
+
+.office-font-noto {
+  font-family: "Noto Sans Devanagari", "Noto Serif Devanagari", sans-serif !important;
+  font-size: 14px !important;
+}
+
+.office-font-tnr {
+  font-family: "Times New Roman", "Tinos", Times, serif !important;
+  font-size: 14px !important;
+}
+
+.office-font-calibri {
+  font-family: "Calibri", "Carlito", sans-serif !important;
+  font-size: 14px !important;
+}
+
+.office-font-arial {
+  font-family: "Arial", "Arimo", sans-serif !important;
+  font-size: 13.5px !important;
+}
+
+.office-font-georgia {
+  font-family: "Georgia", "Noto Serif Devanagari", serif !important;
+  font-size: 14px !important;
 }
 
 /* === WORD RICH TEXT WORKSPACE === */
@@ -275,9 +307,10 @@
   font-size: 17px;
 }
 
-.office-word-page.font-tnr {
-  font-family: "Times New Roman", Times, serif;
-  font-size: 15px;
+.office-tool-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted, #475569);
 }
 
 .office-word-page table {

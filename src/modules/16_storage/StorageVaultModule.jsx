@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
-import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
 import ModuleHeaderToolbar from "../../components/shared/ModuleHeaderToolbar";
 import InbuiltOfficeEditor from "../../components/shared/InbuiltOfficeEditor";
 import {
@@ -62,9 +61,7 @@ export default function StorageVaultModule({
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("GRID"); // GRID | LIST
 
-  // Inbuilt Hindi Font Installer & Office Suite States
-  const [installedFonts, setInstalledFonts] = useState([]);
-  const [fontChoice, setFontChoice] = useState("DevLys 010");
+  // Office Suite State
   const [officeItem, setOfficeItem] = useState(null);
   const loadAllItems = useCallback(async () => {
     const db = await openDriveVaultDB();
@@ -106,7 +103,6 @@ export default function StorageVaultModule({
 
   useEffect(() => {
     loadAllItems();
-    loadAllInstalledFonts().then(setInstalledFonts);
     const refreshItems = () => loadAllItems();
     window.addEventListener("police-vault-updated", refreshItems);
     window.addEventListener("police-vault-cloud-updated", refreshItems);
@@ -115,16 +111,6 @@ export default function StorageVaultModule({
       window.removeEventListener("police-vault-cloud-updated", refreshItems);
     };
   }, [loadAllItems]);
-
-  const handleFontInstall = async (e) => {
-    const file = e.target.files?.at(0);
-    if (!file) return;
-    await installFontInApp(fontChoice, file);
-    const updated = await loadAllInstalledFonts();
-    setInstalledFonts(updated);
-    e.target.value = "";
-    alert(`✔ "${fontChoice}" फ़ॉन्ट ऐप में स्थायी रूप से इंस्टॉल हो गया है!`);
-  };
 
   const saveItemToDB = async (item) => {
     const db = await openDriveVaultDB();
@@ -418,40 +404,6 @@ export default function StorageVaultModule({
           <button type="button" onClick={() => handleCreateNewDoc("WORD")} className="storage-btn storage-btn-blue">
             📝 + New Word
           </button>
-        </div>
-      </div>
-
-      {/* [FONTS] Inbuilt Hindi Font Installer Banner (हिंदी फ़ॉन्ट इंस्टॉलर पट्टी) */}
-      <div className="storage-font-banner">
-        <div className="storage-font-controls">
-          <strong className="storage-font-title">🔤 Inbuilt Hindi Font Installer:</strong>
-          <select value={fontChoice} onChange={(e) => setFontChoice(e.target.value)} className="storage-font-select">
-            <option value="DevLys 010">DevLys 010</option>
-            <option value="Kruti Dev 010">Kruti Dev 010</option>
-            <option value="Mangal">Mangal (Unicode)</option>
-          </select>
-          <label className="storage-font-install-btn">
-            ➕ .TTF फ़ॉन्ट फ़ाइल चुनें (Install)
-            <input type="file" accept=".ttf,.otf,.woff,.woff2" onChange={handleFontInstall} className="storage-hidden-input" />
-          </label>
-        </div>
-
-        <div className="storage-font-chips">
-          {installedFonts.map((f) => (
-            <span key={f.fontName} className="storage-font-chip">
-              ✔ {f.fontName}
-              <button
-                type="button"
-                onClick={async () => {
-                  await removeInstalledFont(f.fontName);
-                  setInstalledFonts(await loadAllInstalledFonts());
-                }}
-                className="storage-font-remove-btn"
-              >
-                ✕
-              </button>
-            </span>
-          ))}
         </div>
       </div>
 

@@ -2,10 +2,18 @@
    GLOBAL TYPOGRAPHY, FONTS & RESPONSIVE RULES (वैश्विक फ़ॉन्ट एवं लेआउट)
    ========================================================================== */
 
-/* === 1. STRICT FONT REGISTRATION (DevLys 010 + Times New Roman + UI) === */
+/* === 1. STRICT PRE-BUNDLED OFFICE FONTS (DevLys 010, Kruti Dev 010, Noto, Times/Tinos, Calibri/Carlito, Arial/Arimo, Georgia) === */
 @font-face {
   font-family: "DevLys 010";
   src: url("/fonts/DevLys010.ttf") format("truetype"), local("DevLys 010"), local("Devlys_010");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Kruti Dev 010";
+  src: url("/fonts/KrutiDev010.ttf") format("truetype"), local("Kruti Dev 010"), local("KrutiDev010"), local("Kruti_Dev_010");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
@@ -18,12 +26,12 @@
 }
 
 .unicode-hindi-text {
-  font-family: "Noto Sans Devanagari", var(--font-ui);
+  font-family: "Noto Sans Devanagari", "Noto Serif Devanagari", var(--font-ui);
 }
 
 .english-text,
 .english-cell {
-  font-family: "Times New Roman", Times, serif;
+  font-family: "Times New Roman", "Tinos", Times, serif;
   font-size: clamp(11px, 0.85vw, 15px);
 }
 
@@ -60,7 +68,7 @@ td,
 input,
 select,
 textarea {
-  font-family: "Times New Roman", Times, serif;
+  font-family: "Times New Roman", "Tinos", Times, serif;
 }
 
 table {

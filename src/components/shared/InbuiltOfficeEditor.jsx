@@ -4,6 +4,8 @@ import { isDevlysText } from "../../core/isDevlysText";
 import {
   extractWordBodyHtml,
   getOfficeEditorKind,
+  getOfficeFontMeta,
+  OFFICE_FONT_OPTIONS,
   wrapWordDocumentHtml
 } from "../../modules/16_storage/storageLogic";
 import "./InbuiltOfficeEditor.css";
@@ -58,8 +60,9 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
   // [STATE] Excel Editor
   const [sheets, setSheets] = useState(() => (kind === "EXCEL" ? parseExcelSheets(item.data) : {}));
   const [activeSheet, setActiveSheet] = useState(() => Object.keys(kind === "EXCEL" ? parseExcelSheets(item.data) : { Sheet1: [] })[0] || "Sheet1");
-  const [colFonts, setColFonts] = useState({}); // colIndex -> "AUTO" | "DEVLYS" | "TNR"
-  const [cellFonts, setCellFonts] = useState({}); // "sheet:r:c" -> "DEVLYS" | "TNR"
+  const [colFonts, setColFonts] = useState({}); // colIndex -> "AUTO" | fontName
+  const [cellFonts, setCellFonts] = useState({}); // "sheet:r:c" -> fontName
+  const [excelToolbarFont, setExcelToolbarFont] = useState("DevLys 010");
   const [focusedCell, setFocusedCell] = useState(null);
 
   // [STATE] Word Editor
@@ -126,28 +129,35 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
   const toggleColumnFont = (colIndex) => {
     setColFonts((prev) => {
       const curr = prev[colIndex] || "AUTO";
-      const next = curr === "AUTO" ? "DEVLYS" : curr === "DEVLYS" ? "TNR" : "AUTO";
+      const next = curr === "AUTO" ? "DevLys 010" : curr === "DevLys 010" ? "Times New Roman" : "AUTO";
       return { ...prev, [colIndex]: next };
     });
   };
 
-  const toggleFocusedCellFont = () => {
-    if (!focusedCell) return;
-    const key = `${activeSheet}:${focusedCell.r}:${focusedCell.c}`;
-    setCellFonts((prev) => ({
-      ...prev,
-      [key]: prev[key] === "DEVLYS" ? "TNR" : "DEVLYS"
-    }));
+  const applyExcelFontSelection = (fontName) => {
+    setExcelToolbarFont(fontName);
+    if (focusedCell) {
+      const key = `${activeSheet}:${focusedCell.r}:${focusedCell.c}`;
+      setCellFonts((prev) => ({ ...prev, [key]: fontName }));
+    }
   };
 
-  const isCellDevlys = (r, c, value) => {
-    const cellOverride = cellFonts[`${activeSheet}:${r}:${c}`];
-    if (cellOverride) return cellOverride === "DEVLYS";
-    const colMode = colFonts[c] || "AUTO";
-    if (colMode === "DEVLYS") return true;
-    if (colMode === "TNR") return false;
-    return String(value || "").split(/\s+/).some((word) => isDevlysText(word));
+  const applyExcelFontToColumn = () => {
+    if (!focusedCell) return;
+    setColFonts((prev) => ({ ...prev, [focusedCell.c]: excelToolbarFont }));
   };
+
+  const resolveCellFontName = (r, c, value) => {
+    const cellOverride = cellFonts[`${activeSheet}:${r}:${c}`];
+    if (cellOverride) return cellOverride;
+    const colMode = colFonts[c] || "AUTO";
+    if (colMode !== "AUTO") return colMode;
+    return String(value || "").split(/\s+/).some((word) => isDevlysText(word))
+      ? "DevLys 010"
+      : "Times New Roman";
+  };
+
+  const getCellFontClass = (r, c, value) => getOfficeFontMeta(resolveCellFontName(r, c, value)).className;
 
   const buildWorkbookBytes = () => {
     const wb = XLSX.utils.book_new();
@@ -200,7 +210,7 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
 
   const applySelectionFont = (fontName) => {
     setWordDefaultFont(fontName);
-    execWord("fontName", fontName === "Times New Roman" ? "Times New Roman" : "DevLys 010");
+    execWord("fontName", getOfficeFontMeta(fontName).stack);
   };
 
   const buildWordBuffer = () => {
@@ -344,8 +354,31 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
               <button type="button" onClick={addExcelRow} className="office-tool-btn">➕ Add Row</button>
               <button type="button" onClick={addExcelColumn} className="office-tool-btn">➕ Add Column</button>
               <button type="button" onClick={addExcelSheet} className="office-tool-btn">📑 + Sheet</button>
-              <button type="button" onClick={toggleFocusedCellFont} className="office-tool-btn" disabled={!focusedCell}>
-                🔤 {english ? "Toggle Cell Font (DevLys / TNR)" : "सक्रिय सेल फ़ॉन्ट (DevLys / TNR)"}
+
+              <label className="office-tool-label" htmlFor="excel-font-select">
+                🔤 {english ? "Font:" : "फ़ॉन्ट:"}
+              </label>
+              <select
+                id="excel-font-select"
+                aria-label="Excel Font Family"
+                value={excelToolbarFont}
+                onChange={(e) => applyExcelFontSelection(e.target.value)}
+                className="office-tool-select"
+              >
+                {OFFICE_FONT_OPTIONS.map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.label}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={applyExcelFontToColumn}
+                className="office-tool-btn"
+                disabled={!focusedCell}
+              >
+                📐 {english ? "Apply to Column" : "पूरे कॉलम पर लागू"}
               </button>
               {statusMsg && <span className="office-status-msg">{statusMsg}</span>}
             </div>
@@ -377,10 +410,10 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
                             <button
                               type="button"
                               onClick={() => toggleColumnFont(colIndex)}
-                              className={`office-col-font-btn ${colMode === "DEVLYS" ? "is-devlys" : ""}`}
+                              className={`office-col-font-btn ${colMode === "DevLys 010" ? "is-devlys" : ""}`}
                               title="Toggle Column Font (Auto / DevLys 010 / Times New Roman)"
                             >
-                              {colMode === "AUTO" ? "Auto" : colMode === "DEVLYS" ? "DevLys" : "TNR"}
+                              {colMode === "AUTO" ? "Auto" : colMode === "DevLys 010" ? "DevLys" : colMode === "Times New Roman" ? "TNR" : colMode.split(" ")[0]}
                             </button>
                           </div>
                         </th>
@@ -394,15 +427,18 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
                       <td className="office-excel-row-num">{rIndex + 1}</td>
                       {Array.from({ length: colCount }, (_, cIndex) => {
                         const val = row[cIndex] ?? "";
-                        const devlys = isCellDevlys(rIndex, cIndex, val);
+                        const fontClass = getCellFontClass(rIndex, cIndex, val);
                         return (
                           <td key={cIndex}>
                             <input
                               type="text"
                               value={val}
-                              onFocus={() => setFocusedCell({ r: rIndex, c: cIndex })}
+                              onFocus={() => {
+                                setFocusedCell({ r: rIndex, c: cIndex });
+                                setExcelToolbarFont(resolveCellFontName(rIndex, cIndex, val));
+                              }}
                               onChange={(e) => updateCell(rIndex, cIndex, e.target.value)}
-                              className={`office-cell-input ${devlys ? "is-devlys" : ""}`}
+                              className={`office-cell-input ${fontClass}`}
                             />
                           </td>
                         );
@@ -443,20 +479,22 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
                 <option value="6">24pt</option>
               </select>
 
-              <button
-                type="button"
-                onClick={() => applySelectionFont("DevLys 010")}
-                className={`office-tool-btn ${wordDefaultFont === "DevLys 010" ? "is-active" : ""}`}
+              <label className="office-tool-label" htmlFor="word-font-select">
+                🔤 {english ? "Font:" : "फ़ॉन्ट:"}
+              </label>
+              <select
+                id="word-font-select"
+                aria-label="Word Font Family"
+                value={wordDefaultFont}
+                onChange={(e) => applySelectionFont(e.target.value)}
+                className="office-tool-select"
               >
-                DevLys 010
-              </button>
-              <button
-                type="button"
-                onClick={() => applySelectionFont("Times New Roman")}
-                className={`office-tool-btn ${wordDefaultFont === "Times New Roman" ? "is-active" : ""}`}
-              >
-                Times New Roman
-              </button>
+                {OFFICE_FONT_OPTIONS.map((font) => (
+                  <option key={font.value} value={font.value}>
+                    {font.label}
+                  </option>
+                ))}
+              </select>
               {statusMsg && <span className="office-status-msg">{statusMsg}</span>}
             </div>
 
@@ -465,7 +503,7 @@ export default function InbuiltOfficeEditor({ item, onSaveFile, onClose, languag
                 ref={wordRef}
                 contentEditable
                 suppressContentEditableWarning
-                className={`office-word-page ${wordDefaultFont === "Times New Roman" ? "font-tnr" : ""}`}
+                className={`office-word-page ${getOfficeFontMeta(wordDefaultFont).className}`}
                 aria-label="Word document editor"
               />
             </div>

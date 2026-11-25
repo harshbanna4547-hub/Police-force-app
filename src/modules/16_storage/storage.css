@@ -1,4 +1,4 @@
-/* === STORAGE VAULT MODULE STYLES (स्टोरेज वॉल्ट एवं फ़ॉन्ट इंस्टॉलर) === */
+/* === STORAGE VAULT MODULE STYLES (स्टोरेज वॉल्ट एवं ऑफिस वॉल्ट) === */
 .storage-vault-module {
   min-width: 0;
   width: 100%;
@@ -65,73 +65,6 @@
 
 .storage-hidden-input {
   display: none;
-}
-
-/* --- Inbuilt Hindi Font Installer Banner (हिंदी फ़ॉन्ट इंस्टॉलर पट्टी) --- */
-.storage-font-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  background-color: #fef3c7;
-  border: 1px solid #f59e0b;
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-}
-
-.storage-font-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.storage-font-title {
-  color: #92400e;
-}
-
-.storage-font-select {
-  padding: 5px 8px;
-  border-radius: 6px;
-  border: 1px solid #d97706;
-  background: #fff;
-}
-
-.storage-font-install-btn {
-  background-color: #d97706;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 0.82rem;
-}
-
-.storage-font-chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.storage-font-chip {
-  background-color: #fff;
-  border: 1px solid #d97706;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 0.78rem;
-  font-weight: bold;
-  color: #78350f;
-}
-
-.storage-font-remove-btn {
-  margin-left: 6px;
-  border: none;
-  background: none;
-  color: #dc2626;
-  cursor: pointer;
-  font-weight: bold;
 }
 
 /* --- Breadcrumbs & Empty Folder State (ब्रेडक्रम्ब नेविगेशन) --- */

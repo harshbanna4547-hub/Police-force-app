@@ -4,6 +4,7 @@ import {
   extractWordBodyHtml,
   getOfficeEditorKind,
   isStrengthVaultFolder,
+  OFFICE_FONT_OPTIONS,
   wrapWordDocumentHtml
 } from "./storageLogic.js";
 
@@ -29,8 +30,24 @@ test("getOfficeEditorKind identifies Excel, Word, and PDF files accurately", () 
   assert.equal(getOfficeEditorKind("Photo.png"), null);
 });
 
-test("Word body extraction and wrapping preserves DevLys 010 @font-face", () => {
+test("Word body extraction and wrapping preserves DevLys 010 & Kruti Dev 010 @font-face", () => {
   const html = wrapWordDocumentHtml("<p>कार्यालय आदेश</p>", "Order", "DevLys 010");
   assert.match(html, /DevLys 010/);
+  assert.match(html, /Kruti Dev 010/);
+  assert.match(html, /Tinos/);
+  assert.match(html, /Carlito/);
   assert.equal(extractWordBodyHtml(new TextEncoder().encode(html).buffer), "<p>कार्यालय आदेश</p>");
+});
+
+test("OFFICE_FONT_OPTIONS includes all 7 pre-bundled office fonts with DevLys 010 & Times New Roman defaults", () => {
+  const values = OFFICE_FONT_OPTIONS.map((f) => f.value);
+  assert.deepEqual(values, [
+    "DevLys 010",
+    "Times New Roman",
+    "Kruti Dev 010",
+    "Noto Sans Devanagari",
+    "Calibri",
+    "Arial",
+    "Georgia"
+  ]);
 });
