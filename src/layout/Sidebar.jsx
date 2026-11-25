@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { OFFICE_SERVER_TOKEN_KEY, saveOfficeServerConfig } from "../core/lanSyncClient.js";
 
 export default function Sidebar({
   sidebarOpen,
@@ -9,10 +10,33 @@ export default function Sidebar({
   activeProfile,
   currentDistrict,
   language,
+  cloudSyncStatus,
   onOpenDistrictSwitcher
 }) {
   const [modulesOpen, setModulesOpen] = useState(false);
+  const [officeKey, setOfficeKey] = useState("");
+  const [officeKeyStatus, setOfficeKeyStatus] = useState("");
+  const [officeKeyConfigured, setOfficeKeyConfigured] = useState(() => {
+    try {
+      return Boolean(window.localStorage.getItem(OFFICE_SERVER_TOKEN_KEY));
+    } catch (error) {
+      console.error("Office Access Key status could not be read:", error);
+      return false;
+    }
+  });
   const visibleModules = modules.filter((module) => module.enabled !== false);
+  const saveOfficeKey = (event) => {
+    event.preventDefault();
+    try {
+      saveOfficeServerConfig(officeKey);
+      setOfficeKey("");
+      setOfficeKeyConfigured(true);
+      setOfficeKeyStatus("Access Key इस डिवाइस पर सुरक्षित हो गई।");
+      window.dispatchEvent(new Event("police-vault-updated"));
+    } catch (error) {
+      setOfficeKeyStatus(error.message);
+    }
+  };
 
   return (
     <>
@@ -129,8 +153,31 @@ export default function Sidebar({
               )}
             </nav>
 
-            <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem", textAlign: "center" }}>
-              District Police Portal
+            <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem" }}>
+              <p style={{ margin: "0 0 9px", textAlign: "center" }}>{cloudSyncStatus}</p>
+              <details>
+                <summary style={{ cursor: "pointer", textAlign: "center" }}>
+                  {officeKeyConfigured ? "Office Access Key बदलें" : "OneDrive sync कनेक्ट करें"}
+                </summary>
+                <form onSubmit={saveOfficeKey} style={{ display: "grid", gap: "8px", marginTop: "10px" }}>
+                  <label htmlFor="office-access-key">सर्वर संचालक से मिली Access Key एक बार दर्ज करें। Microsoft Sign-In आवश्यक नहीं है।</label>
+                  <input
+                    id="office-access-key"
+                    type="password"
+                    autoComplete="new-password"
+                    value={officeKey}
+                    onChange={(event) => setOfficeKey(event.target.value)}
+                    required
+                    minLength={32}
+                    style={{ width: "100%", boxSizing: "border-box", padding: "8px", borderRadius: "6px", border: "1px solid #94A3B8" }}
+                  />
+                  <button type="submit" style={{ padding: "8px", border: "0", borderRadius: "6px", background: "#1D63DC", color: "white", cursor: "pointer" }}>
+                    Access Key सेव करें
+                  </button>
+                  {officeKeyStatus && <span role="status">{officeKeyStatus}</span>}
+                </form>
+              </details>
+              <p style={{ margin: "10px 0 0", textAlign: "center" }}>District Police Portal</p>
             </footer>
           </>
         )}

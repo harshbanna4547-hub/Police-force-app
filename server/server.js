@@ -6,6 +6,11 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import {
+  createOneDriveBackendBridge,
+  matchesOneDriveAccessToken,
+  normalizeOneDriveDistrict
+} from "./oneDriveBackendBridge.js";
 
 const OFFICE_DISTRICT = "CHITTORGARH";
 const SERVER_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
@@ -93,7 +98,8 @@ export function createApp({
   token,
   databaseFile = DEFAULT_DATABASE_FILE,
   maxBodySize = "50mb",
-  frontendDirectory = FRONTEND_DIRECTORY
+  frontendDirectory = FRONTEND_DIRECTORY,
+  oneDriveBridge = createOneDriveBackendBridge()
 } = {}) {
   if (typeof token !== "string" || token.length < 32) {
     throw new Error("A 32-character Office Access Key is required to start the LAN API.");
@@ -112,7 +118,7 @@ export function createApp({
       response.setHeader("Vary", "Origin");
     }
     response.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-    response.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type");
+    response.setHeader("Access-Control-Allow-Headers", "Authorization,Content-Type,X-File-Name,X-File-Type");
     response.setHeader("Access-Control-Allow-Private-Network", "true");
     if (request.method === "OPTIONS") {
       response.sendStatus(204);
@@ -136,7 +142,106 @@ export function createApp({
       next(error);
     }
   });
+  app.use(["/api/cloud-db", "/api/onedrive"], (request, response, next) => {
+    if (request.method === "GET" && request.path === "/auth-callback") {
+      next();
+      return;
+    }
+    if (!matchesOneDriveAccessToken(readBearerToken(request), token)) {
+      response.status(401).json({ error: "Valid Office Access Key required." });
+      return;
+    }
+    next();
+  });
+  app.use(express.raw({ type: "application/octet-stream", limit: "250mb" }));
   app.use(express.json({ limit: maxBodySize, strict: true }));
+
+  app.get("/api/cloud-db/:district", async (request, response, next) => {
+    try {
+      const district = normalizeOneDriveDistrict(request.params.district);
+      response.json(await oneDriveBridge.readDistrictDatabase(district));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/cloud-db/:district", async (request, response, next) => {
+    try {
+      const payload = request.body?.payload;
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        response.status(400).json({ error: "Request must include an object payload." });
+        return;
+      }
+      const district = normalizeOneDriveDistrict(request.params.district);
+      response.json(await oneDriveBridge.writeDistrictDatabase(district, payload));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/onedrive/auth-init", async (request, response, next) => {
+    try {
+      response.json(await oneDriveBridge.createAuthUrl());
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/onedrive/auth-callback", async (request, response, next) => {
+    try {
+      if (request.query.error) {
+        response.status(400).type("text").send("OneDrive authorization was not completed. You may close this page.");
+        return;
+      }
+      await oneDriveBridge.completeAuth({
+        code: request.query.code,
+        state: request.query.state
+      });
+      response.type("text").send("OneDrive is connected. You may close this page and return to the portal.");
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/onedrive/storage/:district", async (request, response, next) => {
+    try {
+      const district = normalizeOneDriveDistrict(request.params.district);
+      response.json({ files: await oneDriveBridge.listStorageFiles(district) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/onedrive/storage/:district/:fileId/content", async (request, response, next) => {
+    try {
+      const district = normalizeOneDriveDistrict(request.params.district);
+      const contents = await oneDriveBridge.downloadStorageFile(district, request.params.fileId);
+      response.type("application/octet-stream").send(contents);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.post("/api/onedrive/storage/:district", async (request, response, next) => {
+    try {
+      const district = normalizeOneDriveDistrict(request.params.district);
+      let fileName;
+      try {
+        fileName = decodeURIComponent(String(request.headers["x-file-name"] || ""));
+      } catch {
+        const error = new Error("Storage फ़ाइल का नाम अमान्य है।");
+        error.status = 400;
+        throw error;
+      }
+      response.json(await oneDriveBridge.uploadStorageFile(district, {
+        fileName,
+        contentType: request.headers["x-file-type"],
+        data: request.body
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
 
   app.get("/api/data/:district", async (request, response, next) => {
     try {

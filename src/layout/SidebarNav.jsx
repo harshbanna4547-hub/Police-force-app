@@ -33,6 +33,7 @@ export default function SidebarNav({
         activeProfile={portalData.activeProfile}
         currentDistrict={currentDistrict}
         lanSyncStatus={lanSyncStatus}
+        cloudSyncStatus={portalData.cloudSyncStatus}
         language={language}
         onOpenDistrictSwitcher={() => setSwitcherOpen(true)}
       />

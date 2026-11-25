@@ -74,7 +74,7 @@ export default function StorageVaultModule({
             kind: "FOLDER",
             name: fName,
             district: activeProfile,
-            updatedAt: new Date().toLocaleString("en-IN")
+            updatedAt: new Date().toISOString()
           });
         });
         writeTx.oncomplete = () => {
@@ -94,7 +94,11 @@ export default function StorageVaultModule({
     loadAllInstalledFonts().then(setInstalledFonts);
     const refreshItems = () => loadAllItems();
     window.addEventListener("police-vault-updated", refreshItems);
-    return () => window.removeEventListener("police-vault-updated", refreshItems);
+    window.addEventListener("police-vault-cloud-updated", refreshItems);
+    return () => {
+      window.removeEventListener("police-vault-updated", refreshItems);
+      window.removeEventListener("police-vault-cloud-updated", refreshItems);
+    };
   }, [loadAllItems]);
 
   const handleFontInstall = async (e) => {
@@ -129,7 +133,7 @@ export default function StorageVaultModule({
       kind: "FOLDER",
       name: name.trim(),
       district: activeProfile,
-      updatedAt: new Date().toLocaleString("en-IN")
+      updatedAt: new Date().toISOString()
     });
     await loadAllItems();
   };
@@ -147,7 +151,7 @@ export default function StorageVaultModule({
         mime: file.type,
         sizeKB: (file.size / 1024).toFixed(1),
         district: activeProfile,
-        updatedAt: new Date().toLocaleString("en-IN"),
+        updatedAt: new Date().toISOString(),
         data: buffer
       });
     }
@@ -173,7 +177,7 @@ export default function StorageVaultModule({
         mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         sizeKB: (out.byteLength / 1024).toFixed(1),
         district: activeProfile,
-        updatedAt: new Date().toLocaleString("en-IN"),
+        updatedAt: new Date().toISOString(),
         data: out
       });
     } else {
@@ -189,7 +193,7 @@ export default function StorageVaultModule({
         mime: "application/msword",
         sizeKB: (buf.byteLength / 1024).toFixed(1),
         district: activeProfile,
-        updatedAt: new Date().toLocaleString("en-IN"),
+        updatedAt: new Date().toISOString(),
         data: buf
       });
     }
@@ -213,7 +217,7 @@ export default function StorageVaultModule({
       mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       sizeKB: (out.byteLength / 1024).toFixed(1),
       district: activeProfile,
-      updatedAt: new Date().toLocaleString("en-IN"),
+      updatedAt: new Date().toISOString(),
       data: out
     });
     await loadAllItems();
@@ -223,7 +227,7 @@ export default function StorageVaultModule({
   const handleRename = async (item) => {
     const newName = prompt("नया नाम लिखें:", item.name);
     if (!newName || !newName.trim() || newName.trim() === item.name) return;
-    await saveItemToDB({ ...item, name: newName.trim(), updatedAt: new Date().toLocaleString("en-IN") });
+    await saveItemToDB({ ...item, name: newName.trim(), updatedAt: new Date().toISOString() });
     await loadAllItems();
   };
 
@@ -285,7 +289,7 @@ export default function StorageVaultModule({
   const getFileIcon = (item) => {
     if (item.kind === "FOLDER") return "📁";
     const n = item.name.toLowerCase();
-    if (n.endsWith(".xlsx") || n.endsWith(".xls") || n.endsWith(".csv")) return "📊";
+    if (/\.(xlsx?|xlsm|xlsb|xltx?|xltm|csv)$/i.test(n)) return "📊";
     if (n.endsWith(".doc") || n.endsWith(".docx")) return "📝";
     if (n.endsWith(".pdf")) return "📕";
     if (n.match(/\.(jpg|jpeg|png|webp)$/)) return "🖼️";
