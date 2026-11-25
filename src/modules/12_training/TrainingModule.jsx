@@ -13,10 +13,13 @@ import {
   buildPostWiseTrainingSummary,
   buildYearWiseTrainingSummary,
   datesOverlap,
+  getMandatoryPendingDueRows,
   getMissingTrainingCourses,
   getTrainingEmployeeKey,
   IN_STATE_INSTITUTES,
   isBeltRank,
+  MANDATORY_DUE_COURSES,
+  NOMINATION_LIFECYCLE_TABS,
   NOMINATION_SUBTABS,
   normalizeTrainingRank,
   OTHER_STATE_INSTITUTES,
@@ -108,19 +111,23 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const english = language === "en";
   const [lookbackCutoff] = useState(() => Date.now() - TWO_YEARS_MS);
 
-  // [NAVIGATION] Primary & Sub-Tab State
+  // [NAVIGATION] Primary, Sub-Tab & 4-Stage Nomination Lifecycle State
   const [primaryTab, setPrimaryTab] = useState("TRAINING");
   const [trainingSubTab, setTrainingSubTab] = useState("ALL_RECORDS");
   const [nominationSubTab, setNominationSubTab] = useState("OTHER_STATE");
+  const [nominationStage, setNominationStage] = useState("GENERATOR");
 
   // [FILTERS] Global Search & Gender
   const [search, setSearch] = useState("");
   const [gender, setGender] = useState("ALL");
 
-  // [TRAINING TAB 1-5 STATE]
+  // [TRAINING TAB 1-6 STATE]
   const [rankFilter, setRankFilter] = useState("ALL");
   const [courseFilter, setCourseFilter] = useState("ALL");
   const [page, setPage] = useState(0);
+  const [dueRankFilter, setDueRankFilter] = useState("ALL");
+  const [dueCourseFilter, setDueCourseFilter] = useState("ALL");
+  const [duePage, setDuePage] = useState(0);
   const [selectedPostRank, setSelectedPostRank] = useState("FC");
   const [selectedCourseName, setSelectedCourseName] = useState("PCC");
   const [selectedInstituteName, setSelectedInstituteName] = useState("RPA जयपुर");
@@ -183,6 +190,22 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
   const pageSize = 50;
   const pageCount = Math.max(1, Math.ceil(filteredMissingRows.length / pageSize));
   const pagedMissingRows = filteredMissingRows.slice(page * pageSize, (page + 1) * pageSize);
+
+  // [TRAINING SUB-TAB 6] Mandatory / Pending Due (PCC for FC/HC only + BNS/BNSS/BSA + Cyber + Induction)
+  const mandatoryDueRows = useMemo(
+    () => getMandatoryPendingDueRows(genderFilteredRecords, history),
+    [genderFilteredRecords, history]
+  );
+
+  const filteredDueRows = mandatoryDueRows.filter((row) => {
+    if (dueRankFilter !== "ALL" && normalizeTrainingRank(row.employee) !== dueRankFilter) return false;
+    if (dueCourseFilter !== "ALL" && !row["लंबित अनिवार्य कोर्स"].includes(dueCourseFilter)) return false;
+    const q = search.trim();
+    return !q || matchesEmployeeSearch(row, q, ["NAME", "BELT NO", "CADER", "POSTING"]);
+  });
+
+  const duePageCount = Math.max(1, Math.ceil(filteredDueRows.length / pageSize));
+  const pagedDueRows = filteredDueRows.slice(duePage * pageSize, (duePage + 1) * pageSize);
 
   // [TRAINING SUB-TAB 2-5] Aggregated Reports
   const postWiseSummary = useMemo(
@@ -340,6 +363,7 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
           ...prev,
           Training_Nominations: [...(prev.Training_Nominations || []), nomination]
         }));
+        setNominationStage("PENDING");
       }
       openOrDownloadHtml(html, fileName, documentType !== "WIRELESS");
       setEmployee(null);
@@ -562,6 +586,17 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
           "पूर्ण प्रशिक्षण संख्या": row.completedCount,
           "प्रशिक्षित कार्मिक": row.uniqueEmployees,
           "प्रमुख विषय": row.coursesSummary
+        }));
+      }
+      if (trainingSubTab === "MANDATORY_DUE") {
+        return filteredDueRows.map((row, index) => ({
+          "क्र.सं.": index + 1,
+          "पद (Post)": row.CADER,
+          "बेल्ट नं.": isBeltRank(row.employee) ? row["BELT NO"] : "-",
+          "नाम": row.NAME,
+          "वर्तमान पदस्थापन": row.POSTING,
+          "पूर्ण प्रशिक्षण संख्या": row["पूर्ण प्रशिक्षण संख्या"],
+          "लंबित अनिवार्य कोर्स": row["लंबित अनिवार्य कोर्स"].join(", ")
         }));
       }
       return filteredMissingRows.map((row, index) => ({
@@ -1007,6 +1042,86 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
               )}
             </section>
           )}
+
+          {/* --- 1.6 MANDATORY / PENDING DUE (PCC for FC/HC only + BNS/BNSS/BSA, Cyber, Induction) --- */}
+          {trainingSubTab === "MANDATORY_DUE" && (
+            <section className="training-section">
+              <div className="training-section-heading">
+                <h3 className="training-section-title">
+                  ⚠️ {english ? `Mandatory / Pending Due (${filteredDueRows.length} Employees)` : `लंबित अनिवार्य प्रशिक्षण (${filteredDueRows.length} कर्मचारी)`}
+                </h3>
+              </div>
+              <div className="training-filter-row">
+                <label>
+                  {english ? "Post / Rank" : "पद / रैंक"}
+                  <select value={dueRankFilter} onChange={(e) => { setDueRankFilter(e.target.value); setDuePage(0); }}>
+                    <option value="ALL">{english ? "All Posts" : "सभी पद (ALL)"}</option>
+                    {POST_ORDER_LIST.map((r) => (
+                      <option key={r.code} value={r.code}>{r.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  {english ? "Mandatory Course" : "अनिवार्य कोर्स"}
+                  <select value={dueCourseFilter} onChange={(e) => { setDueCourseFilter(e.target.value); setDuePage(0); }}>
+                    <option value="ALL">{english ? "All Mandatory Courses" : "सभी अनिवार्य कोर्स"}</option>
+                    {MANDATORY_DUE_COURSES.map((item) => (
+                      <option key={item.label} value={item.label}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="training-table-scroll table-responsive-box">
+                <table className="training-data-table">
+                  <thead>
+                    <tr>
+                      <th>{english ? "S.N." : "क्र.सं."}</th>
+                      <th>{english ? "Post" : "पद"}</th>
+                      <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+                      <th>{english ? "Name" : "नाम"}</th>
+                      <th>{english ? "Current Posting" : "वर्तमान पदस्थापन"}</th>
+                      <th>{english ? "Completed" : "पूर्ण"}</th>
+                      <th>{english ? "Pending Mandatory Courses" : "लंबित अनिवार्य कोर्स"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagedDueRows.map((row, index) => (
+                      <tr key={getTrainingEmployeeKey(row.employee)}>
+                        <td className="training-tnr-cell">{duePage * pageSize + index + 1}</td>
+                        <td className="training-tnr-cell">{row.CADER || "-"}</td>
+                        <td className="training-tnr-cell">{isBeltRank(row.employee) ? row["BELT NO"] : "-"}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="training-name-button"
+                            onClick={() => setDetailEmployee(row.employee)}
+                          >
+                            <HindiText text={row.NAME} />
+                          </button>
+                        </td>
+                        <td><HindiText text={row.POSTING} /></td>
+                        <td className="training-tnr-cell">{row["पूर्ण प्रशिक्षण संख्या"]}</td>
+                        <td>{row["लंबित अनिवार्य कोर्स"].join(", ")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="training-pagination">
+                <button type="button" className="training-btn-secondary" disabled={duePage === 0} onClick={() => setDuePage((p) => p - 1)}>
+                  ← {english ? "Prev" : "पिछला"}
+                </button>
+                <span className="english-cell">
+                  {english ? "Page" : "पृष्ठ"} {duePage + 1} / {duePageCount} · {filteredDueRows.length ? duePage * pageSize + 1 : 0}–{Math.min(filteredDueRows.length, (duePage + 1) * pageSize)} / {filteredDueRows.length}
+                </span>
+                <button type="button" className="training-btn-secondary" disabled={duePage + 1 >= duePageCount} onClick={() => setDuePage((p) => p + 1)}>
+                  {english ? "Next" : "अगला"} →
+                </button>
+              </div>
+            </section>
+          )}
         </>
       )}
 
@@ -1029,143 +1144,211 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
             ))}
           </nav>
 
-          {/* --- 2.1 & 2.2 OTHER STATE & IN-STATE NOMINATION WORKSPACE --- */}
+          {/* --- 2.1 & 2.2 OTHER STATE & IN-STATE 4-STAGE NOMINATION LIFECYCLE --- */}
           {isNominationFormTab && (
-            <>
-              <section className="training-section">
-                <h3 className="training-section-title">
-                  {nominationSubTab === "OTHER_STATE"
-                    ? (english ? "🇮🇳 National & Other State Institute Nomination" : "🇮🇳 अन्य राज्य एवं राष्ट्रीय संस्थान नामांकन व रवानगी आदेश")
-                    : (english ? "🏛️ In-State Training Institute Nomination" : "🏛️ राज्य स्तरीय प्रशिक्षण संस्थान (RPA / CDTI / RPTC / PTS) नामांकन")}
-                </h3>
+            <section className="training-section">
+              <h3 className="training-section-title">
+                {nominationSubTab === "OTHER_STATE"
+                  ? (english ? "🇮🇳 National & Other State Institute Nomination" : "🇮🇳 अन्य राज्य एवं राष्ट्रीय संस्थान नामांकन व रवानगी आदेश")
+                  : (english ? "🏛️ In-State Training Institute Nomination" : "🏛️ राज्य स्तरीय प्रशिक्षण संस्थान (RPA / CDTI / RPTC / PTS) नामांकन")}
+              </h3>
 
-                {/* Quick Institute Chips */}
-                <div className="training-institute-chips">
-                  {(nominationSubTab === "OTHER_STATE" ? OTHER_STATE_INSTITUTES : IN_STATE_INSTITUTES).map((instName) => (
+              {/* 4-Stage Nomination Lifecycle Bar */}
+              <nav className="training-lifecycle-tabs" aria-label={english ? "Nomination workflow stages" : "नामांकन कार्यवाही चरण"}>
+                {NOMINATION_LIFECYCLE_TABS.map((stage) => {
+                  const stageCount = stage.id === "PENDING"
+                    ? ` (${pendingNominations.length})`
+                    : stage.id === "DONE"
+                      ? ` (${completedNominations.length})`
+                      : stage.id === "NOT_DONE"
+                        ? ` (${notDoneNominations.length})`
+                        : "";
+                  return (
                     <button
                       type="button"
-                      key={instName}
-                      onClick={() => setInstitute(instName)}
-                      className={`training-institute-chip ${institute === instName ? "is-active" : ""}`}
+                      key={stage.id}
+                      onClick={() => setNominationStage(stage.id)}
+                      className={`training-subtab-btn ${nominationStage === stage.id ? "is-active" : ""}`}
+                      aria-pressed={nominationStage === stage.id}
                     >
-                      {instName}
+                      {english ? stage.en : stage.hi}{stageCount}
                     </button>
-                  ))}
-                </div>
+                  );
+                })}
+              </nav>
 
-                {/* Employee Search & Quick Selection */}
-                <label className="training-search-box">
-                  <span>{english ? "Search Employee (Name / Belt No. / Post)" : "कर्मचारी खोजें (नाम / बेल्ट नं. / पद)"}</span>
-                  <input
-                    type="search"
-                    value={employeeQuery}
-                    onChange={(event) => {
-                      setEmployeeQuery(event.target.value);
-                      setEmployee(null);
-                    }}
-                    placeholder={english ? "Type name or belt number..." : "नाम या बेल्ट नं. लिखें..."}
-                  />
-                </label>
-
-                <div className="training-match-pills">
-                  {employeeMatches.map((item) => (
-                    <button type="button" key={item._uid || item["BELT NO"]} onClick={() => setEmployee(item)} className="training-match-pill">
-                      <HindiText text={item.NAME} /> · {isBeltRank(item) ? item["BELT NO"] || "-" : "-"} · {item.CADER}
-                    </button>
-                  ))}
-                </div>
-
-                {employee && (
-                  <>
-                    <dl className="training-employee-data">
-                      {[
-                        [english ? "Name" : "नाम", employee.NAME, true],
-                        [english ? "Father Name" : "पिता का नाम", employee["FATHER NAME"], true],
-                        [english ? "Post" : "पद", employee.CADER, false],
-                        [english ? "Belt No." : "बेल्ट नं.", isBeltRank(employee) ? (employee["BELT NO"] || "-") : "-", false],
-                        [english ? "Current Posting" : "वर्तमान पदस्थापन", employee.POSTING, true],
-                        [english ? "Education" : "शैक्षणिक योग्यता", employee.EDUCATION, true, "EDUCATION"],
-                        [english ? "Mobile No." : "मोबाइल नं.", employee["MOBILE NO 1"] || employee["MOBILE NO"], false],
-                        [english ? "DOB" : "जन्मतिथि", formatDateOnly(employee["DATE OF BIRTH"]), false]
-                      ].map(([label, value, useHindi, fieldName = ""]) => (
-                        <div key={label}>
-                          <dt>{label}</dt>
-                          <dd>{useHindi ? <HindiText text={value} field={fieldName} /> : (value || "-")}</dd>
-                        </div>
-                      ))}
-                    </dl>
-
-                    <p>
-                      <strong>{english ? "Last 2 Years Training History" : "गत 02 वर्ष के प्रशिक्षण"}:</strong>{" "}
-                      {recentHistory.map((row) => `${row.COURSE_NAME} (${formatDateOnly(row.FROM_DATE)}–${formatDateOnly(row.TO_DATE)})`).join(", ") || (english ? "None" : "कोई रिकॉर्ड नहीं")}
-                    </p>
-
-                    <form onSubmit={handleGenerateNomination} className="training-generator-form">
-                      <select value={documentType} onChange={(event) => setDocumentType(event.target.value)} aria-label="Training document type">
-                        {TRAINING_DOCUMENTS.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
-                      </select>
-                      <input required value={course} onChange={(event) => setCourse(event.target.value)} placeholder={english ? "Course / Subject" : "प्रशिक्षण विषय / कोर्स"} />
-                      <input required value={institute} onChange={(event) => setInstitute(event.target.value)} placeholder={english ? "Institute Name" : "संस्थान का नाम"} />
-                      <label>{english ? "From" : "कब से"} <input required type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
-                      <label>{english ? "To" : "कब तक"} <input required type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
-                      {documentType !== "WIRELESS" && (
-                        <input value={documentInstructions} onChange={(event) => setDocumentInstructions(event.target.value)} placeholder={english ? "Reason / Instructions" : "कारण / अतिरिक्त निर्देश"} />
-                      )}
-                      {invalidTrainingRange && (
-                        <strong role="alert" className="training-clash">⚠️ {english ? "End date cannot be before start date." : "प्रशिक्षण समाप्ति तिथि, आरंभ तिथि से पहले नहीं हो सकती।"}</strong>
-                      )}
-                      {(alreadyCompleted || dateClash) && (
-                        <strong role="alert" className="training-clash">⚠️ {english ? "Date Clash or Course Already Completed!" : "तिथि टकराव (Date Clash) या कोर्स पहले से पूर्ण है!"}</strong>
-                      )}
+              {/* STAGE 1: 📝 Letter & Wireless Generator */}
+              {nominationStage === "GENERATOR" && (
+                <>
+                  <div className="training-institute-chips">
+                    {(nominationSubTab === "OTHER_STATE" ? OTHER_STATE_INSTITUTES : IN_STATE_INSTITUTES).map((instName) => (
                       <button
-                        type="submit"
-                        className="training-btn-primary"
-                        disabled={saving || invalidTrainingRange || (documentType === "WIRELESS" && (alreadyCompleted || dateClash))}
+                        type="button"
+                        key={instName}
+                        onClick={() => setInstitute(instName)}
+                        className={`training-institute-chip ${institute === instName ? "is-active" : ""}`}
                       >
-                        {saving ? (english ? "Saving…" : "सेव हो रहा है…") : (english ? "📨 Generate Order & Auto-Save to Vault" : "📨 आदेश बनाएं व Storage Vault में सेव करें")}
+                        {instName}
                       </button>
-                    </form>
-                  </>
-                )}
-              </section>
+                    ))}
+                  </div>
 
-              {/* Pending -> Done (DOB) / Not Done Tracking */}
-              <section className="training-section">
-                <h3 className="training-section-title">
-                  ⏳ {english ? `Nomination Status Tracker (Pending: ${pendingNominations.length})` : `नामांकन ट्रैकिंग: लंबित (${pendingNominations.length}) / पूर्ण (${completedNominations.length}) / अनुपस्थित (${notDoneNominations.length})`}
-                </h3>
-                <div className="training-status-row">
-                  <input value={orderNo} onChange={(event) => setOrderNo(event.target.value)} placeholder={english ? "Completion DOB Order No." : "पूर्ण DOB आदेश नं."} />
-                  <input type="date" value={orderDate} onChange={(event) => setOrderDate(event.target.value)} aria-label="DOB आदेश दिनांक" />
+                  <label className="training-search-box">
+                    <span>{english ? "Search Employee (Name / Belt No. / Post)" : "कर्मचारी खोजें (नाम / बेल्ट नं. / पद)"}</span>
+                    <input
+                      type="search"
+                      value={employeeQuery}
+                      onChange={(event) => {
+                        setEmployeeQuery(event.target.value);
+                        setEmployee(null);
+                      }}
+                      placeholder={english ? "Type name or belt number..." : "नाम या बेल्ट नं. लिखें..."}
+                    />
+                  </label>
+
+                  <div className="training-match-pills">
+                    {employeeMatches.map((item) => (
+                      <button type="button" key={item._uid || item["BELT NO"]} onClick={() => setEmployee(item)} className="training-match-pill">
+                        <HindiText text={item.NAME} /> · {isBeltRank(item) ? item["BELT NO"] || "-" : "-"} · {item.CADER}
+                      </button>
+                    ))}
+                  </div>
+
+                  {employee && (
+                    <>
+                      <dl className="training-employee-data">
+                        {[
+                          [english ? "Name" : "नाम", employee.NAME, true],
+                          [english ? "Father Name" : "पिता का नाम", employee["FATHER NAME"], true],
+                          [english ? "Post" : "पद", employee.CADER, false],
+                          [english ? "Belt No." : "बेल्ट नं.", isBeltRank(employee) ? (employee["BELT NO"] || "-") : "-", false],
+                          [english ? "Current Posting" : "वर्तमान पदस्थापन", employee.POSTING, true],
+                          [english ? "Education" : "शैक्षणिक योग्यता", employee.EDUCATION, true, "EDUCATION"],
+                          [english ? "Mobile No." : "मोबाइल नं.", employee["MOBILE NO 1"] || employee["MOBILE NO"], false],
+                          [english ? "DOB" : "जन्मतिथि", formatDateOnly(employee["DATE OF BIRTH"]), false]
+                        ].map(([label, value, useHindi, fieldName = ""]) => (
+                          <div key={label}>
+                            <dt>{label}</dt>
+                            <dd>{useHindi ? <HindiText text={value} field={fieldName} /> : (value || "-")}</dd>
+                          </div>
+                        ))}
+                      </dl>
+
+                      <p>
+                        <strong>{english ? "Last 2 Years Training History" : "गत 02 वर्ष के प्रशिक्षण"}:</strong>{" "}
+                        {recentHistory.map((row) => `${row.COURSE_NAME} (${formatDateOnly(row.FROM_DATE)}–${formatDateOnly(row.TO_DATE)})`).join(", ") || (english ? "None" : "कोई रिकॉर्ड नहीं")}
+                      </p>
+
+                      <form onSubmit={handleGenerateNomination} className="training-generator-form">
+                        <select value={documentType} onChange={(event) => setDocumentType(event.target.value)} aria-label="Training document type">
+                          {TRAINING_DOCUMENTS.map((item) => <option value={item.id} key={item.id}>{item.label}</option>)}
+                        </select>
+                        <input required value={course} onChange={(event) => setCourse(event.target.value)} placeholder={english ? "Course / Subject" : "प्रशिक्षण विषय / कोर्स"} />
+                        <input required value={institute} onChange={(event) => setInstitute(event.target.value)} placeholder={english ? "Institute Name" : "संस्थान का नाम"} />
+                        <label>{english ? "From" : "कब से"} <input required type="date" value={fromDate} onChange={(event) => setFromDate(event.target.value)} /></label>
+                        <label>{english ? "To" : "कब तक"} <input required type="date" value={toDate} onChange={(event) => setToDate(event.target.value)} /></label>
+                        {documentType !== "WIRELESS" && (
+                          <input value={documentInstructions} onChange={(event) => setDocumentInstructions(event.target.value)} placeholder={english ? "Reason / Amendment / Instructions" : "कारण / संशोधन / अतिरिक्त निर्देश"} />
+                        )}
+                        {invalidTrainingRange && (
+                          <strong role="alert" className="training-clash">⚠️ {english ? "End date cannot be before start date." : "प्रशिक्षण समाप्ति तिथि, आरंभ तिथि से पहले नहीं हो सकती।"}</strong>
+                        )}
+                        {(alreadyCompleted || dateClash) && (
+                          <strong role="alert" className="training-clash">⚠️ {english ? "Date Clash or Course Already Completed!" : "तिथि टकराव (Date Clash) या कोर्स पहले से पूर्ण है!"}</strong>
+                        )}
+                        <button
+                          type="submit"
+                          className="training-btn-primary"
+                          disabled={saving || invalidTrainingRange || (documentType === "WIRELESS" && (alreadyCompleted || dateClash))}
+                        >
+                          {saving ? (english ? "Saving…" : "सेव हो रहा है…") : (english ? "📨 Generate Order & Auto-Save to Vault" : "📨 आदेश बनाएं व Storage Vault में सेव करें")}
+                        </button>
+                      </form>
+                    </>
+                  )}
+                </>
+              )}
+
+              {/* STAGE 2: ⏳ Pending Training */}
+              {nominationStage === "PENDING" && (
+                <div>
+                  <h4>⏳ {english ? "Pending / Nominated Employees" : "नामांकित / प्रशिक्षणरत सूची"} ({pendingNominations.length})</h4>
+                  {pendingNominations.map((row, index) => (
+                    <div className="training-nomination-item" key={`pend-${row["BELT NO"]}-${index}`}>
+                      <span>
+                        <HindiText text={row.NAME} /> · <span className="english-cell">{row["BELT NO"] || "-"}</span> · <HindiText text={row.COURSE_NAME} /> · <HindiText text={row.INSTITUTE} /> ({formatDateOnly(row.FROM_DATE)}–{formatDateOnly(row.TO_DATE)})
+                      </span>
+                      <div className="training-action-bar">
+                        <button type="button" className="training-btn-secondary" onClick={() => setNominationStage("DONE")}>
+                          ✅ {english ? "Mark Done" : "पूर्ण दर्ज करें"}
+                        </button>
+                        <button type="button" className="training-btn-danger-soft" onClick={() => markNotDone(row)}>
+                          ❌ {english ? "Not Done" : "अनुपस्थित / निरस्त"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {pendingNominations.length === 0 && (
+                    <p>{english ? "No pending nominations." : "कोई नामांकन लंबित नहीं है।"}</p>
+                  )}
                 </div>
+              )}
 
-                {pendingNominations.map((row, index) => (
-                  <div className="training-nomination-item" key={`${row["BELT NO"]}-${index}`}>
-                    <span>
-                      <HindiText text={row.NAME} /> · <span className="english-cell">{row["BELT NO"] || "-"}</span> · <HindiText text={row.COURSE_NAME} /> · <HindiText text={row.INSTITUTE} /> ({formatDateOnly(row.FROM_DATE)}–{formatDateOnly(row.TO_DATE)})
-                    </span>
-                    <div className="training-action-bar">
+              {/* STAGE 3: ✅ Training Done (Adds DOB No. & Date directly into All Training Record) */}
+              {nominationStage === "DONE" && (
+                <div>
+                  <h4>✅ {english ? "Mark Training Done (Adds directly to All Training Record)" : "प्रशिक्षण पूर्ण दर्ज करें (DOB नं. व दिनांक सीधे All Training Record में जुड़ेगा)"}</h4>
+                  <div className="training-status-row">
+                    <input value={orderNo} onChange={(event) => setOrderNo(event.target.value)} placeholder={english ? "Completion DOB Order No." : "पूर्ण DOB आदेश नं."} />
+                    <input type="date" value={orderDate} onChange={(event) => setOrderDate(event.target.value)} aria-label="DOB आदेश दिनांक" />
+                  </div>
+                  {pendingNominations.map((row, index) => (
+                    <div className="training-nomination-item" key={`complete-${row["BELT NO"]}-${index}`}>
+                      <span>
+                        <HindiText text={row.NAME} /> · <span className="english-cell">{row["BELT NO"] || "-"}</span> · <HindiText text={row.COURSE_NAME} /> · <HindiText text={row.INSTITUTE} />
+                      </span>
                       <button type="button" className="training-btn-success" onClick={() => completeTraining(row)}>
-                        ✅ {english ? "Mark Done (DOB)" : "पूर्ण करें (DOB सहित)"}
-                      </button>
-                      <button type="button" className="training-btn-danger-soft" onClick={() => markNotDone(row)}>
-                        ❌ {english ? "Not Done" : "प्रशिक्षण नहीं किया"}
+                        ✅ {english ? "Complete with DOB" : "DOB सहित पूर्ण करें"}
                       </button>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                  <h4>{english ? "Completed Nominations" : "पूर्ण हो चुके प्रशिक्षण"} ({completedNominations.length})</h4>
+                  {completedNominations.map((row, index) => (
+                    <p key={`done-${index}`}>
+                      ✅ <HindiText text={row.NAME} /> · <HindiText text={row.COURSE_NAME} /> · <HindiText text={row.INSTITUTE} /> · DOB {row.DOB_ORDER_NO} ({formatDateOnly(row.DOB_ORDER_DATE)})
+                    </p>
+                  ))}
+                  {completedNominations.length === 0 && pendingNominations.length === 0 && (
+                    <p>{english ? "No completed nominations yet." : "अभी कोई पूर्ण प्रविष्टि नहीं है।"}</p>
+                  )}
+                </div>
+              )}
 
-                {completedNominations.map((row, index) => (
-                  <p key={`done-${index}`}>✅ <HindiText text={row.NAME} /> · {row.COURSE_NAME} · DOB {row.DOB_ORDER_NO} ({formatDateOnly(row.DOB_ORDER_DATE)})</p>
-                ))}
-                {notDoneNominations.map((row, index) => (
-                  <p key={`notdone-${index}`}>❌ <HindiText text={row.NAME} /> · {row.COURSE_NAME} · {row.NOT_DONE_REASON}</p>
-                ))}
-                {categoryNominations.length === 0 && (
-                  <p>{english ? "No nominations created in this category yet." : "इस श्रेणी में अभी कोई नामांकन दर्ज नहीं है।"}</p>
-                )}
-              </section>
-            </>
+              {/* STAGE 4: ❌ Nominated but Not Done */}
+              {nominationStage === "NOT_DONE" && (
+                <div>
+                  <h4>❌ {english ? "Nominated but Not Done / Cancelled" : "अनुपस्थित / निरस्त नामांकन (कारण सहित)"} ({notDoneNominations.length})</h4>
+                  {pendingNominations.map((row, index) => (
+                    <div className="training-nomination-item" key={`mark-nd-${row["BELT NO"]}-${index}`}>
+                      <span>
+                        <HindiText text={row.NAME} /> · <HindiText text={row.COURSE_NAME} /> ({formatDateOnly(row.FROM_DATE)}–{formatDateOnly(row.TO_DATE)})
+                      </span>
+                      <button type="button" className="training-btn-danger-soft" onClick={() => markNotDone(row)}>
+                        ❌ {english ? "Enter Not-Done Reason" : "कारण दर्ज करें"}
+                      </button>
+                    </div>
+                  ))}
+                  {notDoneNominations.map((row, index) => (
+                    <p key={`notdone-${index}`}>
+                      ❌ <HindiText text={row.NAME} /> · <HindiText text={row.COURSE_NAME} /> · <strong>{row.NOT_DONE_REASON}</strong>
+                    </p>
+                  ))}
+                  {notDoneNominations.length === 0 && pendingNominations.length === 0 && (
+                    <p>{english ? "No absent / cancelled records." : "कोई अनुपस्थित / निरस्त रिकॉर्ड नहीं है।"}</p>
+                  )}
+                </div>
+              )}
+            </section>
           )}
 
           {/* --- 2.3 IGOT KARMAYOGI & MDO ADMIN REPORT --- */}
