@@ -1,0 +1,590 @@
+/* ==========================================================================
+   WINDOWS 11 BUILT-IN APPS STYLES (MS Excel Pro, Word Pro, Photo, Media, VS Code, Calc, Sticky, Games, Store)
+   Zero Inline Styles — Every layout & color variant uses CSS classes.
+   ========================================================================== */
+
+.win11-app-window {
+  position: absolute;
+  top: clamp(10px, 2vh, 22px);
+  left: clamp(14px, 3vw, 48px);
+  right: clamp(14px, 3vw, 48px);
+  bottom: clamp(10px, 2vh, 22px);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(248, 250, 252, 0.96);
+  backdrop-filter: blur(22px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 28px 66px rgba(2, 6, 23, 0.56);
+  color: #0f172a;
+}
+
+.win11-app-window.is-compact {
+  left: clamp(20px, 18vw, 240px);
+  right: clamp(20px, 18vw, 240px);
+}
+
+.win11-app-window.is-maximized {
+  inset: 0 !important;
+  border-radius: 0;
+  border-width: 0;
+}
+
+.win11-app-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  color: #ffffff;
+  cursor: move;
+}
+
+.win11-app-titlebar .win11-win-ctrl-btn {
+  color: #ffffff;
+}
+
+.win11-app-titlebar .win11-win-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.win11-app-title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.win11-app-title-text {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win11-app-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+/* === RIBBON TOOLBAR & FORMULA BAR === */
+.wapp-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.wapp-btn {
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wapp-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.wapp-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.wapp-btn.is-active {
+  background: #1d63dc;
+  border-color: #1d63dc;
+  color: #ffffff;
+}
+
+.wapp-btn.is-save {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+.wapp-btn.is-download {
+  background: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+}
+
+.wapp-select {
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.wapp-status {
+  margin-left: auto;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.wapp-formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #cbd5e1;
+}
+
+.wapp-cell-ref-pill {
+  min-width: 54px;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e3a8a;
+  font-family: "Times New Roman", "Tinos", Times, serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.wapp-fx-badge {
+  font-style: italic;
+  font-weight: 800;
+  color: #2563eb;
+  font-family: "Georgia", serif;
+}
+
+.wapp-formula-input {
+  flex: 1;
+  padding: 5px 9px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  font-family: "Times New Roman", "Tinos", Times, serif;
+  font-size: 0.84rem;
+}
+
+/* Excel Cell Styling Classes */
+.excel-cell-bold { font-weight: 800 !important; }
+.excel-cell-hl-yellow { background-color: #fef9c3 !important; }
+.excel-cell-hl-blue { background-color: #dbeafe !important; }
+.excel-cell-hl-green { background-color: #dcfce7 !important; }
+
+/* Word A4 Canvas & Font Classes */
+.wapp-a4-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(14px, 2vw, 28px);
+  background: #e2e8f0;
+  display: flex;
+  justify-content: center;
+}
+
+.wapp-a4-page {
+  width: min(794px, 100%);
+  min-height: 100%;
+  padding: clamp(22px, 4vw, 48px);
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+  outline: none;
+  line-height: 1.55;
+}
+
+.wapp-a4-page table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+}
+
+.wapp-a4-page th,
+.wapp-a4-page td {
+  border: 1px solid #475569;
+  padding: 6px 8px;
+}
+
+/* === PHOTO VIEWER === */
+.wapp-photo-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #0f172a;
+}
+
+.wapp-photo-img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  transition: transform 0.2s ease;
+}
+
+.photo-zoom-50.photo-rot-0 { transform: scale(0.5) rotate(0deg); }
+.photo-zoom-50.photo-rot-90 { transform: scale(0.5) rotate(90deg); }
+.photo-zoom-50.photo-rot-180 { transform: scale(0.5) rotate(180deg); }
+.photo-zoom-50.photo-rot-270 { transform: scale(0.5) rotate(270deg); }
+.photo-zoom-75.photo-rot-0 { transform: scale(0.75) rotate(0deg); }
+.photo-zoom-75.photo-rot-90 { transform: scale(0.75) rotate(90deg); }
+.photo-zoom-75.photo-rot-180 { transform: scale(0.75) rotate(180deg); }
+.photo-zoom-75.photo-rot-270 { transform: scale(0.75) rotate(270deg); }
+.photo-zoom-100.photo-rot-0 { transform: scale(1) rotate(0deg); }
+.photo-zoom-100.photo-rot-90 { transform: scale(1) rotate(90deg); }
+.photo-zoom-100.photo-rot-180 { transform: scale(1) rotate(180deg); }
+.photo-zoom-100.photo-rot-270 { transform: scale(1) rotate(270deg); }
+.photo-zoom-125.photo-rot-0 { transform: scale(1.25) rotate(0deg); }
+.photo-zoom-125.photo-rot-90 { transform: scale(1.25) rotate(90deg); }
+.photo-zoom-125.photo-rot-180 { transform: scale(1.25) rotate(180deg); }
+.photo-zoom-125.photo-rot-270 { transform: scale(1.25) rotate(270deg); }
+.photo-zoom-150.photo-rot-0 { transform: scale(1.5) rotate(0deg); }
+.photo-zoom-150.photo-rot-90 { transform: scale(1.5) rotate(90deg); }
+.photo-zoom-150.photo-rot-180 { transform: scale(1.5) rotate(180deg); }
+.photo-zoom-150.photo-rot-270 { transform: scale(1.5) rotate(270deg); }
+.photo-zoom-200.photo-rot-0 { transform: scale(2) rotate(0deg); }
+.photo-zoom-200.photo-rot-90 { transform: scale(2) rotate(90deg); }
+.photo-zoom-200.photo-rot-180 { transform: scale(2) rotate(180deg); }
+.photo-zoom-200.photo-rot-270 { transform: scale(2) rotate(270deg); }
+
+/* === MEDIA PLAYER === */
+.wapp-media-stage {
+  flex: 1;
+  min-height: 0;
+  background: #020617;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  gap: 14px;
+  color: #f8fafc;
+}
+
+.wapp-video-el {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 10px;
+  background: #000000;
+}
+
+.wapp-audio-el {
+  width: min(460px, 100%);
+}
+
+/* === VS CODE LITE === */
+.wapp-vscode-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+.wapp-vscode-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #252526;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.wapp-vscode-tag {
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #0e639c;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.wapp-vscode-editor-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+}
+
+.wapp-vscode-gutter {
+  padding: 12px 10px;
+  background: #1e1e1e;
+  border-right: 1px solid #333333;
+  color: #858585;
+  text-align: right;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  user-select: none;
+}
+
+.wapp-vscode-textarea {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: #1e1e1e;
+  color: #9cdcfe;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* === CALCULATOR & STICKY NOTES === */
+.wapp-calc-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 10px;
+  background: #f1f5f9;
+}
+
+.wapp-calc-display {
+  padding: 14px;
+  border-radius: 12px;
+  background: #0f172a;
+  color: #f8fafc;
+  text-align: right;
+  font-family: "Times New Roman", "Tinos", Times, serif;
+  font-size: 1.85rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wapp-calc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+}
+
+.wapp-calc-key {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.wapp-calc-key:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+}
+
+.wapp-calc-key.is-op {
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+.wapp-calc-key.is-eq {
+  background: #1d63dc;
+  border-color: #1d63dc;
+  color: #ffffff;
+}
+
+.wapp-sticky-board {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+  background: #f8fafc;
+}
+
+.wapp-sticky-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fef08a;
+  border: 1px solid #eab308;
+  box-shadow: 0 8px 18px rgba(161, 98, 7, 0.16);
+}
+
+.wapp-sticky-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #fde047;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #713f12;
+}
+
+.wapp-sticky-text {
+  min-height: 130px;
+  padding: 10px;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: transparent;
+  color: #422006;
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+}
+
+/* === CLASSIC MINI GAMES === */
+.wapp-games-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #0f172a;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.wapp-game-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wapp-mines-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 34px);
+  gap: 3px;
+}
+
+.wapp-mine-cell {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #475569;
+  border-radius: 5px;
+  background: #334155;
+  color: #f8fafc;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.wapp-mine-cell.is-open {
+  background: #1e293b;
+  color: #38bdf8;
+}
+
+.wapp-mine-cell.is-boom {
+  background: #dc2626;
+}
+
+.wapp-snake-grid {
+  display: grid;
+  grid-template-columns: repeat(14, 18px);
+  gap: 1px;
+  padding: 6px;
+  background: #1e293b;
+  border: 2px solid #38bdf8;
+  border-radius: 8px;
+}
+
+.wapp-snake-cell {
+  width: 18px;
+  height: 18px;
+  background: #0f172a;
+}
+
+.wapp-snake-cell.is-snake {
+  background: #22c55e;
+  border-radius: 4px;
+}
+
+.wapp-snake-cell.is-food {
+  background: #f97316;
+  border-radius: 999px;
+}
+
+.wapp-ttt-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 76px);
+  gap: 8px;
+}
+
+.wapp-ttt-cell {
+  width: 76px;
+  height: 76px;
+  border-radius: 12px;
+  border: 2px solid #475569;
+  background: #1e293b;
+  color: #38bdf8;
+  font-size: 2rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+/* === APP STORE === */
+.wapp-store-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+  background: #f8fafc;
+}
+
+.wapp-store-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.wapp-store-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wapp-store-icon {
+  font-size: 1.9rem;
+}
+
+.wapp-store-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.wapp-store-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}

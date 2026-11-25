@@ -2,7 +2,7 @@
 
 export const RECYCLE_BIN_ID = "RECYCLE_BIN";
 
-// [WINDOWS 11 FOLDERS] Standard 14 district folders displayed neatly on the Desktop
+// [WINDOWS 11 FOLDERS] Unique sequential folders (01. Strength to 13. Reports + Backup)
 export const WINDOWS_11_DEFAULT_FOLDERS = [
   "01. Strength",
   "02. Posting",
@@ -17,8 +17,165 @@ export const WINDOWS_11_DEFAULT_FOLDERS = [
   "11. Punishment",
   "12. Roster",
   "13. Reports",
-  "14. Backup"
+  "Backup"
 ];
+
+export const WALLPAPER_PRESETS = [
+  { id: "bloom", label: "Blue Bloom", hiLabel: "ब्लू ब्लूम", className: "wp-bloom" },
+  { id: "dark-glow", label: "Dark Glow", hiLabel: "डार्क ग्लो", className: "wp-dark-glow" },
+  { id: "sunset", label: "Sunset Ridge", hiLabel: "सनसेट रिज", className: "wp-sunset" },
+  { id: "emerald", label: "Emerald Waves", hiLabel: "एमराल्ड वेव्स", className: "wp-emerald" }
+];
+
+export const APP_STORE_CATALOG = [
+  { id: "excel-pro", icon: "📊", title: "MS Excel Pro", desc: "Formulas (=SUM, =AVERAGE, =COUNT), DevLys 010 & .xlsx editor", defaultInstalled: true, defaultPinned: true },
+  { id: "word-pro", icon: "📝", title: "MS Word Pro", desc: "A4 Ribbon Editor with DevLys 010, Times New Roman & .doc export", defaultInstalled: true, defaultPinned: true },
+  { id: "photo-viewer", icon: "🖼️", title: "Photo Viewer", desc: "Inspect .jpg, .png, .webp with zoom, rotate & gallery navigation", defaultInstalled: true, defaultPinned: false },
+  { id: "media-player", icon: "🎬", title: "Media Player", desc: "Play .mp4, .webm, .mp3 training videos with speed controls", defaultInstalled: true, defaultPinned: false },
+  { id: "vscode-lite", icon: "💻", title: "VS Code Lite", desc: "Dark code/JSON/text editor with line numbers & JSON formatter", defaultInstalled: true, defaultPinned: true },
+  { id: "calculator", icon: "🧮", title: "Calculator", desc: "Standard Windows 11 quick office calculator", defaultInstalled: true, defaultPinned: true },
+  { id: "sticky-notes", icon: "🗒️", title: "Sticky Notes", desc: "Draggable saved desktop notes & daily establishment reminders", defaultInstalled: true, defaultPinned: false },
+  { id: "games", icon: "🎮", title: "Classic Games", desc: "Minesweeper, Snake & Tic-Tac-Toe with high-score tracking", defaultInstalled: false, defaultPinned: false }
+];
+
+export function deduplicateRootFolders(allItems = []) {
+  const seenKeys = new Set();
+  const redundantIds = [];
+  const list = Array.isArray(allItems) ? allItems : [];
+  for (const item of list) {
+    if (item.isTrashed || item.parentId !== "ROOT" || item.kind !== "FOLDER") continue;
+    const rawName = String(item.name || "").trim();
+    const isTrainingDup = /^09\.\s*training/i.test(rawName);
+    const key = isTrainingDup ? "training_dup_guard" : rawName.toLowerCase();
+    // If "10. Training" already exists, drop empty legacy "09. Training*" duplicate
+    const hasChild = list.some((child) => child.parentId === item.id && !child.isTrashed);
+    if (seenKeys.has(key) || (isTrainingDup && !hasChild && list.some((x) => !x.isTrashed && /^10\.\s*training/i.test(String(x.name || ""))))) {
+      redundantIds.push(item.id);
+    } else {
+      seenKeys.add(key);
+    }
+  }
+  return redundantIds;
+}
+
+export function getVaultFileAppKind(fileName = "", mime = "") {
+  const office = getOfficeEditorKind(fileName, mime);
+  if (office) return office; // EXCEL | WORD | PDF
+  const lower = String(fileName || "").trim().toLowerCase();
+  const mimeLower = String(mime || "").trim().toLowerCase();
+  if (/\.(jpg|jpeg|png|webp|gif|bmp|svg)$/i.test(lower) || mimeLower.startsWith("image/")) {
+    return "PHOTO";
+  }
+  if (/\.(mp4|webm|ogg|mp3|wav|m4a)$/i.test(lower) || mimeLower.startsWith("video/") || mimeLower.startsWith("audio/")) {
+    return "MEDIA";
+  }
+  if (/\.(json|txt|md|js|jsx|ts|tsx|css|xml|log|ini|yml|yaml)$/i.test(lower) || mimeLower.includes("json") || mimeLower.startsWith("text/")) {
+    return "CODE";
+  }
+  return null;
+}
+
+function colLettersToIndex(letters) {
+  let idx = 0;
+  const upper = String(letters || "").toUpperCase();
+  for (let i = 0; i < upper.length; i += 1) {
+    idx = idx * 26 + (upper.charCodeAt(i) - 64);
+  }
+  return idx - 1;
+}
+
+function parseCellRef(token) {
+  const m = String(token || "").trim().match(/^([A-Za-z]{1,3})(\d+)$/);
+  if (!m) return null;
+  return { c: colLettersToIndex(m[1]), r: Math.max(0, Number(m[2]) - 1) };
+}
+
+function collectRangeValues(expr, grid, depth = 0) {
+  const parts = String(expr || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const values = [];
+  for (const part of parts) {
+    if (part.includes(":")) {
+      const [startStr, endStr] = part.split(":");
+      const start = parseCellRef(startStr);
+      const end = parseCellRef(endStr);
+      if (start && end) {
+        const rMin = Math.min(start.r, end.r);
+        const rMax = Math.max(start.r, end.r);
+        const cMin = Math.min(start.c, end.c);
+        const cMax = Math.max(start.c, end.c);
+        for (let r = rMin; r <= rMax; r += 1) {
+          for (let c = cMin; c <= cMax; c += 1) {
+            const raw = grid?.[r]?.[c];
+            if (raw !== undefined && raw !== null && String(raw).trim() !== "") {
+              const resolved = depth < 3 && String(raw).startsWith("=")
+                ? evaluateSpreadsheetFormula(raw, grid, depth + 1)
+                : raw;
+              values.push(resolved);
+            }
+          }
+        }
+      }
+    } else {
+      const ref = parseCellRef(part);
+      if (ref) {
+        const raw = grid?.[ref.r]?.[ref.c];
+        if (raw !== undefined && raw !== null && String(raw).trim() !== "") {
+          values.push(depth < 3 && String(raw).startsWith("=") ? evaluateSpreadsheetFormula(raw, grid, depth + 1) : raw);
+        }
+      } else if (!Number.isNaN(Number(part))) {
+        values.push(Number(part));
+      }
+    }
+  }
+  return values;
+}
+
+export function evaluateSpreadsheetFormula(rawValue, grid, depth = 0) {
+  const text = String(rawValue ?? "").trim();
+  if (!text.startsWith("=")) return rawValue;
+  if (depth > 4) return "#ERR";
+
+  const body = text.slice(1).trim();
+  const fnMatch = body.match(/^(SUM|AVERAGE|AVG|COUNT)\((.*)\)$/i);
+  if (fnMatch) {
+    const fn = fnMatch[1].toUpperCase();
+    const vals = collectRangeValues(fnMatch[2], grid, depth);
+    const nums = vals.map((v) => Number(v)).filter((n) => Number.isFinite(n));
+    if (fn === "COUNT") return String(nums.length);
+    if (fn === "SUM") {
+      const sum = nums.reduce((acc, n) => acc + n, 0);
+      return Number.isInteger(sum) ? String(sum) : sum.toFixed(2);
+    }
+    if (fn === "AVERAGE" || fn === "AVG") {
+      if (!nums.length) return "0";
+      const avg = nums.reduce((acc, n) => acc + n, 0) / nums.length;
+      return Number.isInteger(avg) ? String(avg) : avg.toFixed(2);
+    }
+  }
+
+  // Single cell reference (=A1) or simple A1+B1 arithmetic
+  const single = parseCellRef(body);
+  if (single) {
+    const target = grid?.[single.r]?.[single.c] ?? "";
+    return String(target).startsWith("=") ? evaluateSpreadsheetFormula(target, grid, depth + 1) : String(target);
+  }
+
+  const arith = body.match(/^([A-Za-z]{1,3}\d+)\s*([+\-*/])\s*([A-Za-z]{1,3}\d+)$/);
+  if (arith) {
+    const leftRef = parseCellRef(arith[1]);
+    const rightRef = parseCellRef(arith[3]);
+    const a = Number(evaluateSpreadsheetFormula(grid?.[leftRef.r]?.[leftRef.c] ?? 0, grid, depth + 1));
+    const b = Number(evaluateSpreadsheetFormula(grid?.[rightRef.r]?.[rightRef.c] ?? 0, grid, depth + 1));
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      if (arith[2] === "+") return String(a + b);
+      if (arith[2] === "-") return String(a - b);
+      if (arith[2] === "*") return String(a * b);
+      if (arith[2] === "/") return b === 0 ? "#DIV/0!" : (a / b).toFixed(2);
+    }
+  }
+
+  return text;
+}
 
 export function formatIstClockDate(date = new Date()) {
   const dt = date instanceof Date ? date : new Date(date);

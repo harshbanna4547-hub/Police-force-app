@@ -4,9 +4,12 @@ import {
   buildCopySubtree,
   canMoveItemToTarget,
   collectDescendantIds,
+  deduplicateRootFolders,
+  evaluateSpreadsheetFormula,
   extractWordBodyHtml,
   formatIstClockDate,
   getOfficeEditorKind,
+  getVaultFileAppKind,
   getVaultItemPath,
   isStrengthVaultFolder,
   OFFICE_FONT_OPTIONS,
@@ -79,10 +82,29 @@ test("Explorer path, descendant tree, move guard, and copy subtree behave cleanl
   assert.equal(copied[1].parentId, copied[0].id);
 });
 
-test("WINDOWS_11_DEFAULT_FOLDERS lists all 14 standard folders and IST clock formats HH:mm | DD-MM-YYYY", () => {
+test("WINDOWS_11_DEFAULT_FOLDERS lists all 14 unique folders and IST clock formats HH:mm | DD-MM-YYYY", () => {
   assert.equal(WINDOWS_11_DEFAULT_FOLDERS.length, 14);
   assert.equal(WINDOWS_11_DEFAULT_FOLDERS[0], "01. Strength");
-  assert.equal(WINDOWS_11_DEFAULT_FOLDERS[13], "14. Backup");
+  assert.equal(WINDOWS_11_DEFAULT_FOLDERS[13], "Backup");
   const formatted = formatIstClockDate(new Date("2026-11-25T15:51:00.000Z"));
   assert.equal(formatted, "21:21 | 25-11-2026");
+});
+
+test("Excel formula evaluator computes =SUM, =AVERAGE, =COUNT and file app kinds resolve cleanly", () => {
+  const grid = [
+    ["10", "20", "30"],
+    ["40", "", "100"]
+  ];
+  assert.equal(evaluateSpreadsheetFormula("=SUM(A1:C1)", grid), "60");
+  assert.equal(evaluateSpreadsheetFormula("=AVERAGE(A1:B2)", grid), "23.33");
+  assert.equal(evaluateSpreadsheetFormula("=COUNT(A1:C2)", grid), "5");
+  assert.equal(getVaultFileAppKind("photo.jpg"), "PHOTO");
+  assert.equal(getVaultFileAppKind("training.mp4"), "MEDIA");
+  assert.equal(getVaultFileAppKind("config.json"), "CODE");
+
+  const dupIds = deduplicateRootFolders([
+    { id: "t1", parentId: "ROOT", kind: "FOLDER", name: "09. Training (प्रशिक्षण)" },
+    { id: "t2", parentId: "ROOT", kind: "FOLDER", name: "10. Training" }
+  ]);
+  assert.deepEqual(dupIds, ["t1"]);
 });
