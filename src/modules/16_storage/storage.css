@@ -1,9 +1,11 @@
-/* === STORAGE VAULT MODULE STYLES (स्टोरेज वॉल्ट एवं ऑफिस वॉल्ट) === */
+/* === STORAGE VAULT WINDOWS DESKTOP / EXPLORER STYLES (स्टोरेज डेस्कटॉप एवं एक्सप्लोरर) === */
 .storage-vault-module {
   min-width: 0;
   width: 100%;
   border-radius: var(--radius-card, 22px);
   box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
 }
 
 .storage-view-toggle {
@@ -15,7 +17,7 @@
   cursor: pointer;
 }
 
-/* --- Top Action Bar (ऊपरी कार्यवाही पट्टी) --- */
+/* --- Top Action Bar (ऊपरी मुख्य कार्यवाही पट्टी) --- */
 .storage-action-bar {
   display: flex;
   justify-content: space-between;
@@ -31,6 +33,29 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.storage-clipboard-badge {
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e3a8a;
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storage-clipboard-clear {
+  border: none;
+  background: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-weight: 800;
+  padding: 0 2px;
 }
 
 .storage-btn {
@@ -47,8 +72,8 @@
 }
 
 .storage-btn:disabled {
-  cursor: wait;
-  opacity: 0.75;
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .storage-btn-sky { background-color: #0284c7; padding: 8px 14px; }
@@ -57,6 +82,7 @@
 .storage-btn-green { background-color: #16a34a; padding: 8px 14px; }
 .storage-btn-emerald { background-color: #059669; }
 .storage-btn-blue { background-color: #2563eb; }
+.storage-btn-danger { background-color: #dc2626; }
 .storage-btn-danger-soft {
   background-color: #fee2e2;
   color: #b91c1c;
@@ -67,16 +93,49 @@
   display: none;
 }
 
-/* --- Breadcrumbs & Empty Folder State (ब्रेडक्रम्ब नेविगेशन) --- */
+/* --- Windows Explorer Back / Up + Breadcrumb Bar --- */
+.storage-explorer-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.storage-back-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.storage-back-btn:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #1d63dc;
+  color: #1d63dc;
+}
+
+.storage-back-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .storage-breadcrumbs {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
-  background-color: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 8px;
-  margin-bottom: 14px;
   font-size: 0.9rem;
 }
 
@@ -86,104 +145,15 @@
   color: #1d63dc;
 }
 
+.storage-crumb-link:hover {
+  text-decoration: underline;
+}
+
 .storage-crumb-sep {
   color: #94a3b8;
 }
 
-.storage-empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: #64748b;
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
-}
-
-.storage-empty-icon {
-  font-size: 2.5rem;
-  margin-bottom: 8px;
-}
-
-.storage-empty-title {
-  font-weight: bold;
-}
-
-/* --- Grid View Cards (ग्रिड व्यू कार्ड्स) --- */
-.storage-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 14px;
-}
-
-.storage-card {
-  background-color: #fff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
-}
-
-.storage-card.is-folder {
-  background-color: #eff6ff;
-}
-
-.storage-card-body {
-  text-align: center;
-  cursor: default;
-}
-
-.storage-card-body.is-folder {
-  cursor: pointer;
-}
-
-.storage-card-icon {
-  font-size: 2.4rem;
-  margin-bottom: 6px;
-}
-
-.storage-card-name {
-  font-weight: bold;
-  font-size: 0.9rem;
-  color: #0f172a;
-  word-break: break-word;
-}
-
-.storage-card-meta {
-  font-size: 0.74rem;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-.storage-card-actions {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-  padding-top: 8px;
-  border-top: 1px solid #e2e8f0;
-  flex-wrap: wrap;
-}
-
-.storage-mini-btn {
-  border: none;
-  padding: 4px 8px;
-  border-radius: 5px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  font-weight: bold;
-  color: #fff;
-}
-
-.storage-mini-btn-blue { background-color: #1d63dc; }
-.storage-mini-btn-indigo { background-color: #4f46e5; }
-.storage-mini-btn-green { background-color: #16a34a; }
-.storage-mini-btn-sky { background-color: #0284c7; font-weight: 600; }
-.storage-mini-btn-muted { background-color: #e2e8f0; color: #1e293b; font-weight: 600; }
-.storage-mini-btn-danger { background-color: #fee2e2; color: #dc2626; font-weight: 600; }
-
-/* --- Contextual 01. Strength Master Data Bar (केवल 01. Strength फोल्डर के अंदर) --- */
+/* --- Contextual 01. Strength Master Data Bar & Recycle Bin Bar --- */
 .storage-strength-master-bar {
   display: flex;
   flex-wrap: wrap;
@@ -203,27 +173,328 @@
   color: #1e3a8a;
 }
 
-/* --- List Table View (लिस्ट व्यू तालिका) --- */
+.storage-recycle-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.storage-recycle-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #991b1b;
+}
+
+/* --- Desktop Explorer Canvas (राइट-क्लिक डेस्कटॉप क्षेत्र) --- */
+.storage-desktop-canvas {
+  min-height: 360px;
+  padding: 14px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+}
+
+.storage-empty-state {
+  text-align: center;
+  padding: 54px 20px;
+  color: #64748b;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.storage-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.storage-empty-title {
+  font-weight: bold;
+}
+
+/* --- Clean Windows Desktop Icon Cards (बिना निचले बटनों के साफ़ डेस्कटॉप आइकन) --- */
+.storage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+  gap: 14px;
+}
+
+.storage-card {
+  position: relative;
+  background-color: #ffffff;
+  border: 1px solid #dbe4f0;
+  border-radius: 14px;
+  padding: 18px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, background-color 0.14s ease;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+}
+
+.storage-card:hover {
+  transform: translateY(-2px);
+  border-color: #60a5fa;
+  background-color: #f8fbff;
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12);
+}
+
+.storage-card.is-folder {
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.storage-card.is-recycle {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.storage-card.is-recycle:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+.storage-card.is-cut {
+  opacity: 0.55;
+  border-style: dashed;
+}
+
+.storage-card-menu-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.06);
+  color: #334155;
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.storage-card-menu-btn:hover {
+  background: #1d63dc;
+  color: #ffffff;
+}
+
+.storage-recycle-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  font-family: "Times New Roman", "Tinos", Times, serif;
+}
+
+.storage-card-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.storage-card-icon {
+  font-size: 2.6rem;
+  line-height: 1.05;
+}
+
+.storage-card-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #0f172a;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+.storage-card-meta {
+  font-size: 0.72rem;
+  color: #64748b;
+  font-family: "Times New Roman", "Tinos", Times, serif;
+}
+
+.storage-rename-input {
+  width: 100%;
+  padding: 4px 7px;
+  border: 2px solid #2563eb;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* --- List View Table --- */
 .storage-list-name {
   font-weight: bold;
   color: #0f172a;
-  cursor: default;
+  cursor: pointer;
 }
 
 .storage-list-name.is-folder {
   color: #1d63dc;
+}
+
+.storage-list-menu-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-weight: 800;
   cursor: pointer;
 }
 
-.storage-list-actions {
-  white-space: nowrap;
+.storage-list-menu-btn:hover {
+  background: #1d63dc;
+  color: #ffffff;
+  border-color: #1d63dc;
 }
 
-.storage-list-actions .storage-mini-btn {
-  font-size: 0.78rem;
-  margin-right: 5px;
+/* --- Floating Windows Right-Click Context Menu --- */
+.storage-context-menu {
+  position: fixed;
+  z-index: 1600;
+  min-width: 215px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.storage-list-actions .storage-mini-btn:last-child {
-  margin-right: 0;
+.storage-context-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  text-align: left;
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.storage-context-item:hover:not(:disabled) {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.storage-context-item:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.storage-context-item.is-danger {
+  color: #dc2626;
+}
+
+.storage-context-item.is-danger:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.storage-context-divider {
+  height: 1px;
+  margin: 4px 6px;
+  background: #e2e8f0;
+}
+
+/* --- Move to Folder Picker Modal --- */
+.storage-move-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1550;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.storage-move-modal {
+  width: min(440px, 100%);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.28);
+}
+
+.storage-move-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.storage-move-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 48vh;
+  overflow-y: auto;
+}
+
+.storage-move-option {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.storage-move-option:hover:not(:disabled) {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.storage-move-option:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.storage-move-footer {
+  display: flex;
+  justify-content: flex-end;
 }

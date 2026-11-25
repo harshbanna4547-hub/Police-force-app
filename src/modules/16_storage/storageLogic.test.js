@@ -1,10 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  buildCopySubtree,
+  canMoveItemToTarget,
+  collectDescendantIds,
   extractWordBodyHtml,
   getOfficeEditorKind,
+  getVaultItemPath,
   isStrengthVaultFolder,
   OFFICE_FONT_OPTIONS,
+  RECYCLE_BIN_ID,
   wrapWordDocumentHtml
 } from "./storageLogic.js";
 
@@ -50,4 +55,24 @@ test("OFFICE_FONT_OPTIONS includes all 7 pre-bundled office fonts with DevLys 01
     "Arial",
     "Georgia"
   ]);
+});
+
+test("Explorer path, descendant tree, move guard, and copy subtree behave cleanly", () => {
+  const sampleItems = [
+    { id: "f1", parentId: "ROOT", kind: "FOLDER", name: "01. Strength" },
+    { id: "f2", parentId: "f1", kind: "FOLDER", name: "2026 Orders" },
+    { id: "f3", parentId: "ROOT", kind: "FOLDER", name: "02. Transfer" },
+    { id: "doc1", parentId: "f2", kind: "FILE", name: "Roster.xlsx", data: new Uint8Array([1, 2, 3]).buffer }
+  ];
+
+  assert.equal(getVaultItemPath(sampleItems[3], sampleItems), "🖥️ Storage Desktop > 01. Strength > 2026 Orders");
+  assert.deepEqual(collectDescendantIds("f1", sampleItems).sort(), ["doc1", "f2"]);
+  assert.equal(canMoveItemToTarget(sampleItems[0], "f2", sampleItems), false);
+  assert.equal(canMoveItemToTarget(sampleItems[0], RECYCLE_BIN_ID, sampleItems), false);
+  assert.equal(canMoveItemToTarget(sampleItems[1], "f3", sampleItems), true);
+
+  const copied = buildCopySubtree(sampleItems[1], "f1", sampleItems);
+  assert.equal(copied.length, 2);
+  assert.equal(copied[0].name, "2026 Orders - Copy");
+  assert.equal(copied[1].parentId, copied[0].id);
 });

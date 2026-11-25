@@ -1,11 +1,132 @@
 /* === STORAGE VAULT LOGIC HELPERS (स्टोरेज वॉल्ट एवं ऑफिस एडिटर हेल्पर्स) === */
 
+export const RECYCLE_BIN_ID = "RECYCLE_BIN";
+
 export function isStorageItemForDistrict(item, districtName) {
   return String(item?.district || "") === String(districtName || "");
 }
 
 export function getStorageItemSummary(items, districtName) {
   return (Array.isArray(items) ? items : []).filter((item) => isStorageItemForDistrict(item, districtName));
+}
+
+// [EXPLORER HELPERS] Breadcrumb path builder, descendant collector, move guard & copy clone
+export function getVaultItemPath(item, allItems = []) {
+  const parts = [];
+  let currId = item?.parentId;
+  const guard = new Set();
+  while (currId && currId !== "ROOT" && !guard.has(currId)) {
+    guard.add(currId);
+    const parent = allItems.find((entry) => entry.id === currId);
+    if (!parent) break;
+    parts.unshift(parent.name);
+    currId = parent.parentId;
+  }
+  return ["🖥️ Storage Desktop", ...parts].join(" > ");
+}
+
+export function collectDescendantIds(parentId, allItems = []) {
+  const result = [];
+  const stack = [parentId];
+  const seen = new Set([parentId]);
+  while (stack.length > 0) {
+    const current = stack.pop();
+    const children = allItems.filter((entry) => entry.parentId === current);
+    children.forEach((child) => {
+      if (seen.has(child.id)) return;
+      seen.add(child.id);
+      result.push(child.id);
+      if (child.kind === "FOLDER") stack.push(child.id);
+    });
+  }
+  return result;
+}
+
+export function canMoveItemToTarget(item, targetFolderId, allItems = []) {
+  if (!item || !targetFolderId || targetFolderId === RECYCLE_BIN_ID) return false;
+  if (item.id === targetFolderId) return false;
+  if (item.parentId === targetFolderId) return false;
+  if (item.kind === "FOLDER") {
+    const descendants = new Set(collectDescendantIds(item.id, allItems));
+    if (descendants.has(targetFolderId)) return false;
+  }
+  return true;
+}
+
+export function getUniqueCopyName(originalName = "Untitled", siblingNames = []) {
+  const used = new Set((siblingNames || []).map((n) => String(n || "").toLowerCase()));
+  const trimmed = String(originalName || "Untitled").trim();
+  const dotIdx = trimmed.lastIndexOf(".");
+  const hasExt = dotIdx > 0;
+  const stem = hasExt ? trimmed.slice(0, dotIdx) : trimmed;
+  const ext = hasExt ? trimmed.slice(dotIdx) : "";
+
+  let candidate = `${stem} - Copy${ext}`;
+  let counter = 2;
+  while (used.has(candidate.toLowerCase())) {
+    candidate = `${stem} - Copy (${counter})${ext}`;
+    counter += 1;
+  }
+  return candidate;
+}
+
+export function stripTrashMetadata(entry) {
+  const cleaned = { ...entry };
+  delete cleaned.isTrashed;
+  delete cleaned.trashedAt;
+  delete cleaned.trashedRootId;
+  delete cleaned.originalParentId;
+  delete cleaned.originalPath;
+  return cleaned;
+}
+
+export function buildCopySubtree(sourceItem, targetParentId, allItems = []) {
+  const now = new Date().toISOString();
+  const targetSiblingNames = allItems
+    .filter((entry) => !entry.isTrashed && entry.parentId === targetParentId)
+    .map((entry) => entry.name);
+  const needsCopySuffix =
+    sourceItem.parentId === targetParentId ||
+    targetSiblingNames.some((n) => String(n).toLowerCase() === String(sourceItem.name || "").toLowerCase());
+
+  const cloneBuffer = (buf) => {
+    if (!buf) return buf;
+    if (buf instanceof ArrayBuffer) return buf.slice(0);
+    if (ArrayBuffer.isView(buf)) {
+      return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    }
+    return buf;
+  };
+
+  const makeId = (kind) =>
+    `${kind === "FOLDER" ? "fld" : "fil"}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+  const cloned = [];
+  const cloneNode = (node, newParentId, overrideName) => {
+    const newId = makeId(node.kind);
+    const rest = stripTrashMetadata(node);
+    cloned.push({
+      ...rest,
+      id: newId,
+      parentId: newParentId,
+      name: overrideName || node.name,
+      isTrashed: false,
+      updatedAt: now,
+      data: cloneBuffer(node.data)
+    });
+    if (node.kind === "FOLDER") {
+      allItems
+        .filter((child) => child.parentId === node.id && !child.isTrashed)
+        .forEach((child) => cloneNode(child, newId));
+    }
+  };
+
+  cloneNode(
+    sourceItem,
+    targetParentId,
+    needsCopySuffix ? getUniqueCopyName(sourceItem.name, targetSiblingNames) : sourceItem.name
+  );
+  return cloned;
 }
 
 // [CONTEXT] Checks whether user is inside the "01. Strength" folder or any subfolder of it
