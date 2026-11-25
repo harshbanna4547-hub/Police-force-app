@@ -1,4 +1,8 @@
-/* === GLOBAL FONT REGISTRATION (DevLys 010 + Times New Roman) === */
+/* ==========================================================================
+   GLOBAL TYPOGRAPHY, FONTS & RESPONSIVE RULES (वैश्विक फ़ॉन्ट एवं लेआउट)
+   ========================================================================== */
+
+/* === 1. STRICT FONT REGISTRATION (DevLys 010 + Times New Roman + UI) === */
 @font-face {
   font-family: "DevLys 010";
   src: url("/fonts/DevLys010.ttf") format("truetype"), local("DevLys 010");
@@ -8,20 +12,21 @@
 }
 
 .devlys-text {
-  font-family: 'DevLys 010', sans-serif;
+  font-family: "DevLys 010", sans-serif;
   font-size: 17px;
   line-height: 1.45;
 }
 
 .unicode-hindi-text {
-  font-family: 'Noto Sans Devanagari', sans-serif;
+  font-family: "Noto Sans Devanagari", var(--font-ui);
 }
 
 .english-text,
 .english-cell {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: "Times New Roman", Times, serif;
 }
 
+/* === 2. BASE DOCUMENT RESET & TYPOGRAPHY === */
 * {
   box-sizing: border-box;
 }
@@ -34,70 +39,63 @@ body,
   overflow-x: hidden;
 }
 
-body, input, select, button, table, th, td {
-  font-family: 'Times New Roman', Times, serif;
-}
-
 body {
   margin: 0;
   padding: 0;
-  max-width: 100%;
-  overflow-x: hidden;
-  background-color: #F4F7FB;
-  font-family: 'Noto Sans Devanagari', 'Segoe UI', Roboto, Arial, sans-serif;
+  background-color: var(--page, #f1f5f9);
+  color: var(--text, #0f172a);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
 }
 
-:root {
-  color-scheme: light;
-  --page: #F4F7FB;
-  --surface: #F4F7FB;
-  --surface-raised: #FFFFFF;
-  --text: #0F172A;
-  --muted: #64748B;
-  --border: #E2E8F0;
+h1, h2, h3, h4, nav, button {
+  font-family: var(--font-ui);
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --page: #0B1220;
-  --surface: #101A2B;
-  --surface-raised: #172338;
-  --text: #E5EDF8;
-  --muted: #A7B4C7;
-  --border: #2B3A50;
+table,
+th,
+td,
+input,
+select,
+textarea {
+  font-family: "Times New Roman", Times, serif;
 }
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/* === 3. DARK THEME COMPATIBILITY (डार्क मोड सपोर्ट) === */
 .app-shell[data-theme="dark"] {
-  background-color: var(--page) !important;
+  background-color: var(--page);
   color: var(--text);
 }
 
-.app-shell[data-theme="dark"] > div {
-  background-color: var(--page) !important;
-}
-
-.app-shell[data-theme="dark"] main,
-.app-shell[data-theme="dark"] .portal-top-header {
-  background-color: var(--surface) !important;
-  color: var(--text);
-}
-
-.app-shell[data-theme="dark"] .portal-top-header h1,
-.app-shell[data-theme="dark"] .portal-top-header small {
-  color: var(--text) !important;
-}
-
-.app-shell[data-theme="dark"] main > div,
-.app-shell[data-theme="dark"] main > section,
-.app-shell[data-theme="dark"] main article,
-.app-shell[data-theme="dark"] main fieldset,
 .app-shell[data-theme="dark"] main input,
 .app-shell[data-theme="dark"] main select,
 .app-shell[data-theme="dark"] main textarea {
-  background-color: var(--surface-raised) !important;
-  color: var(--text) !important;
-  border-color: var(--border) !important;
+  background-color: #0b1220;
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.app-shell[data-theme="dark"] main .module-panel,
+.app-shell[data-theme="dark"] main .training-module,
+.app-shell[data-theme="dark"] main .posting-module,
+.app-shell[data-theme="dark"] main .strength-module,
+.app-shell[data-theme="dark"] main .employee-management,
+.app-shell[data-theme="dark"] main .employee-archive section,
+.app-shell[data-theme="dark"] main .transfer-card,
+.app-shell[data-theme="dark"] main .module-form-card,
+.app-shell[data-theme="dark"] main .strength-vacancy-card,
+.app-shell[data-theme="dark"] main .training-employee-data > div,
+.app-shell[data-theme="dark"] main .training-module section,
+.app-shell[data-theme="dark"] main details {
+  background-color: var(--surface-raised);
+  color: var(--text);
+  border-color: var(--border);
 }
 
 .app-shell[data-theme="dark"] main td,
@@ -110,27 +108,7 @@ body {
   color: var(--text);
 }
 
-.app-shell[data-theme="dark"] main .training-employee-data > div,
-.app-shell[data-theme="dark"] main .training-module section,
-.app-shell[data-theme="dark"] main details,
-.app-shell[data-theme="dark"] main .employee-archive section,
-.app-shell[data-theme="dark"] main .employee-management,
-.app-shell[data-theme="dark"] main .posting-module {
-  background-color: var(--surface-raised) !important;
-  border-color: var(--border) !important;
-}
-
-.app-shell[data-theme="dark"] main input,
-.app-shell[data-theme="dark"] main select,
-.app-shell[data-theme="dark"] main textarea {
-  background-color: #0B1220 !important;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
+/* === 4. RESPONSIVE EMPLOYEE DETAIL CARD (मोबाइल विवरण कार्ड) === */
 .employee-detail-card {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -157,25 +135,10 @@ table {
   }
 }
 
-.portal-stat-cards {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.module-card-grid {
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-}
-
-/* टैबलेट स्क्रीन (1024px से कम) */
-@media (max-width: 1024px) {
-  .portal-top-header h1 {
-    font-size: 1.2rem !important;
-  }
-}
-
-/* Mobile and tablet layout */
+/* === 5. MOBILE & TABLET LAYOUT ADJUSTMENTS (मोबाइल / टैबलेट अनुकूलन) === */
 @media (max-width: 1024px) {
   .app-main-area {
-    padding: clamp(8px, 2vw, 18px) !important;
+    padding: clamp(10px, 2vw, 18px) !important;
   }
 }
 
@@ -183,115 +146,27 @@ table {
   .portal-sidebar {
     position: fixed !important;
     inset: 0 auto 0 0;
-    width: 280px !important;
-    min-width: 280px !important;
+    width: 260px !important;
+    min-width: 260px !important;
     transform: translateX(0);
     transition: transform 0.3s ease !important;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.35);
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.35);
   }
 
   .portal-sidebar.is-closed {
     transform: translateX(-100%);
   }
 
-  .portal-top-header {
-    padding: 6px clamp(8px, 2vw, 14px) !important;
-    gap: 6px !important;
-  }
-
-  .portal-top-header h1 {
-    font-size: clamp(0.78rem, 3.2vw, 1rem) !important;
-    line-height: 1.2;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    max-width: 100%;
-  }
-
-  .portal-top-header .header-back-button,
-  .portal-top-header .header-action-label {
-    display: none !important;
-  }
-
-  .portal-top-header .header-menu-button,
-  .portal-top-header .header-action-button {
-    min-width: 36px;
-    min-height: 36px;
-    padding: 6px !important;
-    border-radius: 9px !important;
-    text-align: center;
-  }
-
-  .portal-stat-cards,
-  .module-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .portal-stat-cards {
-    padding: 6px clamp(8px, 2vw, 14px) !important;
-    gap: clamp(6px, 1.5vw, 10px) !important;
-  }
-
-  .portal-stat-cards > div {
-    min-width: 0;
-    gap: 8px !important;
-    padding: clamp(8px, 2.5vw, 12px) !important;
-    border-radius: 12px !important;
-  }
-
-  .portal-stat-cards > div > div:first-child {
-    width: clamp(30px, 9vw, 40px) !important;
-    height: clamp(30px, 9vw, 40px) !important;
-    flex: 0 0 auto;
-    font-size: 1.1rem !important;
-  }
-
-  .portal-stat-cards > div > div:last-child > div:first-child {
-    font-size: clamp(0.62rem, 2.5vw, 0.75rem) !important;
-    line-height: 1.2;
-  }
-
-  .portal-stat-cards > div > div:last-child > div:last-child {
-    font-size: clamp(1.05rem, 5vw, 1.4rem) !important;
-  }
-
-  .module-card-grid {
-    gap: clamp(7px, 2vw, 12px) !important;
-  }
-
-  .module-card-grid > button {
-    min-height: 0 !important;
-    padding: clamp(10px, 2.5vw, 14px) !important;
-    gap: 6px !important;
-    border-radius: 10px !important;
-  }
-
-  .module-card-grid > button > div > span {
-    font-size: clamp(1.15rem, 5vw, 1.45rem) !important;
-  }
-
-  .module-card-grid > button > strong {
-    font-size: clamp(0.76rem, 3vw, 0.92rem) !important;
-    line-height: 1.25;
-  }
-
-  .module-card-grid > button > span {
-    font-size: clamp(0.68rem, 2.6vw, 0.78rem) !important;
-    line-height: 1.3 !important;
-  }
-
   .app-main-area {
     min-width: 0;
-    padding: clamp(8px, 2vw, 12px) !important;
+    padding: clamp(10px, 2.5vw, 14px) !important;
   }
 
   .app-main-area footer,
   .app-main-area [class*="footer"],
   .app-main-area [role="group"],
   .app-main-content .module-filter-bar,
-  .app-main-content .training-filter-row,
-  .app-main-area [style*="display: flex"],
-  .app-main-area [style*="display:flex"] {
+  .app-main-content .training-filter-row {
     flex-wrap: wrap !important;
   }
 
@@ -300,13 +175,10 @@ table {
     margin-right: 0 !important;
   }
 
-  .app-main-area .strength-footer-bar {
-    margin-left: -14px;
-    margin-right: -14px;
-  }
-
-  input, select, button {
-    font-size: 14px !important;
+  input,
+  select,
+  button {
+    font-size: 14px;
     min-height: 38px;
   }
 }

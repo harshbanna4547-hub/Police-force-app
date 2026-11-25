@@ -1,12 +1,16 @@
 import TopHeader from "./TopHeader";
 import StatCards from "./StatCards";
 
+/**
+ * [COMPONENT] TopHeaderAndStats — शीर्ष नेविगेशन बार एवं केवल होम डैशबोर्ड पर KPI सारांश बैंड
+ */
 export default function TopHeaderAndStats({
   portalData,
   activeView,
   setActiveView,
   sidebarOpen,
   setSidebarOpen,
+  currentDistrict,
   theme,
   onThemeChange,
   language,
@@ -26,6 +30,7 @@ export default function TopHeaderAndStats({
         setSidebarOpen={setSidebarOpen}
         activeView={activeView}
         setActiveView={setActiveView}
+        currentDistrict={currentDistrict}
         theme={theme}
         onThemeChange={onThemeChange}
         language={language}
@@ -38,6 +43,7 @@ export default function TopHeaderAndStats({
           attCount={attRecords.length}
           depCount={depRecords.length}
           setActiveView={setActiveView}
+          currentDistrict={currentDistrict}
           language={language}
         />
       )}
