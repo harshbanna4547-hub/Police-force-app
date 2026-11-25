@@ -3,6 +3,7 @@ import { devToHindi } from "../utils/devlysConverter";
 export default function PortalModuleContent({
   activeView,
   portalData,
+  districtId,
   modules
 }) {
   const {
@@ -96,7 +97,8 @@ export default function PortalModuleContent({
       onEditEmployee: setEditingEmployee,
       onArchiveEmployee: removeEmployee
     },
-    ARCHIVE: { records, allSheets, onArchiveEmployee: removeEmployee }
+    ARCHIVE: { records, allSheets, onArchiveEmployee: removeEmployee },
+    DEV_SERVICES: { districtId, portalData }
   };
   const ActiveModule = selectedModule.component;
 

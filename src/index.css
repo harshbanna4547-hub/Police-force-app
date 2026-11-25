@@ -18,6 +18,8 @@ body, input, select, button, table, th, td {
 body {
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
   background-color: #F4F7FB;
   font-family: 'Segoe UI', Roboto, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;

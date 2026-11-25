@@ -47,6 +47,55 @@
   font-family: "Times New Roman", Times, serif;
 }
 
+.strength-drilldown-table,
+.office-working-list-table {
+  min-width: 1100px;
+  white-space: nowrap;
+}
+
+.strength-drilldown-table th,
+.strength-drilldown-table td,
+.office-working-list-table th,
+.office-working-list-table td {
+  padding: 8px 10px !important;
+  font-size: 13px !important;
+}
+
+.strength-drilldown-table .drilldown-sticky-first,
+.office-working-list-table .drilldown-sticky-first {
+  position: sticky;
+  left: 0;
+  width: 56px;
+  min-width: 56px;
+  background: #fff;
+  z-index: 2;
+}
+
+.strength-drilldown-table .drilldown-sticky-second,
+.office-working-list-table .drilldown-sticky-second {
+  position: sticky;
+  left: 56px;
+  min-width: 160px;
+  background: #fff;
+  z-index: 2;
+}
+
+.strength-drilldown-table thead .drilldown-sticky-first,
+.strength-drilldown-table thead .drilldown-sticky-second,
+.office-working-list-table thead .drilldown-sticky-first,
+.office-working-list-table thead .drilldown-sticky-second {
+  background: #0b1e3d;
+  color: #fff;
+  z-index: 3;
+}
+
+.strength-drilldown-table tbody tr:nth-child(even) .drilldown-sticky-first,
+.strength-drilldown-table tbody tr:nth-child(even) .drilldown-sticky-second,
+.office-working-list-table tbody tr:nth-child(even) .drilldown-sticky-first,
+.office-working-list-table tbody tr:nth-child(even) .drilldown-sticky-second {
+  background: #f8fafc;
+}
+
 @media (max-width: 768px) {
   .strength-module th,
   .strength-module td,

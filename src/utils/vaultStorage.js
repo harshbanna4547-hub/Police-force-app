@@ -21,6 +21,11 @@ function getDistrictVaultKeys(districtName) {
   };
 }
 
+export function getDistrictStorageBackupFolderId(districtName) {
+  const { current } = getDistrictVaultKeys(districtName);
+  return `storage_backup_${current.replace(/^police_data_/, "")}`;
+}
+
 function openVaultDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
@@ -56,6 +61,47 @@ export async function getDistrictStorageItems(districtName) {
     const req = tx.objectStore(DRIVE_STORE_NAME).getAll();
     req.onsuccess = () => resolve((req.result || []).filter((item) => item.district === districtName));
     req.onerror = () => reject(req.error);
+  });
+}
+
+export async function saveDistrictOfflineBackup(districtName, payload, timestamp = new Date()) {
+  const { current } = getDistrictVaultKeys(districtName);
+  const district = current.replace(/^police_data_/, "");
+  const pad = (value) => String(value).padStart(2, "0");
+  const stamp = `${pad(timestamp.getDate())}-${pad(timestamp.getMonth() + 1)}-${timestamp.getFullYear()}_${pad(timestamp.getHours())}-${pad(timestamp.getMinutes())}`;
+  const fileName = `Backup_${district}_${stamp}.json`;
+  const folderId = getDistrictStorageBackupFolderId(districtName);
+  const updatedAt = timestamp.toISOString();
+  const data = new TextEncoder().encode(JSON.stringify(payload)).buffer;
+  const db = await openDriveVaultDB();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(DRIVE_STORE_NAME, "readwrite");
+    const store = tx.objectStore(DRIVE_STORE_NAME);
+    store.put({
+      id: folderId,
+      parentId: "ROOT",
+      kind: "FOLDER",
+      name: "Backup",
+      district: districtName,
+      updatedAt
+    });
+    store.put({
+      id: `offline_backup_${district}_${stamp}`,
+      parentId: folderId,
+      kind: "FILE",
+      name: fileName,
+      mime: "application/json",
+      sizeKB: (data.byteLength / 1024).toFixed(1),
+      district: districtName,
+      updatedAt,
+      data
+    });
+    tx.oncomplete = () => {
+      window.dispatchEvent(new Event("police-vault-updated"));
+      resolve(fileName);
+    };
+    tx.onerror = () => reject(tx.error);
   });
 }
 

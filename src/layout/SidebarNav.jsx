@@ -31,11 +31,6 @@ export default function SidebarNav({
         modules={modules}
         activeProfile={portalData.activeProfile}
         currentDistrict={currentDistrict}
-        cloudSyncState={portalData.cloudSyncState}
-        cloudSyncStatus={portalData.cloudSyncStatus}
-        isCloudSyncing={portalData.isCloudSyncing}
-        isOnline={portalData.isOnline}
-        onReauthenticateOneDrive={portalData.onReauthenticateOneDrive}
         language={language}
         onOpenDistrictSwitcher={() => setSwitcherOpen(true)}
       />

@@ -15,6 +15,7 @@ import StorageVaultModule from "./13_storage/StorageVaultModule";
 import PostingModule from "./02_posting/PostingModule";
 import EmployeeManagementModule from "./03_employee/EmployeeManagementModule";
 import EmployeeArchiveModule from "./04_archive/EmployeeArchiveModule";
+import DevServicesModule from "./14_dev_services/DevServicesModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {
@@ -176,5 +177,15 @@ export const MODULES_CONFIG = Object.freeze([
     description: "Excel, दस्तावेज़ और फ़ाइल प्रबंधन",
     enabled: true,
     component: StorageVaultModule
+  },
+  {
+    id: "DEV_SERVICES",
+    title: "Development Services",
+    hindiTitle: "Development Services",
+    icon: "🛠️",
+    color: "#0F766E",
+    description: "डिप्लॉयमेंट, क्लाउड सिंक और सक्रिय डिवाइस",
+    enabled: true,
+    component: DevServicesModule
   }
 ]);

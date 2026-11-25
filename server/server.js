@@ -6,6 +6,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import { createOneDriveSyncHandler } from "../api/onedrive-sync.js";
 import {
   createOneDriveBackendBridge,
   matchesOneDriveAccessToken,
@@ -99,7 +100,10 @@ export function createApp({
   databaseFile = DEFAULT_DATABASE_FILE,
   maxBodySize = "50mb",
   frontendDirectory = FRONTEND_DIRECTORY,
-  oneDriveBridge = createOneDriveBackendBridge()
+  oneDriveBridge = createOneDriveBackendBridge(),
+  oneDriveSyncBridge = createOneDriveBackendBridge({
+    databasePathForDistrict: (district) => `PoliceForcePortal/${district}_master_db.json`
+  })
 } = {}) {
   if (typeof token !== "string" || token.length < 32) {
     throw new Error("A 32-character Office Access Key is required to start the LAN API.");
@@ -155,6 +159,11 @@ export function createApp({
   });
   app.use(express.raw({ type: "application/octet-stream", limit: "250mb" }));
   app.use(express.json({ limit: maxBodySize, strict: true }));
+
+  app.all("/api/onedrive-sync", createOneDriveSyncHandler({
+    env: { ...process.env, OFFICE_SERVER_TOKEN: token },
+    bridge: oneDriveSyncBridge
+  }));
 
   app.get("/api/cloud-db/:district", async (request, response, next) => {
     try {

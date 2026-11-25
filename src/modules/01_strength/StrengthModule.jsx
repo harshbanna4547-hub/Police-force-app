@@ -311,12 +311,12 @@ export default function StrengthModule({
                   : `👥 ${selectedPostTab} पद पर कार्यरत कर्मचारियों की विस्तृत सूची (कुल: ${employeeSearchResults.length})`}
               </h4>
               {employeeSearchResults.length > 0 ? (
-              <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", maxHeight: "420px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.86rem", whiteSpace: "nowrap" }}>
+              <div className="table-responsive-box" style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", border: "1px solid #e2e8f0", borderRadius: "8px", maxHeight: "420px" }}>
+                <table className="strength-drilldown-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#1E293B", color: "#fff" }}>
-                      <th style={{ padding: "8px", border: "1px solid #475569" }}>S.N.</th>
-                      <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Name</th>
+                      <th className="drilldown-sticky-first" style={{ padding: "8px", border: "1px solid #475569" }}>S.N.</th>
+                      <th className="drilldown-sticky-second" style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Name</th>
                       <th style={{ padding: "8px", textAlign: "left", border: "1px solid #475569" }}>Father Name</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Post</th>
                       <th style={{ padding: "8px", border: "1px solid #475569" }}>Belt No.</th>
@@ -345,8 +345,8 @@ export default function StrengthModule({
                         }}
                         style={{ backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F8FAFC" }}
                       >
-                        <td style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>{idx + 1}</td>
-                        <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0", fontWeight: "bold" }}>
+                        <td className="drilldown-sticky-first" style={{ padding: "6px 8px", textAlign: "center", border: "1px solid #E2E8F0" }}>{idx + 1}</td>
+                        <td className="drilldown-sticky-second" style={{ padding: "6px 8px", border: "1px solid #E2E8F0", fontWeight: "bold" }}>
                           <HindiText text={emp["NAME"]} />
                         </td>
                         <td style={{ padding: "6px 8px", border: "1px solid #E2E8F0" }}>
@@ -430,8 +430,7 @@ export default function StrengthModule({
         </div>
       )}
       <footer className="strength-footer-bar">
-        <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} actions={["excel"]} />
-        <button type="button" onClick={() => window.print()}>🖨 Print</button>
+        <ExportBar title={`पद-वार स्वीकृत नफरी (${selectedPostTab})`} rows={postExportRows} fileName={`Strength_${selectedPostTab}`} />
       </footer>
     </div>
   );

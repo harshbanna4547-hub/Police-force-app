@@ -371,15 +371,15 @@ export default function OfficePsStrength({
                 </div>
               )}
 
-              <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
+              <div className="table-responsive-box" style={{ width: "100%", maxWidth: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch", border: "1px solid #e2e8f0", borderRadius: "8px" }}>
+              <table className="office-working-list-table" style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", fontSize: "13px", whiteSpace: "nowrap" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-                    <th style={{ padding: "6px" }}>क्र.</th>
+                    <th className="drilldown-sticky-first" style={{ padding: "6px" }}>क्र.</th>
+                    <th className="drilldown-sticky-second" style={{ padding: "6px", textAlign: "left" }}>नाम</th>
                     <th style={{ padding: "6px" }}>पिता का नाम</th>
                     <th style={{ padding: "6px" }}>पद</th>
                     <th style={{ padding: "6px" }}>बेल्ट नं.</th>
-                    <th style={{ padding: "6px", textAlign: "left" }}>नाम</th>
                     <th style={{ padding: "6px" }}>Posting DOB</th>
                     <th style={{ padding: "6px" }}>Posting Place</th>
                     <th style={{ padding: "6px" }}>Without DOB</th>
@@ -400,11 +400,11 @@ export default function OfficePsStrength({
                       }
                       if (action === "SERVICE_SLIP") openEmployeeServiceSlip(employee);
                     }} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                      <td style={{ padding: "5px", textAlign: "center" }}>{i + 1}</td>
+                      <td className="drilldown-sticky-first" style={{ padding: "5px", textAlign: "center" }}>{i + 1}</td>
+                      <td className="drilldown-sticky-second" style={{ padding: "5px", fontWeight: "bold" }}><HindiText text={e["NAME"]} /></td>
                       <td style={{ padding: "5px" }}><HindiText text={e["FATHER NAME"]} /></td>
                       <td style={{ padding: "5px", textAlign: "center" }}>{e["CADER"]}</td>
                       <td style={{ padding: "5px", textAlign: "center", fontWeight: "bold", color: "#0369A1" }}>{getBeltNo(e)}</td>
-                      <td style={{ padding: "5px", fontWeight: "bold" }}><HindiText text={e["NAME"]} /></td>
                       <td style={{ padding: "5px", textAlign: "center" }}>{formatDateOnly(e["POSTING DOB NO"])}</td>
                       <td style={{ padding: "5px" }}>{e.POSTING || "-"}</td>
                       <td style={{ padding: "5px", textAlign: "center" }}>{e["WITHOUT DOB"] || "-"}</td>

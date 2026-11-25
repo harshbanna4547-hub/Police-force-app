@@ -128,7 +128,6 @@ export default function PostingModule({ records = [], sanctioned = {}, unitRankS
         ].map(([id, label]) => (
           <button type="button" key={id} onClick={() => setTab(id)} aria-pressed={tab === id}>{label}</button>
         ))}
-        <button type="button" onClick={() => window.print()}>🖨 Print</button>
       </div>
       {tab === "ALL" && allWorkingRows.map((group) => (
         <section key={group.title}>

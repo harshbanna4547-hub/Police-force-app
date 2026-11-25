@@ -15,10 +15,18 @@ test("protects the LAN data API and keeps district writes versioned", async () =
   const frontendDirectory = path.join(directory, "dist");
   await mkdir(frontendDirectory);
   await writeFile(path.join(frontendDirectory, "index.html"), "<!doctype html><title>Office LAN</title>");
+  const oneDriveSyncBridge = {
+    readDistrictDatabase: async (district) => ({
+      district,
+      payload: { records: [{ NAME: "Cloud Employee" }] },
+      updatedAt: "2026-11-25T10:00:00.000Z"
+    })
+  };
   const server = createApp({
     token: "test-office-key-123456789012345678901234",
     databaseFile: path.join(directory, "office.json"),
-    frontendDirectory
+    frontendDirectory,
+    oneDriveSyncBridge
   }).listen(0, "127.0.0.1");
 
   try {
@@ -55,6 +63,10 @@ test("protects the LAN data API and keeps district writes versioned", async () =
 
     const loaded = await fetch(`${baseUrl}/api/data/CHITTORGARH`, { headers });
     assert.deepEqual((await loaded.json()).payload.records, [{ NAME: "Test Employee" }]);
+
+    const cloudRead = await fetch(`${baseUrl}/api/onedrive-sync?district=UDAIPUR`, { headers });
+    assert.equal(cloudRead.status, 200);
+    assert.equal((await cloudRead.json()).database.district, "UDAIPUR");
 
     const previousWindow = globalThis.window;
     const previousFetch = globalThis.fetch;

@@ -122,11 +122,15 @@ export default function App() {
         />
         <main className="app-main-area" style={{ minWidth: 0, width: "100%", padding: "12px 24px 24px", flex: 1, overflowX: "hidden" }}>
           {activeView === "HOME" ? (
-            <ModuleCardGrid modules={modules} onOpenModule={setActiveView} />
+            <ModuleCardGrid
+              modules={modules.filter((module) => module.id !== "DEV_SERVICES")}
+              onOpenModule={setActiveView}
+            />
           ) : (
             <PortalModuleContent
               activeView={activeView}
               portalData={portalData}
+              districtId={currentDistrict.id}
               modules={modules}
             />
           )}

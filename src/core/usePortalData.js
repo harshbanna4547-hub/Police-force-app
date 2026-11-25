@@ -5,6 +5,7 @@ import { generateAllReportsData, downloadAllReportsExcel } from "../utils/report
 import { exportMasterFile } from "./masterExportHelper";
 import {
   getDistrictStorageItems,
+  saveDistrictOfflineBackup,
   loadDistrictVault,
   removeDistrictVault,
   replaceDistrictStorageItems,
@@ -17,14 +18,44 @@ import {
 } from "./lanSyncClient.js";
 import {
   OneDriveSyncError,
-  authenticateOneDriveAccount,
+  deserializeOneDriveVault,
+  fetchOneDriveActiveDevices,
+  fetchOneDriveConfigurationStatus,
+  fetchOneDriveDistrictData,
+  getCurrentOneDriveDevice,
+  registerOneDriveActiveDevice,
+  saveCurrentOneDriveDeviceName,
+  serializeOneDriveVault,
   synchronizeOneDriveStorage,
   synchronizeOneDriveVault
 } from "./oneDriveDbEngine.js";
 
 const OFFICE_DISTRICT_ID = "CHITTORGARH";
 const LAN_SYNC_INTERVAL_MS = 15000;
-const ONEDRIVE_SYNC_INTERVAL_MS = 25000;
+const DEFAULT_ONEDRIVE_SYNC_INTERVAL = "20000";
+const LAST_SYNCED_STORAGE_KEY = "police_portal_last_sync_at";
+const AUTO_SYNC_INTERVAL_STORAGE_KEY = "police_portal_auto_sync_interval";
+
+function readLastSyncedAt() {
+  try {
+    return localStorage.getItem(LAST_SYNCED_STORAGE_KEY) || "";
+  } catch (error) {
+    console.error("Last sync timestamp could not be read:", error);
+    return "";
+  }
+}
+
+function readAutoSyncInterval() {
+  try {
+    const savedInterval = localStorage.getItem(AUTO_SYNC_INTERVAL_STORAGE_KEY);
+    return ["20000", "60000", "change-only"].includes(savedInterval)
+      ? savedInterval
+      : DEFAULT_ONEDRIVE_SYNC_INTERVAL;
+  } catch (error) {
+    console.error("Auto-sync interval could not be read:", error);
+    return DEFAULT_ONEDRIVE_SYNC_INTERVAL;
+  }
+}
 
 function readDistrictSetting(key, districtId, fallback) {
   try {
@@ -246,6 +277,10 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
   ));
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [lastSyncedAt, setLastSyncedAt] = useState(readLastSyncedAt);
+  const [autoSyncInterval, setAutoSyncIntervalState] = useState(readAutoSyncInterval);
+  const [activeDevices, setActiveDevices] = useState([]);
+  const [currentDevice, setCurrentDevice] = useState(() => getCurrentOneDriveDevice());
   const [lanSyncStatus, setLanSyncStatus] = useState("offline");
 
   const fileHandleRef = useRef(null);
@@ -259,6 +294,22 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
   const oneDriveSyncRunner = useRef(null);
   const activeDistrictId = useRef(districtId);
   activeDistrictId.current = districtId;
+
+  const drainPendingOneDriveSync = useCallback(() => {
+    if (!oneDriveSyncPending.current) return;
+    const pendingDistrict = oneDrivePendingDistrict.current;
+    const pendingVault = oneDrivePendingVault.current;
+    const pendingReady = oneDrivePendingReady.current;
+    oneDriveSyncPending.current = false;
+    oneDrivePendingDistrict.current = "";
+    oneDrivePendingVault.current = undefined;
+    oneDrivePendingReady.current = null;
+    if (pendingDistrict === activeDistrictId.current) {
+      window.setTimeout(() => {
+        void oneDriveSyncRunner.current?.(pendingVault, pendingReady);
+      }, 0);
+    }
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -413,20 +464,48 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
         await replaceDistrictStorageItems(activeProfile, storageItems);
         window.dispatchEvent(new Event("police-vault-cloud-updated"));
       }
+      const currentDeviceRecord = getCurrentOneDriveDevice(
+        result.vault?.updatedAt || localVault?.updatedAt || null
+      );
+      const devices = await registerOneDriveActiveDevice(districtId, currentDeviceRecord);
+      setCurrentDevice(currentDeviceRecord);
+      setActiveDevices(devices.filter((device) =>
+        String(device.district || "").toUpperCase() === String(districtId).toUpperCase()
+      ));
+      const syncedAt = new Date().toISOString();
+      setLastSyncedAt(syncedAt);
+      try {
+        localStorage.setItem(LAST_SYNCED_STORAGE_KEY, syncedAt);
+      } catch (error) {
+        console.error("Last sync timestamp could not be saved:", error);
+      }
       setCloudSyncState("synced");
       setCloudSyncStatus("OneDrive Live Synced");
       return true;
     } catch (error) {
       markDatabaseReady();
       if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
+        if (navigator.onLine) {
+          try {
+            const backupVault = sourceVault === undefined
+              ? await loadDistrictVault(districtId)
+              : sourceVault;
+            if (backupVault) {
+              await saveDistrictOfflineBackup(
+                activeProfile,
+                serializeOneDriveVault(backupVault)
+              );
+            }
+          } catch (backupError) {
+            console.error("Offline OneDrive backup could not be saved:", backupError);
+          }
+        }
         setCloudSyncState("offline");
         setCloudSyncStatus("इंटरनेट उपलब्ध नहीं; बदलाव इस डिवाइस में सुरक्षित हैं");
-      } else if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
-        setCloudSyncState("setup-required");
-        setCloudSyncStatus("VITE_ONEDRIVE_CLIENT_ID कॉन्फ़िगर नहीं है");
       } else if (error instanceof OneDriveSyncError && error.code === "AUTH_REQUIRED") {
-        setCloudSyncState("auth-required");
-        setCloudSyncStatus("OneDrive sign-in आवश्यक है। नीचे के Wi-Fi संकेतक पर क्लिक करें।");
+        console.error("OneDrive sync authorization failed:", error);
+        setCloudSyncState("error");
+        setCloudSyncStatus(`OneDrive sync API access denied: ${error.message}`);
       } else {
         console.error("OneDrive sync failed:", error);
         setCloudSyncState("error");
@@ -436,23 +515,114 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     } finally {
       oneDriveSyncInProgress.current = false;
       setIsCloudSyncing(false);
-      if (oneDriveSyncPending.current) {
-        const pendingDistrict = oneDrivePendingDistrict.current;
-        const pendingVault = oneDrivePendingVault.current;
-        const pendingReady = oneDrivePendingReady.current;
-        oneDriveSyncPending.current = false;
-        oneDrivePendingDistrict.current = "";
-        oneDrivePendingVault.current = undefined;
-        oneDrivePendingReady.current = null;
-        if (pendingDistrict === activeDistrictId.current) {
-          window.setTimeout(() => {
-            void oneDriveSyncRunner.current?.(pendingVault, pendingReady);
-          }, 0);
-        }
-      }
+      drainPendingOneDriveSync();
     }
-  }, [activeProfile, applyOfficeVault, districtId]);
+  }, [activeProfile, applyOfficeVault, districtId, drainPendingOneDriveSync]);
   oneDriveSyncRunner.current = syncOneDriveData;
+
+  const refreshActiveDevices = useCallback(async () => {
+    const devices = await fetchOneDriveActiveDevices(districtId);
+    const districtDevices = devices.filter((device) =>
+      String(device.district || "").toUpperCase() === String(districtId).toUpperCase()
+    );
+    setActiveDevices(districtDevices);
+    return districtDevices;
+  }, [districtId]);
+
+  const getOneDriveConfigurationStatus = useCallback(
+    () => fetchOneDriveConfigurationStatus(districtId),
+    [districtId]
+  );
+
+  const renameCurrentDevice = useCallback((name) => {
+    saveCurrentOneDriveDeviceName(name);
+    const device = getCurrentOneDriveDevice();
+    setCurrentDevice(device);
+    void syncOneDriveData();
+    return device;
+  }, [syncOneDriveData]);
+
+  const setAutoSyncInterval = useCallback((value) => {
+    const nextInterval = String(value);
+    if (!["20000", "60000", "change-only"].includes(nextInterval)) {
+      throw new Error("Auto-sync interval is not supported.");
+    }
+    try {
+      localStorage.setItem(AUTO_SYNC_INTERVAL_STORAGE_KEY, nextInterval);
+    } catch (error) {
+      console.error("Auto-sync interval could not be saved:", error);
+      throw error;
+    }
+    setAutoSyncIntervalState(nextInterval);
+  }, []);
+
+  const pullLatestFromOneDrive = useCallback(async () => {
+    if (!districtId || oneDriveSyncInProgress.current) return false;
+    oneDriveSyncInProgress.current = true;
+    setIsCloudSyncing(true);
+    setCloudSyncState("syncing");
+    setCloudSyncStatus("OneDrive से नवीनतम डेटा जाँचा जा रहा है…");
+    try {
+      const remote = await fetchOneDriveDistrictData(districtId);
+      if (!remote?.payload) {
+        setCloudSyncStatus("OneDrive पर इस जिले का डेटा उपलब्ध नहीं है।");
+        setCloudSyncState("error");
+        return false;
+      }
+      const localVault = await loadDistrictVault(districtId);
+      const remoteTime = Date.parse(remote.updatedAt || remote.payload.updatedAt || "") || 0;
+      const localTime = Date.parse(localVault?.updatedAt || "") || 0;
+      if (remoteTime <= localTime) {
+        setCloudSyncState("synced");
+        setCloudSyncStatus("OneDrive पर इससे नया डेटा नहीं मिला।");
+        return false;
+      }
+      if (activeDistrictId.current !== districtId) return false;
+
+      const remoteVault = deserializeOneDriveVault(remote.payload);
+      await applyOfficeVault({
+        ...remoteVault,
+        updatedAt: remote.updatedAt || remoteVault.updatedAt
+      });
+      const localStorageItems = await getDistrictStorageItems(activeProfile);
+      const syncedStorageItems = await synchronizeOneDriveStorage(districtId, localStorageItems);
+      const storageChanged = syncedStorageItems.length !== localStorageItems.length
+        || syncedStorageItems.some((item, index) => item !== localStorageItems[index]);
+      if (storageChanged) {
+        await replaceDistrictStorageItems(activeProfile, syncedStorageItems);
+        window.dispatchEvent(new Event("police-vault-cloud-updated"));
+      }
+      const currentDeviceRecord = getCurrentOneDriveDevice(remote.updatedAt || remoteVault.updatedAt);
+      const devices = await registerOneDriveActiveDevice(districtId, currentDeviceRecord);
+      setCurrentDevice(currentDeviceRecord);
+      setActiveDevices(devices.filter((device) =>
+        String(device.district || "").toUpperCase() === String(districtId).toUpperCase()
+      ));
+      const syncedAt = new Date().toISOString();
+      setLastSyncedAt(syncedAt);
+      try {
+        localStorage.setItem(LAST_SYNCED_STORAGE_KEY, syncedAt);
+      } catch (error) {
+        console.error("Last sync timestamp could not be saved:", error);
+      }
+      setCloudSyncState("synced");
+      setCloudSyncStatus("OneDrive का नवीनतम डेटा डाउनलोड हो गया।");
+      return true;
+    } catch (error) {
+      console.error("Latest OneDrive data could not be pulled:", error);
+      setCloudSyncState(error instanceof OneDriveSyncError && error.code === "OFFLINE" ? "offline" : "error");
+      setCloudSyncStatus(`OneDrive से डेटा नहीं मिल सका: ${error.message}`);
+      return false;
+    } finally {
+      oneDriveSyncInProgress.current = false;
+      setIsCloudSyncing(false);
+      drainPendingOneDriveSync();
+    }
+  }, [activeProfile, applyOfficeVault, districtId, drainPendingOneDriveSync]);
+  const forceOneDriveSync = useCallback(
+    () => syncOneDriveData(),
+    [syncOneDriveData]
+  );
 
   useEffect(() => {
     if (!districtId) return undefined;
@@ -546,26 +716,28 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
   useEffect(() => {
     if (!districtId || loadedDistrictId !== districtId) return undefined;
     const pollOneDrive = () => {
-      if (document.visibilityState === "visible") void syncOneDriveData();
+      if (navigator.onLine) void syncOneDriveData();
     };
     const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") void syncOneDriveData();
+      if (document.visibilityState === "visible") pollOneDrive();
     };
-    const interval = window.setInterval(pollOneDrive, ONEDRIVE_SYNC_INTERVAL_MS);
+    const interval = autoSyncInterval === "change-only"
+      ? null
+      : window.setInterval(pollOneDrive, Number(autoSyncInterval));
     window.addEventListener("police-vault-updated", pollOneDrive);
     window.addEventListener("online", pollOneDrive);
     window.addEventListener("focus", pollOneDrive);
     window.addEventListener("pageshow", pollOneDrive);
     document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
-      window.clearInterval(interval);
+      if (interval !== null) window.clearInterval(interval);
       window.removeEventListener("police-vault-updated", pollOneDrive);
       window.removeEventListener("online", pollOneDrive);
       window.removeEventListener("focus", pollOneDrive);
       window.removeEventListener("pageshow", pollOneDrive);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [districtId, loadedDistrictId, syncOneDriveData]);
+  }, [autoSyncInterval, districtId, loadedDistrictId, syncOneDriveData]);
 
   useEffect(() => {
     if (districtId !== OFFICE_DISTRICT_ID || loadedDistrictId !== districtId) return undefined;
@@ -588,6 +760,12 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
           updatedAt: new Date().toISOString()
         };
         await saveDistrictVault(districtId, localPayload);
+        if (!navigator.onLine) {
+          await saveDistrictOfflineBackup(
+            activeProfile,
+            serializeOneDriveVault(localPayload)
+          );
+        }
         setPersistenceError("");
         setHasUnsavedChanges(true);
         if (districtId === OFFICE_DISTRICT_ID) void syncLanData(localPayload);
@@ -931,60 +1109,6 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     ...districtVaultPayload,
     unitRankSanc: value
   });
-  const reauthenticateOneDrive = useCallback(async () => {
-    if (!districtId) {
-      setCloudSyncState("error");
-      setCloudSyncStatus("पहले जिला चुनें।");
-      return false;
-    }
-
-    setIsCloudSyncing(true);
-    setCloudSyncState("syncing");
-    setCloudSyncStatus("OneDrive से साइन-इन हो रहा है…");
-    try {
-      await authenticateOneDriveAccount();
-    } catch (error) {
-      console.error("OneDrive authentication failed:", error);
-      if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
-        setCloudSyncState("setup-required");
-      } else if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
-        setCloudSyncState("offline");
-      } else {
-        setCloudSyncState("auth-required");
-      }
-      setCloudSyncStatus(`OneDrive साइन-इन असफल: ${error.message}`);
-      setIsCloudSyncing(false);
-      return false;
-    }
-
-    try {
-      const localVault = await loadDistrictVault(districtId);
-      const sourceVault = localVault || {
-        ...districtVaultPayload,
-        updatedAt: new Date().toISOString()
-      };
-      if (!localVault) await saveDistrictVault(districtId, sourceVault);
-      const synced = await syncOneDriveData(sourceVault);
-      if (synced) setPersistenceError("");
-      return synced;
-    } catch (error) {
-      console.error("OneDrive data could not be synced after authentication:", error);
-      if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
-        setCloudSyncState("setup-required");
-      } else if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
-        setCloudSyncState("offline");
-      } else if (error instanceof OneDriveSyncError && error.code === "AUTH_REQUIRED") {
-        setCloudSyncState("auth-required");
-      } else {
-        setCloudSyncState("error");
-      }
-      setCloudSyncStatus(`OneDrive कनेक्शन असफल: ${error.message}`);
-      return false;
-    } finally {
-      setIsCloudSyncing(false);
-    }
-  }, [districtId, districtVaultPayload, syncOneDriveData]);
-
   return {
     activeProfile,
     isDistrictDataReady,
@@ -1012,7 +1136,16 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     cloudSyncState,
     isCloudSyncing,
     isOnline,
-    onReauthenticateOneDrive: reauthenticateOneDrive,
+    lastSyncedAt,
+    autoSyncInterval,
+    setAutoSyncInterval,
+    activeDevices,
+    currentDevice,
+    refreshActiveDevices,
+    getOneDriveConfigurationStatus,
+    renameCurrentDevice,
+    onForceOneDriveSync: forceOneDriveSync,
+    onPullLatestFromOneDrive: pullLatestFromOneDrive,
     lanSyncStatus: districtId === OFFICE_DISTRICT_ID ? lanSyncStatus : "disabled",
     onSaveSanctioned: saveSanctionedSettings,
     onSaveUnitRankSanc: saveUnitRankSettings,

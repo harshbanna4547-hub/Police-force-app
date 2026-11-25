@@ -59,6 +59,11 @@ function safeStorageFileName(value) {
   return fileName;
 }
 
+function isBackupFileName(fileName, district) {
+  return new RegExp(`^Backup_${district}_\\d{2}-\\d{2}-\\d{4}_\\d{2}-\\d{2}\\.json$`, "i")
+    .test(String(fileName || ""));
+}
+
 function makeError(message, status = 502) {
   const error = new Error(message);
   error.status = status;
@@ -68,12 +73,14 @@ function makeError(message, status = 502) {
 export function createOneDriveBackendBridge({
   env = process.env,
   fetchImpl = globalThis.fetch,
-  refreshTokenFile = REFRESH_TOKEN_FILE
+  refreshTokenFile = REFRESH_TOKEN_FILE,
+  databasePathForDistrict = (district) => `PoliceForcePortal/${district}/${district}_db.json`
 } = {}) {
   let accessToken = "";
   let accessTokenExpiresAt = 0;
   let tokenRefreshInFlight = null;
   const databaseWriteQueues = new Map();
+  let activeDevicesWriteQueue = Promise.resolve();
   const pendingAuthStates = new Map();
 
   function getTenant() {
@@ -201,7 +208,7 @@ export function createOneDriveBackendBridge({
   }
 
   function districtDatabasePath(district) {
-    return `PoliceForcePortal/${normalizeOneDriveDistrict(district)}/${normalizeOneDriveDistrict(district)}_db.json`;
+    return databasePathForDistrict(normalizeOneDriveDistrict(district));
   }
 
   async function ensureFolderPath(segments) {
@@ -259,6 +266,80 @@ export function createOneDriveBackendBridge({
     }
   }
 
+  async function getConfigurationStatus() {
+    const refreshToken = await getRefreshToken();
+    return {
+      clientIdConfigured: Boolean(String(env.ONEDRIVE_CLIENT_ID || "").trim()),
+      clientSecretConfigured: Boolean(String(env.ONEDRIVE_CLIENT_SECRET || "").trim()),
+      refreshTokenConfigured: Boolean(refreshToken),
+      redirectUriConfigured: Boolean(String(env.ONEDRIVE_REDIRECT_URI || "").trim())
+    };
+  }
+
+  async function readActiveDevices() {
+    const response = await graphRequest(`${GRAPH_API}/me/drive/root:/PoliceForcePortal/active_devices.json:/content`);
+    if (response.status === 404) return [];
+    await requireSuccess(response, "OneDrive active-device listing failed");
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      throw makeError("OneDrive active-device file contains invalid JSON.");
+    }
+    if (!data || !Array.isArray(data.devices)) {
+      throw makeError("OneDrive active-device file has an invalid structure.");
+    }
+    return data.devices;
+  }
+
+  function validateActiveDevice(district, device) {
+    const deviceId = String(device?.deviceId || "").trim();
+    const name = String(device?.name || "").trim();
+    const validScreens = new Set(["Desktop", "Tablet", "Mobile", "Unknown"]);
+    const lastDataUpdatedAt = String(device?.lastDataUpdatedAt || "");
+    if (!/^[A-Za-z0-9._-]{8,128}$/.test(deviceId) || !name || name.length > 80) {
+      throw makeError("Device ID or name is invalid.", 400);
+    }
+    if (!validScreens.has(device.screenType)) {
+      throw makeError("Device screen type is invalid.", 400);
+    }
+    if (lastDataUpdatedAt && !Number.isFinite(Date.parse(lastDataUpdatedAt))) {
+      throw makeError("Device data timestamp is invalid.", 400);
+    }
+    return {
+      deviceId,
+      name,
+      district: normalizeOneDriveDistrict(district),
+      os: String(device.os || "Unknown").slice(0, 40),
+      browser: String(device.browser || "Unknown").slice(0, 40),
+      screenType: device.screenType,
+      lastActiveAt: new Date().toISOString(),
+      lastDataUpdatedAt: lastDataUpdatedAt || null
+    };
+  }
+
+  function upsertActiveDevice(district, device) {
+    const record = validateActiveDevice(district, device);
+    const update = activeDevicesWriteQueue.then(async () => {
+      const devices = await readActiveDevices();
+      const updatedDevices = [
+        ...devices.filter((item) => item.deviceId !== record.deviceId),
+        record
+      ].sort((first, second) => Date.parse(second.lastActiveAt) - Date.parse(first.lastActiveAt));
+      const filePath = "PoliceForcePortal/active_devices.json";
+      await ensureFolderPath(["PoliceForcePortal"]);
+      const response = await graphRequest(`${GRAPH_API}/me/drive/root:/${filePath}:/content`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ devices: updatedDevices, updatedAt: new Date().toISOString() })
+      });
+      await requireSuccess(response, "OneDrive active-device update failed");
+      return updatedDevices;
+    });
+    activeDevicesWriteQueue = update.catch(() => undefined);
+    return update;
+  }
+
   async function writeDistrictDatabaseNow(normalizedDistrict, payload) {
     const current = await readDistrictDatabase(normalizedDistrict);
     const updatedAt = new Date(Date.parse(payload.updatedAt || "") || Date.now()).toISOString();
@@ -267,8 +348,8 @@ export function createOneDriveBackendBridge({
       error.code = "CONFLICT";
       throw error;
     }
-    await ensureFolderPath(["PoliceForcePortal", normalizedDistrict]);
     const filePath = districtDatabasePath(normalizedDistrict);
+    await ensureFolderPath(filePath.split("/").slice(0, -1));
     const response = await graphRequest(`${GRAPH_API}/me/drive/root:/${filePath}:/content`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -292,19 +373,32 @@ export function createOneDriveBackendBridge({
   }
 
   async function listStorageFiles(district) {
-    const folderPath = `PoliceForcePortal/${normalizeOneDriveDistrict(district)}/Storage`;
-    const items = await readGraphCollection(
+    const normalizedDistrict = normalizeOneDriveDistrict(district);
+    const folderPath = `PoliceForcePortal/${normalizedDistrict}/Storage`;
+    const rootItems = await readGraphCollection(
       `${GRAPH_API}/me/drive/root:/${folderPath}:/children?$select=id,name,size,lastModifiedDateTime,file`,
       "OneDrive Storage listing failed"
     );
-    return items
+    const backupFolder = rootItems.find((item) => item.folder && item.name === "Backup");
+    const backupItems = backupFolder
+      ? await readGraphCollection(
+        `${GRAPH_API}/me/drive/items/${encodeURIComponent(backupFolder.id)}/children?$select=id,name,size,lastModifiedDateTime,file`,
+        "OneDrive Storage Backup listing failed"
+      )
+      : [];
+    const rootFiles = rootItems
       .filter((item) => item.file && STORAGE_FILE_EXTENSIONS.has(path.extname(item.name || "").toLowerCase()))
-      .map((item) => ({
+      .map((item) => ({ ...item, storageFolder: "" }));
+    const backupFiles = backupItems
+      .filter((item) => item.file && isBackupFileName(item.name, normalizedDistrict))
+      .map((item) => ({ ...item, storageFolder: "Backup" }));
+    return [...rootFiles, ...backupFiles].map((item) => ({
         id: item.id,
         name: item.name,
         size: item.size,
         mime: item.file.mimeType || "application/octet-stream",
-        updatedAt: item.lastModifiedDateTime || null
+        updatedAt: item.lastModifiedDateTime || null,
+        folder: item.storageFolder
       }));
   }
 
@@ -318,13 +412,29 @@ export function createOneDriveBackendBridge({
     return Buffer.from(await response.arrayBuffer());
   }
 
-  async function uploadStorageFile(district, { fileName, contentType, data }) {
+  async function uploadStorageFile(district, { fileName, contentType, data, folder = "" }) {
     const normalizedDistrict = normalizeOneDriveDistrict(district);
-    const safeName = safeStorageFileName(fileName);
+    if (folder && folder !== "Backup") {
+      throw makeError("OneDrive Storage folder is invalid.", 400);
+    }
+    let safeName;
+    if (folder === "Backup") {
+      safeName = String(fileName || "").trim();
+      if (!isBackupFileName(safeName, normalizedDistrict) || safeName.length > 200) {
+        throw makeError("Storage Backup फ़ाइल का नाम अमान्य है।", 400);
+      }
+    } else {
+      safeName = safeStorageFileName(fileName);
+    }
     if (!Buffer.isBuffer(data) || data.byteLength > 250_000_000) {
       throw makeError("Storage फ़ाइल डेटा अमान्य या बहुत बड़ा है।", 400);
     }
-    const parentId = await ensureFolderPath(["PoliceForcePortal", normalizedDistrict, "Storage"]);
+    const parentId = await ensureFolderPath([
+      "PoliceForcePortal",
+      normalizedDistrict,
+      "Storage",
+      ...(folder === "Backup" ? ["Backup"] : [])
+    ]);
     const response = await graphRequest(`${GRAPH_API}/me/drive/items/${encodeURIComponent(parentId)}:/${encodeURIComponent(safeName)}:/content`, {
       method: "PUT",
       headers: { "Content-Type": String(contentType || "application/octet-stream") },
@@ -386,6 +496,9 @@ export function createOneDriveBackendBridge({
   return {
     readDistrictDatabase,
     writeDistrictDatabase,
+    getConfigurationStatus,
+    readActiveDevices,
+    upsertActiveDevice,
     listStorageFiles,
     downloadStorageFile,
     uploadStorageFile,

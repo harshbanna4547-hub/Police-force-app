@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
-import XLSX from "xlsx-js-style";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../../data/officeUnits";
 import { unicodeToDevlys } from "../../utils/devlysConverter";
 import HindiText from "../../core/HindiText";
+import ExportBar from "../../core/ExportBar";
 import {
   buildTransferPostingOptions,
   createTransferOrderUpdates,
@@ -206,82 +206,6 @@ function printRelievingJoiningSlip(order, employee, displayText) {
     printWindow.focus();
     printWindow.print();
   }, 400);
-}
-
-function exportTransferOrder(order, displayText) {
-  if (!order?.rows?.length) {
-    alert("Excel निर्यात के लिए जारी स्थानांतरण आदेश उपलब्ध नहीं है।");
-    return;
-  }
-
-  const reportRows = getTransferRows(order, displayText);
-  const rawRows = [
-    ["कार्यालय पुलिस अधीक्षक"],
-    ["स्थानांतरण आदेश"],
-    ["आदेश क्रमांक", order.orderNo, "दिनांक", order.orderDate],
-    ORDER_COLUMNS,
-    ...reportRows
-  ];
-  const worksheet = XLSX.utils.aoa_to_sheet(
-    rawRows.map((row) => row.map((value) => (
-      typeof value === "string" ? unicodeToDevlys(value) : value
-    )))
-  );
-  worksheet["!merges"] = [
-    { s: { r: 0, c: 0 }, e: { r: 0, c: ORDER_COLUMNS.length - 1 } },
-    { s: { r: 1, c: 0 }, e: { r: 1, c: ORDER_COLUMNS.length - 1 } }
-  ];
-  worksheet["!cols"] = [
-    { wch: 9 },
-    { wch: 16 },
-    { wch: 16 },
-    { wch: 26 },
-    { wch: 34 },
-    { wch: 34 },
-    { wch: 24 }
-  ];
-  worksheet["!autofilter"] = {
-    ref: `A4:G${Math.max(4, rawRows.length)}`
-  };
-
-  for (let rowIndex = 0; rowIndex < rawRows.length; rowIndex += 1) {
-    for (let columnIndex = 0; columnIndex < ORDER_COLUMNS.length; columnIndex += 1) {
-      const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
-      if (!worksheet[cellAddress]) continue;
-      const originalValue = rawRows[rowIndex][columnIndex] ?? "";
-      const containsHindi = /[\u0900-\u097F]/.test(String(originalValue));
-      const isHeading = rowIndex <= 1 || rowIndex === 3;
-      worksheet[cellAddress].s = {
-        font: {
-          name: containsHindi ? "DevLys 010" : "Times New Roman",
-          sz: rowIndex <= 1 ? 15 : 11,
-          bold: isHeading
-        },
-        alignment: {
-          horizontal: rowIndex <= 1 ? "center" : "left",
-          vertical: "center",
-          wrapText: true
-        },
-        ...(rowIndex === 3 ? {
-          fill: { patternType: "solid", fgColor: { rgb: "DCE6F1" } },
-          border: {
-            top: { style: "thin", color: { rgb: "000000" } },
-            bottom: { style: "thin", color: { rgb: "000000" } },
-            left: { style: "thin", color: { rgb: "000000" } },
-            right: { style: "thin", color: { rgb: "000000" } }
-          }
-        } : {})
-      };
-    }
-  }
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Transfer Order");
-  const safeOrderNo = String(order.orderNo || "Order").replace(/[<>:"/\\|?*]+/g, "_");
-  XLSX.writeFile(
-    workbook,
-    `Transfer_Order_${safeOrderNo}_${String(order.orderDate || "").replace(/-/g, "")}.xlsx`
-  );
 }
 
 export default function TransferModule({
@@ -975,9 +899,14 @@ export default function TransferModule({
                       <button type="button" className="transfer-primary-button" onClick={() => printTransferOrder(currentOrder, displayText)}>
                         🖨️ आदेश प्रिंट करें
                       </button>
-                      <button type="button" className="transfer-secondary-button" onClick={() => exportTransferOrder(currentOrder, displayText)}>
-                        📊 Excel निर्यात करें
-                      </button>
+                      <ExportBar
+                        title={`स्थानांतरण आदेश ${currentOrder.orderNo}`}
+                        rows={getTransferRows(currentOrder, displayText).map((row) => (
+                          Object.fromEntries(ORDER_COLUMNS.map((column, index) => [column, row[index]]))
+                        ))}
+                        fileName={`Transfer_Order_${currentOrder.orderNo}`}
+                        actions={["excel", "word", "pdf"]}
+                      />
                     </div>
                   </>
                 )}

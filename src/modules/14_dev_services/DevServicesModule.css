@@ -1,0 +1,358 @@
+.dev-services {
+  min-width: 0;
+  width: 100%;
+  color: #0f172a;
+}
+
+.dev-services-heading,
+.dev-services-device-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.dev-services-heading {
+  margin-bottom: 18px;
+}
+
+.dev-services-heading h1 {
+  margin: 0 0 6px;
+  color: #0b1e3d;
+  font-size: 1.5rem;
+}
+
+.dev-services-heading p {
+  margin: 0;
+  color: #64748b;
+}
+
+.dev-services-eyebrow {
+  margin: 0 0 5px !important;
+  color: #2563eb !important;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.dev-services-district {
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #eaf1ff;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.dev-services-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.dev-services-status-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.dev-services-card-icon {
+  flex: 0 0 auto;
+  font-size: 1.25rem;
+}
+
+.dev-services-status-card h2 {
+  margin: 0 0 6px;
+  color: #0b1e3d;
+  font-size: 0.98rem;
+}
+
+.dev-services-status-card p {
+  margin: 3px 0;
+  color: #475569;
+  font-size: 0.83rem;
+}
+
+.dev-services-status-card a,
+.dev-services-secondary-link {
+  display: inline-block;
+  margin: 5px 10px 0 0;
+  color: #1d4ed8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dev-services-wrap {
+  overflow-wrap: anywhere;
+}
+
+.dev-services-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.dev-services-card-actions button,
+.dev-services-device-heading button,
+.dev-services-device-rename button,
+.dev-services-primary-button,
+.dev-services-secondary-link {
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: #1d4ed8;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dev-services-card-actions button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.dev-services-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+  border-bottom: 1px solid #dbe3ee;
+}
+
+.dev-services-tabs button {
+  padding: 10px 12px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.dev-services-tabs button.is-active {
+  border-bottom-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.dev-services-feedback {
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: #eff6ff;
+  color: #1e40af;
+}
+
+.dev-services-panel {
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.dev-services-panel h2 {
+  margin: 0 0 12px;
+  color: #0b1e3d;
+  font-size: 1.12rem;
+}
+
+.dev-services-security-note {
+  padding: 10px 12px;
+  border-left: 3px solid #0f766e;
+  background: #f0fdfa;
+  color: #115e59;
+  font-size: 0.86rem;
+}
+
+.dev-services-settings-grid,
+.dev-services-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.dev-services-settings-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #334155;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.dev-services-settings-grid input,
+.dev-services-settings-grid select,
+.dev-services-device-rename input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+}
+
+.dev-services-config-status {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #334155;
+  font-size: 0.84rem;
+}
+
+.dev-services-config-status ul {
+  margin: 7px 0 0;
+  padding-left: 20px;
+}
+
+.dev-services-devices {
+  margin-top: 22px;
+}
+
+.dev-services-device-heading {
+  align-items: center;
+}
+
+.dev-services-device-heading h3 {
+  margin: 0 0 4px;
+  color: #0b1e3d;
+}
+
+.dev-services-device-heading p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.dev-services-device-rename {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.dev-services-device-rename label {
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.dev-services-device-rename input {
+  flex: 1 1 200px;
+  max-width: 340px;
+}
+
+.dev-services-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.dev-services-table-wrap table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.dev-services-table-wrap th,
+.dev-services-table-wrap td {
+  padding: 9px 10px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+
+.dev-services-table-wrap th {
+  background: #0b1e3d;
+  color: #fff;
+}
+
+.dev-services-detail-grid > div {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+}
+
+.dev-services-detail-grid p {
+  margin: 6px 0 0;
+  color: #475569;
+  overflow-wrap: anywhere;
+}
+
+.dev-services-backup-log {
+  margin: 18px 0;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  color: #475569;
+  font-size: 0.84rem;
+}
+
+.dev-services-backup-log h3 {
+  margin: 0 0 8px;
+  color: #0b1e3d;
+  font-size: 0.96rem;
+}
+
+.dev-services-backup-log ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.dev-services-backup-log li {
+  padding: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+.dev-services-backup-log li span {
+  margin-left: 8px;
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .dev-services-status-grid,
+  .dev-services-settings-grid,
+  .dev-services-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dev-services-heading {
+    flex-direction: column;
+  }
+
+  .dev-services-tabs {
+    align-items: stretch;
+  }
+
+  .dev-services-tabs button {
+    flex: 1 1 160px;
+    text-align: left;
+  }
+
+  .dev-services-device-heading {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .dev-services-panel,
+  .dev-services-status-card {
+    padding: 12px;
+  }
+
+  .dev-services-heading h1 {
+    font-size: 1.25rem;
+  }
+}

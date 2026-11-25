@@ -56,7 +56,6 @@ export default function EmployeeArchiveModule({ records = [], allSheets = {}, on
             </select>
           </label>
           <ExportBar title="Employee Archive" rows={visibleRows} fileName="Employee_Archive" />
-          <button type="button" onClick={() => window.print()}>🖨 Print</button>
         </div>
       </header>
       <section style={{ padding: "14px", background: "#F8FAFC", borderRadius: "10px", margin: "12px 0" }}>

@@ -1,16 +1,17 @@
-import {
-  InteractionRequiredAuthError,
-  PublicClientApplication
-} from "@azure/msal-browser";
+import { getOfficeServerConfig } from "./lanSyncClient.js";
+import { getDistrictStorageBackupFolderId } from "../utils/vaultStorage.js";
 
-const CLIENT_ID = import.meta.env?.VITE_ONEDRIVE_CLIENT_ID || "";
-const AUTHORITY = "https://login.microsoftonline.com/common";
-const GRAPH_API = "https://graph.microsoft.com/v1.0";
-const GRAPH_SCOPES = ["Files.ReadWrite", "User.Read"];
+const SYNC_API = "/api/onedrive-sync";
 const PORTAL_FOLDER = "PoliceForcePortal";
+const DEVICE_ID_KEY = "police_portal_device_id";
+const DEVICE_NAME_KEY = "police_portal_device_name";
 const STORAGE_EXTENSIONS = /\.(xlsx?|xlsm|xlsb|xltx?|xltm|csv|pdf)$/i;
+let memoryDeviceId = "";
 
-let clientPromise;
+function isDistrictBackupFile(fileName, district) {
+  return new RegExp(`^Backup_${normalizeDistrict(district)}_\\d{2}-\\d{2}-\\d{4}_\\d{2}-\\d{2}\\.json$`, "i")
+    .test(String(fileName || ""));
+}
 
 export class OneDriveSyncError extends Error {
   constructor(message, code) {
@@ -18,75 +19,6 @@ export class OneDriveSyncError extends Error {
     this.name = "OneDriveSyncError";
     this.code = code;
   }
-}
-
-function getClient() {
-  if (!CLIENT_ID) {
-    throw new OneDriveSyncError("VITE_ONEDRIVE_CLIENT_ID कॉन्फ़िगर नहीं है।", "CONFIG_MISSING");
-  }
-  if (!clientPromise) {
-    const client = new PublicClientApplication({
-      auth: { clientId: CLIENT_ID, authority: AUTHORITY },
-      cache: { cacheLocation: "localStorage" }
-    });
-    clientPromise = client.initialize()
-      .then(async () => {
-        const redirectResult = await client.handleRedirectPromise();
-        const account = redirectResult?.account || client.getActiveAccount() || client.getAllAccounts()[0];
-        if (account) client.setActiveAccount(account);
-        return client;
-      })
-      .catch((error) => {
-        clientPromise = undefined;
-        throw new OneDriveSyncError(`Microsoft sign-in शुरू नहीं हो सका: ${error.message}`, "AUTH_ERROR");
-      });
-  }
-  return clientPromise;
-}
-
-async function getAccessToken() {
-  const client = await getClient();
-  const account = client.getActiveAccount() || client.getAllAccounts()[0];
-  if (!account) {
-    throw new OneDriveSyncError("OneDrive से कनेक्ट करें।", "AUTH_REQUIRED");
-  }
-  client.setActiveAccount(account);
-  try {
-    const result = await client.acquireTokenSilent({ account, scopes: GRAPH_SCOPES });
-    return result.accessToken;
-  } catch (error) {
-    if (error instanceof InteractionRequiredAuthError) {
-      throw new OneDriveSyncError("OneDrive पर फिर से साइन इन करें।", "AUTH_REQUIRED");
-    }
-    throw new OneDriveSyncError(`OneDrive access token नहीं मिला: ${error.message}`, "AUTH_ERROR");
-  }
-}
-
-export async function authenticateOneDriveAccount() {
-  const client = await getClient();
-  const account = client.getActiveAccount() || client.getAllAccounts()[0];
-  if (account) {
-    client.setActiveAccount(account);
-    try {
-      await client.acquireTokenSilent({ account, scopes: GRAPH_SCOPES });
-      return account;
-    } catch (error) {
-      if (!(error instanceof InteractionRequiredAuthError)) {
-        throw new OneDriveSyncError(`OneDrive sign-in असफल: ${error.message}`, "AUTH_ERROR");
-      }
-      const result = await client.acquireTokenPopup({ account, scopes: GRAPH_SCOPES });
-      const selectedAccount = result.account || account;
-      client.setActiveAccount(selectedAccount);
-      return selectedAccount;
-    }
-  }
-
-  const result = await client.loginPopup({ scopes: GRAPH_SCOPES });
-  if (!result.account) {
-    throw new OneDriveSyncError("Microsoft account नहीं चुना गया।", "AUTH_REQUIRED");
-  }
-  client.setActiveAccount(result.account);
-  return result.account;
 }
 
 function normalizeDistrict(district) {
@@ -97,10 +29,6 @@ function normalizeDistrict(district) {
   return normalized;
 }
 
-function encodeGraphPath(path) {
-  return path.split("/").map((segment) => encodeURIComponent(segment)).join("/");
-}
-
 export function getDistrictDatabasePath(district) {
   return `${PORTAL_FOLDER}/${normalizeDistrict(district)}_master_db.json`;
 }
@@ -109,60 +37,62 @@ export function getDistrictStoragePath(district) {
   return `${PORTAL_FOLDER}/${normalizeDistrict(district)}/Storage`;
 }
 
-function graphItemPath(path) {
-  return `/me/drive/root:/${encodeGraphPath(path)}`;
-}
-
-async function graphRequest(path, {
+async function requestSyncApi(resource, district, {
   method = "GET",
   body,
-  rawBody = false,
+  contentType,
+  fileName,
+  fileType,
+  storageFolder,
+  fileId,
   responseType = "json"
 } = {}) {
-  const token = await getAccessToken();
+  const { token } = getOfficeServerConfig();
+  if (!token) {
+    throw new OneDriveSyncError(
+      "The existing Office Access Key is not configured in this browser.",
+      "AUTH_REQUIRED"
+    );
+  }
+  const query = new URLSearchParams({ resource, district: normalizeDistrict(district) });
+  if (fileId) query.set("fileId", fileId);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
+  const timeout = setTimeout(() => controller.abort(), 60_000);
   let response;
   try {
-    response = await fetch(
-      path.startsWith("https://") ? path : `${GRAPH_API}${path}`,
-      {
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          ...(body !== undefined ? {
-            "Content-Type": rawBody ? "application/octet-stream" : "application/json"
-          } : {})
-        },
-        ...(body !== undefined ? { body } : {}),
-        signal: controller.signal
-      }
-    );
+    response = await fetch(`${SYNC_API}?${query}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(contentType ? { "Content-Type": contentType } : {}),
+        ...(fileName ? { "X-File-Name": encodeURIComponent(fileName) } : {}),
+        ...(fileType ? { "X-File-Type": fileType } : {}),
+        ...(storageFolder ? { "X-Storage-Folder": storageFolder } : {})
+      },
+      ...(body !== undefined ? { body } : {}),
+      signal: controller.signal
+    });
   } catch (error) {
-    const message = error.name === "AbortError" ? "OneDrive अनुरोध का समय समाप्त हुआ।" : error.message;
-    throw new OneDriveSyncError(`OneDrive उपलब्ध नहीं है: ${message}`, "OFFLINE");
+    const message = error.name === "AbortError" ? "Sync API request timed out." : error.message;
+    throw new OneDriveSyncError(`OneDrive sync API is unavailable: ${message}`, "OFFLINE");
   } finally {
     clearTimeout(timeout);
   }
 
-  if (response.status === 401 || response.status === 403) {
-    throw new OneDriveSyncError("OneDrive ने access अस्वीकार किया। Files.ReadWrite अनुमति जाँचें।", "AUTH_REQUIRED");
-  }
-  if (response.status === 404) {
-    throw new OneDriveSyncError("OneDrive फ़ाइल या फ़ोल्डर नहीं मिला।", "NOT_FOUND");
-  }
-  if (response.status === 409) {
-    throw new OneDriveSyncError("OneDrive में समान नाम की फ़ाइल मौजूद है।", "CONFLICT");
-  }
   if (!response.ok) {
-    let message = `Microsoft Graph अनुरोध असफल हुआ (${response.status})।`;
-    try {
-      const details = await response.json();
-      message = details.error?.message || message;
-    } catch {
-      // Keep the HTTP status when Graph doesn't return a JSON error.
-    }
-    throw new OneDriveSyncError(message, "GRAPH_ERROR");
+    let details = {};
+    try { details = await response.json(); } catch { /* Use the HTTP status below. */ }
+    const message = details.error || `OneDrive sync API request failed (${response.status}).`;
+    const code = response.status === 401 || response.status === 403
+      ? "AUTH_REQUIRED"
+      : response.status === 404
+        ? "NOT_FOUND"
+        : response.status === 409
+          ? "CONFLICT"
+          : response.status === 413
+            ? "FILE_TOO_LARGE"
+            : "API_ERROR";
+    throw new OneDriveSyncError(message, code);
   }
   if (response.status === 204) return null;
   try {
@@ -170,37 +100,7 @@ async function graphRequest(path, {
     if (responseType === "text") return await response.text();
     return await response.json();
   } catch (error) {
-    throw new OneDriveSyncError(`OneDrive उत्तर पढ़ा नहीं जा सका: ${error.message}`, "INVALID_RESPONSE");
-  }
-}
-
-async function ensureGraphFolderPath(path) {
-  const segments = path.split("/");
-  for (let index = 0; index < segments.length; index += 1) {
-    const currentPath = segments.slice(0, index + 1).join("/");
-    try {
-      await graphRequest(graphItemPath(currentPath));
-    } catch (error) {
-      if (!(error instanceof OneDriveSyncError) || error.code !== "NOT_FOUND") throw error;
-      const parentPath = segments.slice(0, index).join("/");
-      const childrenPath = parentPath
-        ? `${graphItemPath(parentPath)}:/children`
-        : "/me/drive/root/children";
-      try {
-        await graphRequest(childrenPath, {
-          method: "POST",
-          body: JSON.stringify({
-            name: segments[index],
-            folder: {},
-            "@microsoft.graph.conflictBehavior": "fail"
-          })
-        });
-      } catch (createError) {
-        if (!(createError instanceof OneDriveSyncError) || createError.code !== "CONFLICT") {
-          throw createError;
-        }
-      }
-    }
+    throw new OneDriveSyncError(`OneDrive sync API response could not be read: ${error.message}`, "INVALID_RESPONSE");
   }
 }
 
@@ -249,66 +149,116 @@ export function deserializeOneDriveVault(vault = {}) {
 }
 
 export async function fetchOneDriveDistrictData(district) {
-  const path = getDistrictDatabasePath(district);
-  let contents;
-  try {
-    contents = await graphRequest(`${graphItemPath(path)}:/content`, { responseType: "text" });
-  } catch (error) {
-    if (error instanceof OneDriveSyncError && error.code === "NOT_FOUND") return null;
-    throw error;
-  }
-  try {
-    return JSON.parse(contents);
-  } catch (error) {
-    throw new OneDriveSyncError(`OneDrive जिला डेटाबेस JSON अमान्य है: ${error.message}`, "INVALID_DATABASE");
-  }
+  const result = await requestSyncApi("database", district);
+  return result.database;
 }
 
 export async function saveOneDriveDistrictData(district, payload) {
   const normalizedDistrict = normalizeDistrict(district);
-  const path = getDistrictDatabasePath(normalizedDistrict);
-  await ensureGraphFolderPath(PORTAL_FOLDER);
   const updatedAt = payload?.updatedAt || new Date().toISOString();
-  const database = {
-    district: normalizedDistrict,
-    updatedAt,
-    payload: serializeOneDriveVault({ ...payload, updatedAt })
-  };
-  const result = await graphRequest(`${graphItemPath(path)}:/content`, {
-    method: "PUT",
-    rawBody: true,
-    body: JSON.stringify(database)
+  const result = await requestSyncApi("database", normalizedDistrict, {
+    method: "POST",
+    contentType: "application/json",
+    body: JSON.stringify({ payload: serializeOneDriveVault({ ...payload, updatedAt }) })
   });
   return {
-    updatedAt,
-    id: result?.id
+    updatedAt: result.updatedAt || updatedAt,
+    id: result.id
   };
 }
 
 export async function listOneDriveStorageFiles(district) {
-  const folderPath = getDistrictStoragePath(district);
-  await ensureGraphFolderPath(folderPath);
-  const files = [];
-  let nextUrl = `${GRAPH_API}${graphItemPath(folderPath)}:/children?$select=id,name,size,file,lastModifiedDateTime`;
-  while (nextUrl) {
-    const result = await graphRequest(nextUrl);
-    files.push(...(result.value || []).filter((item) => item.file && STORAGE_EXTENSIONS.test(item.name || "")));
-    nextUrl = result["@odata.nextLink"] || "";
-  }
-  return files.map((item) => ({
-    id: item.id,
-    name: item.name,
-    size: item.size,
-    mime: item.file?.mimeType || "application/octet-stream",
-    updatedAt: item.lastModifiedDateTime
-  }));
+  const result = await requestSyncApi("storage", district);
+  return result.files;
 }
 
 export function downloadOneDriveStorageFile(district, fileId) {
-  normalizeDistrict(district);
-  return graphRequest(`/me/drive/items/${encodeURIComponent(fileId)}/content`, {
-    responseType: "arrayBuffer"
+  return requestSyncApi("storage-file", district, { fileId, responseType: "arrayBuffer" });
+}
+
+function getPersistentDeviceId() {
+  try {
+    const storedId = window.localStorage.getItem(DEVICE_ID_KEY);
+    if (storedId) return storedId;
+    memoryDeviceId = memoryDeviceId || `device_${globalThis.crypto?.randomUUID?.() || `${Date.now()}_${Math.random().toString(36).slice(2)}`}`;
+    window.localStorage.setItem(DEVICE_ID_KEY, memoryDeviceId);
+    return memoryDeviceId;
+  } catch (error) {
+    console.warn("Device ID could not be persisted in local storage:", error);
+    memoryDeviceId = memoryDeviceId || `device_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return memoryDeviceId;
+  }
+}
+
+function getBrowserName(userAgent) {
+  if (/Edg\//i.test(userAgent)) return "Edge";
+  if (/Firefox\//i.test(userAgent)) return "Firefox";
+  if (/Chrome|CriOS/i.test(userAgent)) return "Chrome";
+  if (/Safari\//i.test(userAgent)) return "Safari";
+  return "Unknown";
+}
+
+function getOperatingSystem(userAgent) {
+  if (/Windows/i.test(userAgent)) return "Windows";
+  if (/Android/i.test(userAgent)) return "Android";
+  if (/iPhone|iPad|iPod/i.test(userAgent)) return "iOS";
+  if (/Mac OS X|Macintosh/i.test(userAgent)) return "macOS";
+  if (/Linux/i.test(userAgent)) return "Linux";
+  return "Unknown";
+}
+
+export function getCurrentOneDriveDevice(lastDataUpdatedAt = null) {
+  const userAgent = navigator.userAgent || "";
+  const screenWidth = window.innerWidth || 0;
+  const screenType = screenWidth <= 768
+    ? "Mobile"
+    : screenWidth <= 1024
+      ? "Tablet"
+      : "Desktop";
+  let name = "";
+  try {
+    name = window.localStorage.getItem(DEVICE_NAME_KEY) || "";
+  } catch (error) {
+    console.warn("Device name could not be read from local storage:", error);
+  }
+  const os = getOperatingSystem(userAgent);
+  const browser = getBrowserName(userAgent);
+  return {
+    deviceId: getPersistentDeviceId(),
+    name: name || `Personal ${screenType === "Mobile" ? "Mobile" : "PC"}`,
+    os,
+    browser,
+    screenType,
+    lastActiveAt: new Date().toISOString(),
+    lastDataUpdatedAt
+  };
+}
+
+export function saveCurrentOneDriveDeviceName(value) {
+  const name = String(value || "").trim();
+  if (!name || name.length > 80) {
+    throw new OneDriveSyncError("डिवाइस का नाम 1 से 80 अक्षरों के बीच होना चाहिए।", "DEVICE_NAME_INVALID");
+  }
+  window.localStorage.setItem(DEVICE_NAME_KEY, name);
+  return name;
+}
+
+export function fetchOneDriveConfigurationStatus(district) {
+  return requestSyncApi("config-status", district);
+}
+
+export async function fetchOneDriveActiveDevices(district) {
+  const result = await requestSyncApi("active-devices", district);
+  return result.devices;
+}
+
+export async function registerOneDriveActiveDevice(district, device) {
+  const result = await requestSyncApi("active-devices", district, {
+    method: "POST",
+    contentType: "application/json",
+    body: JSON.stringify({ device })
   });
+  return result.devices;
 }
 
 function sanitizeFileName(name) {
@@ -322,14 +272,17 @@ function sanitizeFileName(name) {
 
 export function getDatedOneDriveStorageFileName(item) {
   if (item.oneDriveFileName) return item.oneDriveFileName;
+  const isBackupFolder = item.oneDriveFolder === "Backup"
+    || (item.district && item.parentId === getDistrictStorageBackupFolderId(item.district));
+  if (isBackupFolder) {
+    return item.name;
+  }
   const parsedDate = Date.parse(item.updatedAt || "");
   const date = new Date(parsedDate || Date.now()).toISOString().slice(0, 10);
   return `${date}_${sanitizeFileName(item.name)}`;
 }
 
 export async function uploadOneDriveStorageFile(district, item) {
-  const folderPath = getDistrictStoragePath(district);
-  await ensureGraphFolderPath(folderPath);
   const fileName = getDatedOneDriveStorageFileName(item);
   const content = item.data instanceof Blob
     ? await item.data.arrayBuffer()
@@ -337,10 +290,15 @@ export async function uploadOneDriveStorageFile(district, item) {
   if (!(content instanceof ArrayBuffer) && !ArrayBuffer.isView(content)) {
     throw new OneDriveSyncError("Storage फ़ाइल का डेटा अमान्य है।", "INVALID_FILE");
   }
-  const result = await graphRequest(
-    `${graphItemPath(`${folderPath}/${fileName}`)}:/content`,
-    { method: "PUT", rawBody: true, body: content }
-  );
+  const result = await requestSyncApi("storage", district, {
+    method: "POST",
+    body: content,
+    contentType: item.mime || "application/octet-stream",
+    fileName,
+    fileType: item.mime || "application/octet-stream",
+    storageFolder: item.oneDriveFolder
+      || (item.parentId === getDistrictStorageBackupFolderId(district) ? "Backup" : "")
+  });
   return {
     id: result?.id,
     name: fileName,
@@ -384,7 +342,10 @@ function toLocalStorageItem(remoteFile, data, district) {
     oneDriveFileId: remoteFile.id,
     oneDriveFileName: remoteFile.name,
     oneDriveUpdatedAt: remoteFile.updatedAt,
-    parentId: "ROOT",
+    oneDriveFolder: remoteFile.folder || "",
+    parentId: remoteFile.folder === "Backup"
+      ? getDistrictStorageBackupFolderId(district)
+      : "ROOT",
     kind: "FILE",
     name: remoteFile.name,
     mime: remoteFile.mime,
@@ -404,7 +365,10 @@ export async function synchronizeOneDriveStorage(district, localStorageItems = [
     const matchIndex = syncedItems.findIndex((item) =>
       item.kind === "FILE" && (
         item.oneDriveFileId === remoteFile.id
-        || item.oneDriveFileName === remoteFile.name
+        || (
+          item.oneDriveFileName === remoteFile.name
+          && (item.oneDriveFolder || "") === (remoteFile.folder || "")
+        )
       )
     );
     if (matchIndex < 0) {
@@ -430,9 +394,14 @@ export async function synchronizeOneDriveStorage(district, localStorageItems = [
 
   for (let index = 0; index < syncedItems.length; index += 1) {
     const item = syncedItems[index];
-    if (item.kind !== "FILE" || !STORAGE_EXTENSIONS.test(item.name || "")) continue;
+    const isBackup = item.parentId === getDistrictStorageBackupFolderId(normalizedDistrict)
+      && isDistrictBackupFile(item.name, normalizedDistrict);
+    if (item.kind !== "FILE" || (!isBackup && !STORAGE_EXTENSIONS.test(item.name || ""))) continue;
     const fileName = getDatedOneDriveStorageFileName(item);
-    const remoteFile = remoteFiles.find((file) => file.name === fileName);
+    const remoteFile = remoteFiles.find((file) =>
+      file.name === fileName
+      && (file.folder || "") === (isBackup ? "Backup" : "")
+    );
     const localTime = Date.parse(item.updatedAt || "") || 0;
     const syncedTime = Date.parse(item.oneDriveUpdatedAt || "") || 0;
     if (remoteFile && localTime <= syncedTime) {
@@ -449,12 +418,14 @@ export async function synchronizeOneDriveStorage(district, localStorageItems = [
 
     const uploaded = await uploadOneDriveStorageFile(normalizedDistrict, {
       ...item,
-      oneDriveFileName: fileName
+      oneDriveFileName: fileName,
+      oneDriveFolder: isBackup ? "Backup" : ""
     });
     syncedItems[index] = {
       ...item,
       oneDriveFileId: uploaded.id,
       oneDriveFileName: uploaded.name,
+      oneDriveFolder: isBackup ? "Backup" : "",
       oneDriveUpdatedAt: uploaded.updatedAt
     };
   }

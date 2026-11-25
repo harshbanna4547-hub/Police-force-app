@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
-import { openDriveVaultDB } from "../../utils/vaultStorage";
+import { getDistrictStorageBackupFolderId, openDriveVaultDB } from "../../utils/vaultStorage";
 import { getStorageItemSummary } from "./storageLogic";
 import "./storage.css";
 
@@ -20,7 +20,8 @@ const MODULE_DEFAULT_FOLDERS = [
   "10. Punishment (सज़ा व विभागीय जांच)",
   "11. Promotion Exam (PCC व DPC)",
   "12. Seniority (वरिष्ठता सूची)",
-  "13. Roster (मासिक थाना रोस्टर)"
+  "13. Roster (मासिक थाना रोस्टर)",
+  "Backup"
 ];
 
 function dateOnly(value) {
@@ -68,7 +69,9 @@ export default function StorageVaultModule({
         const store = writeTx.objectStore("drive_items");
         missingFolders.forEach((fName, idx) => {
           store.put({
-            id: `mod_fld_${idx}_${Date.now()}`,
+            id: fName === "Backup"
+              ? getDistrictStorageBackupFolderId(activeProfile)
+              : `mod_fld_${idx}_${Date.now()}`,
             parentId: "ROOT",
             kind: "FOLDER",
             name: fName,

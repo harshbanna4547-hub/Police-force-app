@@ -9,34 +9,10 @@ export default function Sidebar({
   activeProfile,
   currentDistrict,
   language,
-  cloudSyncState,
-  cloudSyncStatus,
-  isCloudSyncing,
-  isOnline,
-  onReauthenticateOneDrive,
   onOpenDistrictSwitcher
 }) {
   const [modulesOpen, setModulesOpen] = useState(false);
-  const visibleModules = modules.filter((module) => module.enabled !== false);
-  const syncIndicatorState = !isOnline || cloudSyncState === "offline"
-    ? "offline"
-    : isCloudSyncing || cloudSyncState === "syncing"
-      ? "syncing"
-      : cloudSyncState;
-  const syncIndicator = {
-    synced: { label: "Online • Synced", color: "#166534", background: "#DCFCE7", border: "#86EFAC" },
-    syncing: { label: "Syncing...", color: "#1D4ED8", background: "#DBEAFE", border: "#93C5FD" },
-    offline: { label: "Offline (Local Saved)", color: "#991B1B", background: "#FEE2E2", border: "#FCA5A5" },
-    "auth-required": { label: "Sign-in Required", color: "#92400E", background: "#FEF3C7", border: "#FCD34D" },
-    "setup-required": { label: "Setup Required", color: "#475569", background: "#F1F5F9", border: "#CBD5E1" },
-    error: { label: "Sync Issue", color: "#991B1B", background: "#FEE2E2", border: "#FCA5A5" }
-  }[syncIndicatorState] || {
-    label: "Sync Issue",
-    color: "#991B1B",
-    background: "#FEE2E2",
-    border: "#FCA5A5"
-  };
-  const canReauthenticate = syncIndicatorState === "auth-required" && isOnline;
+  const visibleModules = modules.filter((module) => module.enabled !== false && module.id !== "DEV_SERVICES");
   const selectView = (view) => {
     setActiveView(view);
     if (window.matchMedia("(max-width: 768px)").matches) setSidebarOpen(false);
@@ -57,6 +33,7 @@ export default function Sidebar({
           width: sidebarOpen ? "280px" : "0px",
           minWidth: sidebarOpen ? "280px" : "0px",
           height: "100vh",
+          minHeight: "100vh",
           position: "sticky",
           top: 0,
           alignSelf: "flex-start",
@@ -67,6 +44,7 @@ export default function Sidebar({
           overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
+          justifyContent: "space-between",
           zIndex: 999,
           flexShrink: 0
         }}
@@ -158,39 +136,29 @@ export default function Sidebar({
               )}
             </nav>
 
-            <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem", display: "flex", justifyContent: "center" }}>
+            <div style={{ marginTop: "auto" }}>
               <button
                 type="button"
-                aria-label={syncIndicator.label}
-                title={cloudSyncStatus}
-                disabled={!canReauthenticate || isCloudSyncing}
-                onClick={canReauthenticate ? onReauthenticateOneDrive : undefined}
+                onClick={() => selectView("DEV_SERVICES")}
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  padding: "8px 12px",
-                  border: `1px solid ${syncIndicator.border}`,
-                  borderRadius: "999px",
-                  background: syncIndicator.background,
-                  color: syncIndicator.color,
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  cursor: canReauthenticate ? "pointer" : "default",
-                  opacity: isCloudSyncing ? 0.75 : 1
+                  width: "calc(100% - 20px)",
+                  padding: "11px 12px",
+                  margin: "8px 10px",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: "8px",
+                  textAlign: "left",
+                  background: activeView === "DEV_SERVICES" ? "#1D63DC" : "rgba(255,255,255,0.06)",
+                  color: "white",
+                  fontWeight: activeView === "DEV_SERVICES" ? "bold" : "normal",
+                  cursor: "pointer"
                 }}
               >
-                <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M2 8.82a16 16 0 0 1 20 0" />
-                  <path d="M5 12.86a10 10 0 0 1 14 0" />
-                  <path d="M8.5 16.4a5 5 0 0 1 7 0" />
-                  <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
-                  {syncIndicatorState === "offline" && <path d="m3 3 18 18" />}
-                </svg>
-                <span aria-live="polite">{syncIndicator.label}</span>
+                🛠️ Development Services
               </button>
-            </footer>
+              <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.78rem", textAlign: "center" }}>
+                District Police Portal
+              </footer>
+            </div>
           </>
         )}
       </aside>
