@@ -126,5 +126,5 @@ test("DeskX live wallpaper presets, overlay widgets & DeskX App Store entry are 
   /* Geo scenes are present in WALLPAPER_PRESETS with correct classNames */
   assert.ok(WALLPAPER_PRESETS.some((w) => w.id === "geo-poly" && w.className === "wp-geo-poly"));
   assert.ok(WALLPAPER_PRESETS.some((w) => w.id === "geo-spheres" && w.isLive));
-  assert.equal(WALLPAPER_PRESETS.length, 15);
+  assert.equal(WALLPAPER_PRESETS.length, 14);
 });
