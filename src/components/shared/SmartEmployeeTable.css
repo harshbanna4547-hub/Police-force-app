@@ -1,3 +1,7 @@
+/* ==========================================================================
+   SMART EMPLOYEE TABLE (डिवाइस-अनुकूल कर्मचारी तालिका)
+   ========================================================================== */
+
 .smart-employee-table-wrap {
   width: 100%;
   max-width: 100%;
@@ -5,7 +9,9 @@
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 8px;
+  border-radius: 16px;
+  background: var(--surface-raised, #ffffff);
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
 }
 
 .smart-employee-table {
@@ -18,7 +24,7 @@
 
 .smart-employee-table th,
 .smart-employee-table td {
-  padding: 7px 8px;
+  padding: 9px 10px;
   border: 1px solid var(--border, #e2e8f0);
   text-align: left;
 }
@@ -27,16 +33,20 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #0b1e3d;
-  color: #fff;
+  background: #0f172a;
+  color: #ffffff;
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
 }
 
 .smart-employee-table tbody tr:nth-child(even):not(.employee-detail-row) {
-  background: #f8fafc;
+  background: var(--surface, #f8fafc);
 }
 
 .smart-employee-table tbody tr:hover:not(.employee-detail-row) {
-  background: #eff6ff;
+  background: var(--surface-tint, #eff6ff);
 }
 
 .smart-employee-table td:nth-child(1),
@@ -51,7 +61,7 @@
 .smart-phone-link {
   text-decoration: none;
   display: inline-block;
-  margin-left: 4px;
+  margin-left: 5px;
 }
 
 .smart-belt-cell {
@@ -66,10 +76,11 @@
 
 .smart-empty-row {
   text-align: center !important;
-  padding: 18px !important;
-  color: #64748b;
+  padding: 24px !important;
+  color: var(--muted, #64748b);
 }
 
+/* === TABLET VIEWPORT (641px - 1024px) === */
 @media (min-width: 641px) and (max-width: 1024px) {
   .smart-employee-table {
     min-width: 0;
@@ -85,17 +96,18 @@
 
   .smart-employee-table th,
   .smart-employee-table td {
-    padding: 6px 4px;
+    padding: 7px 5px;
     overflow-wrap: anywhere;
   }
 }
 
+/* === MOBILE VIEWPORT (<= 640px: 5 CLEAN COLUMNS + EXPANDABLE CARD) === */
 @media (max-width: 640px) {
   .smart-employee-table {
     min-width: 0;
     table-layout: fixed;
     white-space: normal;
-    font-size: clamp(0.65rem, 2.5vw, 0.78rem);
+    font-size: clamp(0.66rem, 2.5vw, 0.78rem);
   }
 
   .smart-employee-table th:nth-child(n + 6),
@@ -105,7 +117,7 @@
 
   .smart-employee-table th,
   .smart-employee-table td {
-    padding: 5px 3px;
+    padding: 6px 4px;
     overflow-wrap: anywhere;
   }
 

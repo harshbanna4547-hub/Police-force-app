@@ -3,7 +3,7 @@ import "./App.css";
 import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
-import ModuleCardGrid from "./layout/ModuleCardGrid";
+import DashboardBento from "./layout/DashboardBento";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
 import { createDistrictSelection } from "./core/districtAuth.js";
@@ -115,6 +115,7 @@ export default function App() {
           setActiveView={setActiveView}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          currentDistrict={currentDistrict}
           theme={theme}
           onThemeChange={() => setTheme((value) => value === "light" ? "dark" : "light")}
           language={language}
@@ -122,7 +123,7 @@ export default function App() {
         />
         <main className="app-main-area">
           {activeView === "HOME" ? (
-            <ModuleCardGrid
+            <DashboardBento
               modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "DEV_SERVICES"].includes(module.id))}
               onOpenModule={setActiveView}
               language={language}

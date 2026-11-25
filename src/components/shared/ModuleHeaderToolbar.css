@@ -1,22 +1,29 @@
+/* ==========================================================================
+   MODULE HEADER TOOLBAR (प्रत्येक मॉड्यूल के शीर्ष पर नियंत्रण पट्टी)
+   ========================================================================== */
+
 .module-header-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(8px, 1.5vw, 14px);
+  gap: clamp(10px, 1.5vw, 16px);
   flex-wrap: wrap;
-  margin-bottom: 14px;
-  padding: clamp(10px, 1.5vw, 14px);
+  margin-bottom: 18px;
+  padding: 14px 18px;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 12px;
-  background: var(--surface-raised, #fff);
+  border-radius: 16px;
+  background: var(--surface, #f8fafc);
 }
 
 .module-toolbar-title {
   flex: 1 1 240px;
   min-width: 0;
   margin: 0;
-  color: var(--text, #0b1e3d);
+  font-family: var(--font-ui);
+  color: var(--text-strong, #0b1e3d);
   font-size: clamp(1.05rem, 2vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .module-toolbar-controls {
@@ -29,7 +36,7 @@
 }
 
 .module-toolbar-search {
-  flex: 1 1 200px;
+  flex: 1 1 210px;
   min-width: 160px;
 }
 
@@ -37,15 +44,23 @@
 .module-toolbar-gender select {
   min-width: 0;
   min-height: 38px;
-  padding: 7px 10px;
-  border: 1px solid var(--border, #cbd5e1);
-  border-radius: 7px;
-  background: var(--surface-raised, #fff);
+  padding: 7px 14px;
+  border: 1px solid var(--border-strong, #cbd5e1);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--surface-raised, #ffffff);
   color: var(--text, #0f172a);
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
 }
 
 .module-toolbar-search input {
   width: 100%;
+}
+
+.module-toolbar-search input:focus,
+.module-toolbar-gender select:focus {
+  outline: 2px solid rgba(29, 99, 220, 0.22);
+  border-color: var(--royal-blue, #1d63dc);
 }
 
 .module-toolbar-gender {
@@ -53,8 +68,8 @@
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  font-weight: 600;
-  font-size: 0.85rem;
+  font-weight: 700;
+  font-size: 0.84rem;
 }
 
 .visually-hidden {
@@ -71,7 +86,9 @@
 
 @media (max-width: 768px) {
   .module-header-toolbar {
-    gap: 8px;
+    padding: 12px;
+    gap: 10px;
+    border-radius: 14px;
   }
 
   .module-toolbar-title {
