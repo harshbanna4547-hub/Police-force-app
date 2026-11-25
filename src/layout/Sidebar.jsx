@@ -1,7 +1,11 @@
 import { useState } from "react";
+import "./SidebarNav.css";
 
 const DIRECT_SIDEBAR_IDS = new Set(["EMPLOYEES", "STORAGE", "DEV_SERVICES"]);
 
+/**
+ * [COMPONENT] Sidebar — फिक्स्ड बायां साइडबार (Home, Employee Management, Storage Vault एवं मॉड्यूल सूची)
+ */
 export default function Sidebar({
   className = "",
   sidebarOpen,
@@ -22,80 +26,47 @@ export default function Sidebar({
     (module) => module.enabled !== false && !DIRECT_SIDEBAR_IDS.has(module.id)
   );
 
+  // [ACTION] Select view and auto-close drawer on small screens
   const selectView = (view) => {
     setActiveView(view);
     if (window.matchMedia("(max-width: 768px)").matches) setSidebarOpen(false);
   };
-
-  const navButtonStyle = (isActive) => ({
-    width: "100%",
-    padding: "11px 12px",
-    marginBottom: "6px",
-    border: "none",
-    borderRadius: "8px",
-    textAlign: "left",
-    background: isActive ? "#1D63DC" : "transparent",
-    color: "white",
-    fontWeight: isActive ? "bold" : "normal",
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis"
-  });
 
   return (
     <>
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 998, display: "none" }}
           className="sidebar-overlay"
         />
       )}
       <aside
         className={`portal-sidebar ${className} ${sidebarOpen ? "is-open" : "is-closed"}`}
         aria-hidden={!sidebarOpen}
-        style={{
-          backgroundColor: "#0B1E3D",
-          color: "white",
-          overflowY: "auto",
-          overflowX: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          flexShrink: 0
-        }}
       >
-        <section style={{ padding: "20px 16px 16px", borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
-          <div style={{ padding: "12px", borderRadius: "10px", background: "rgba(255,255,255,0.1)", textAlign: "center" }}>
-            <strong style={{ display: "block", fontSize: "0.95rem" }}>👮‍♂️ {activeProfile}</strong>
-            <span style={{ display: "block", marginTop: "5px", color: "#BFDBFE", fontSize: "0.8rem" }}>
+        {/* === PROFILE & DISTRICT HEADER === */}
+        <section className="sidebar-profile-section">
+          <div className="sidebar-profile-card">
+            <strong className="sidebar-profile-title">👮‍♂️ {activeProfile}</strong>
+            <span className="sidebar-profile-district">
               📍 {currentDistrict?.name || activeProfile}
             </span>
             <button
               type="button"
               onClick={onOpenDistrictSwitcher}
-              style={{
-                marginTop: "9px",
-                padding: "6px 10px",
-                border: "1px solid rgba(255,255,255,0.35)",
-                borderRadius: "7px",
-                background: "transparent",
-                color: "white",
-                fontSize: "0.78rem",
-                cursor: "pointer"
-              }}
+              className="sidebar-switch-btn"
             >
               🔄 {english ? "Switch District" : "जिला बदलें"}
             </button>
           </div>
         </section>
 
-        <nav aria-label={english ? "Main navigation" : "मुख्य नेविगेशन"} style={{ flex: 1, padding: "12px 10px" }}>
+        {/* === PRIMARY NAVIGATION LINKS === */}
+        <nav aria-label={english ? "Main navigation" : "मुख्य नेविगेशन"} className="sidebar-nav-list">
           <button
             type="button"
             onClick={() => selectView("HOME")}
-            style={navButtonStyle(activeView === "HOME")}
+            className={`sidebar-nav-btn ${activeView === "HOME" ? "is-active" : ""}`}
           >
             🏠 {english ? "Home (Dashboard)" : "होम (डैशबोर्ड)"}
           </button>
@@ -104,7 +75,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => selectView("EMPLOYEES")}
-              style={navButtonStyle(activeView === "EMPLOYEES")}
+              className={`sidebar-nav-btn ${activeView === "EMPLOYEES" ? "is-active" : ""}`}
             >
               {employeesModule.icon} {english ? employeesModule.title : (employeesModule.hindiTitle || employeesModule.title)}
             </button>
@@ -114,7 +85,7 @@ export default function Sidebar({
             <button
               type="button"
               onClick={() => selectView("STORAGE")}
-              style={navButtonStyle(activeView === "STORAGE")}
+              className={`sidebar-nav-btn ${activeView === "STORAGE" ? "is-active" : ""}`}
             >
               {storageModule.icon} {english ? storageModule.title : (storageModule.hindiTitle || storageModule.title)}
             </button>
@@ -125,11 +96,7 @@ export default function Sidebar({
             aria-expanded={modulesOpen}
             aria-controls="sidebar-modules-list"
             onClick={() => setModulesOpen((open) => !open)}
-            style={{
-              ...navButtonStyle(false),
-              fontWeight: "bold",
-              marginTop: "4px"
-            }}
+            className="sidebar-nav-btn sidebar-modules-toggle"
           >
             📂 {english ? "Modules" : "मॉड्यूल"} {modulesOpen ? "▴" : "▾"}
           </button>
@@ -142,21 +109,7 @@ export default function Sidebar({
                   type="button"
                   title={english ? module.title : (module.hindiTitle || module.title)}
                   onClick={() => selectView(module.id)}
-                  style={{
-                    width: "100%",
-                    padding: "9px 12px",
-                    marginBottom: "4px",
-                    border: "none",
-                    borderRadius: "8px",
-                    textAlign: "left",
-                    background: activeView === module.id ? "rgba(255,255,255,0.18)" : "transparent",
-                    color: "white",
-                    fontWeight: activeView === module.id ? "bold" : "normal",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis"
-                  }}
+                  className={`sidebar-sub-btn ${activeView === module.id ? "is-active" : ""}`}
                 >
                   {module.icon} {english ? module.title : (module.hindiTitle || module.title)}
                 </button>
@@ -165,35 +118,20 @@ export default function Sidebar({
           )}
         </nav>
 
-        <div style={{ marginTop: "auto" }}>
+        {/* === FOOTER & DEV SERVICES === */}
+        <div className="sidebar-footer-wrap">
           <button
             type="button"
             onClick={() => selectView("DEV_SERVICES")}
-            style={{
-              width: "calc(100% - 20px)",
-              padding: "11px 12px",
-              margin: "8px 10px",
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: "8px",
-              textAlign: "left",
-              background: activeView === "DEV_SERVICES" ? "#1D63DC" : "rgba(255,255,255,0.06)",
-              color: "white",
-              fontWeight: activeView === "DEV_SERVICES" ? "bold" : "normal",
-              cursor: "pointer"
-            }}
+            className={`sidebar-dev-btn ${activeView === "DEV_SERVICES" ? "is-active" : ""}`}
           >
             🛠️ {english ? "Development Services" : "डेवलपमेंट सेवाएँ"}
           </button>
-          <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.78rem", textAlign: "center" }}>
+          <footer className="sidebar-footer-caption">
             {english ? "District Police Portal" : "जिला पुलिस पोर्टल"}
           </footer>
         </div>
       </aside>
-      <style>{`
-        @media (max-width: 768px) {
-          .sidebar-overlay { display: block !important; }
-        }
-      `}</style>
     </>
   );
 }

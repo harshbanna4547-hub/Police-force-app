@@ -59,6 +59,20 @@
   cursor: pointer;
 }
 
+.employee-phone-inline-link {
+  text-decoration: none;
+}
+
+.employee-action-row {
+  cursor: context-menu;
+}
+
+@media (max-width: 1024px) {
+  .employee-action-row.has-responsive-details {
+    cursor: default;
+  }
+}
+
 .employee-action-menu button:hover {
   background: #eff6ff;
 }

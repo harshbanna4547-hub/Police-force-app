@@ -81,7 +81,7 @@ export default function EmployeeActionMenu({
       <tr
         onClick={openMenu}
         onContextMenu={openMenu}
-        style={{ ...style, cursor: responsiveDetails && window.innerWidth <= 1024 ? "default" : "context-menu" }}
+        className={`employee-action-row ${responsiveDetails ? "has-responsive-details" : ""}`}
         title={english ? "Click or right-click for employee actions" : "कर्मचारी कार्यवाही के लिए क्लिक या राइट-क्लिक करें"}
       >
         {rowCells}
@@ -114,7 +114,7 @@ export default function EmployeeActionMenu({
                   {phoneNumber && (
                     <>
                       {" "}
-                      <a href={`tel:${phoneNumber}`} style={{ textDecoration: "none" }}>📞</a>
+                      <a href={`tel:${phoneNumber}`} className="employee-phone-inline-link">📞</a>
                     </>
                   )}
                 </div>

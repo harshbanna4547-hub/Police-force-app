@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import XLSX from "xlsx-js-style";
 import { isDevlysText } from "./isDevlysText";
+import "./ExportBar.css";
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => ({
@@ -218,16 +219,6 @@ export default function ExportBar({
     }, 400);
   };
 
-  const buttonStyle = {
-    backgroundColor: "#0B1E3D",
-    color: "#fff",
-    border: "none",
-    padding: "7px 12px",
-    borderRadius: "6px",
-    fontWeight: "bold",
-    fontSize: "0.82rem",
-    cursor: "pointer"
-  };
   const exportOptions = [
     { key: "excel", label: "📊 Excel (.xlsx - DevLys 010)", onClick: handleExcel },
     { key: "word", label: "📝 Word (.doc)", onClick: handleWord },
@@ -235,35 +226,20 @@ export default function ExportBar({
   ].filter((option) => actions.includes(option.key));
 
   return (
-    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+    <div className="export-bar-group">
       {exportOptions.length > 0 && (
-        <div ref={menuRef} style={{ position: "relative" }}>
+        <div ref={menuRef} className="export-bar-menu-wrap">
           <button
             type="button"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((open) => !open)}
-            style={buttonStyle}
+            className="export-bar-btn"
           >
             📥 {language === "en" ? "Export" : "Export"} ▾
           </button>
           {menuOpen && (
-            <div
-              role="menu"
-              style={{
-                position: "absolute",
-                top: "calc(100% + 5px)",
-                right: 0,
-                zIndex: 30,
-                minWidth: "230px",
-                padding: "5px",
-                border: "1px solid #cbd5e1",
-                borderRadius: "8px",
-                background: "#fff",
-                color: "#0f172a",
-                boxShadow: "0 8px 20px rgba(15,23,42,.18)"
-              }}
-            >
+            <div role="menu" className="export-bar-dropdown">
               {exportOptions.map((option) => (
                 <button
                   key={option.key}
@@ -273,17 +249,7 @@ export default function ExportBar({
                     setMenuOpen(false);
                     void option.onClick();
                   }}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "9px 10px",
-                    border: 0,
-                    borderRadius: "5px",
-                    background: "transparent",
-                    color: "#0f172a",
-                    textAlign: "left",
-                    cursor: "pointer"
-                  }}
+                  className="export-bar-dropdown-item"
                 >
                   {option.label}
                 </button>
@@ -293,7 +259,7 @@ export default function ExportBar({
         </div>
       )}
       {actions.includes("print") && (
-        <button type="button" onClick={handlePrint} style={buttonStyle}>🖨️ Print</button>
+        <button type="button" onClick={handlePrint} className="export-bar-btn">🖨️ Print</button>
       )}
     </div>
   );

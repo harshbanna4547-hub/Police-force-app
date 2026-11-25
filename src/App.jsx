@@ -92,11 +92,11 @@ export default function App() {
   };
 
   if (!portalData.isDistrictDataReady) {
-    return <main style={{ minHeight: "100vh", display: "grid", placeItems: "center", fontFamily: "Segoe UI, sans-serif" }}>जिला डेटा सुरक्षित स्टोरेज से लोड हो रहा है…</main>;
+    return <main className="app-loading-screen">जिला डेटा सुरक्षित स्टोरेज से लोड हो रहा है…</main>;
   }
 
   return (
-    <div className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"}`} data-theme={theme} style={{ display: "flex", minHeight: "100vh", maxWidth: "100%", overflowX: "hidden", backgroundColor: "#F4F7FB", fontFamily: "Segoe UI, sans-serif" }}>
+    <div className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"}`} data-theme={theme}>
       <SidebarNav
         portalData={portalData}
         sidebarOpen={sidebarOpen}
@@ -108,7 +108,7 @@ export default function App() {
         onDistrictChange={handleDistrictChange}
         language={language}
       />
-      <div className={`app-main-content ${sidebarOpen ? "has-sidebar" : "is-expanded"}`} style={{ minWidth: 0, flex: 1, width: "100%", display: "flex", flexDirection: "column", overflowX: "hidden" }}>
+      <div className={`app-main-content ${sidebarOpen ? "has-sidebar" : "is-expanded"}`}>
         <TopHeaderAndStats
           portalData={portalData}
           activeView={activeView}
@@ -120,7 +120,7 @@ export default function App() {
           language={language}
           onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
         />
-        <main className="app-main-area" style={{ minWidth: 0, width: "100%", padding: "12px 24px 24px", flex: 1, overflowX: "hidden" }}>
+        <main className="app-main-area">
           {activeView === "HOME" ? (
             <ModuleCardGrid
               modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "DEV_SERVICES"].includes(module.id))}

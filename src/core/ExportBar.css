@@ -1,0 +1,52 @@
+/* === EXPORT BAR DROPDOWN & PRINT BUTTONS === */
+.export-bar-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.export-bar-menu-wrap {
+  position: relative;
+}
+
+.export-bar-btn {
+  background-color: #0B1E3D;
+  color: #ffffff;
+  border: none;
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.export-bar-dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  z-index: 30;
+  min-width: 230px;
+  padding: 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+}
+
+.export-bar-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+}
+
+.export-bar-dropdown-item:hover {
+  background: #eff6ff;
+}

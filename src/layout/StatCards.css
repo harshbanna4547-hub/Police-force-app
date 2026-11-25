@@ -1,0 +1,60 @@
+/* === DASHBOARD KPI STAT CARDS (होम डैशबोर्ड सारांश कार्ड) === */
+.portal-stat-cards {
+  padding: 8px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.portal-stat-card {
+  background-color: var(--surface-raised, #fff);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid var(--border, #E2E8F0);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.portal-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+}
+
+.portal-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.portal-stat-title {
+  font-size: 0.8rem;
+  color: var(--muted, #475569);
+  font-weight: bold;
+}
+
+.portal-stat-value {
+  font-size: 1.6rem;
+  font-weight: bold;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* Color Variants */
+.stat-tone-green .portal-stat-icon { background-color: #D1FAE5; color: #059669; }
+.stat-tone-green .portal-stat-value { color: #059669; }
+
+.stat-tone-blue .portal-stat-icon { background-color: #DBEAFE; color: #1D63DC; }
+.stat-tone-blue .portal-stat-value { color: #1D63DC; }
+
+.stat-tone-orange .portal-stat-icon { background-color: #FFEDD5; color: #EA580C; }
+.stat-tone-orange .portal-stat-value { color: #EA580C; }
+
+.stat-tone-indigo .portal-stat-icon { background-color: #EDE9FE; color: #4F46E5; }
+.stat-tone-indigo .portal-stat-value { color: #4F46E5; }

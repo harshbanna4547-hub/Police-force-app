@@ -11,8 +11,10 @@ import {
 } from "./SmartEmployeeTable.logic";
 import "./SmartEmployeeTable.css";
 
-const ENGLISH_CELL_STYLE = { fontFamily: "'Times New Roman', Times, serif" };
-
+/**
+ * [COMPONENT] SmartEmployeeTable — डिवाइस-अनुकूल कर्मचारी तालिका
+ * Mobile (<= 640px): 5 कॉलम + tap-to-expand; Desktop (> 1024px): सभी 13 कॉलम horizontal scroll सहित
+ */
 export default function SmartEmployeeTable({
   employees = [],
   onAction,
@@ -25,6 +27,7 @@ export default function SmartEmployeeTable({
     <div className="smart-employee-table-wrap">
       <table className="smart-employee-table employee-responsive-table">
         <caption className="visually-hidden">{caption}</caption>
+        {/* === 13 TABLE HEADERS (तालिका शीर्षक) === */}
         <thead>
           <tr>
             {SMART_EMPLOYEE_COLUMNS.map((column) => (
@@ -34,21 +37,22 @@ export default function SmartEmployeeTable({
             ))}
           </tr>
         </thead>
+        {/* === EMPLOYEE ROWS (कर्मचारी पंक्तियाँ) === */}
         <tbody>
           {employees.map((employee, index) => {
             const phone = getEmployeeMobile(employee);
             const phoneHref = getPhoneHref(phone);
             const withoutDob = employee?.["WITHOUT DOB"] || employee?.["WITHOUR DOB"];
             const cells = [
-              <span style={ENGLISH_CELL_STYLE}>{index + 1}</span>,
+              <span className="english-cell">{index + 1}</span>,
               <HindiText text={employee.NAME} />,
               <HindiText text={employee["FATHER NAME"]} />,
-              <span style={ENGLISH_CELL_STYLE}>{displayEmployeeCell(employee.CADER)}</span>,
-              <span style={{ ...ENGLISH_CELL_STYLE, fontWeight: "bold", color: "#0369A1" }}>{getEmployeeBelt(employee)}</span>,
+              <span className="english-cell">{displayEmployeeCell(employee.CADER)}</span>,
+              <span className="english-cell smart-belt-cell">{getEmployeeBelt(employee)}</span>,
               <HindiText text={employee.POSTING} />,
-              <span style={ENGLISH_CELL_STYLE}>{formatEmployeeDateCell(employee["DATE OF BIRTH"])}</span>,
+              <span className="english-cell">{formatEmployeeDateCell(employee["DATE OF BIRTH"])}</span>,
               phone ? (
-                <span style={ENGLISH_CELL_STYLE}>
+                <span className="english-cell">
                   <span>{phone}</span>
                   {phoneHref && (
                     <>
@@ -64,12 +68,12 @@ export default function SmartEmployeeTable({
                     </>
                   )}
                 </span>
-              ) : <span style={ENGLISH_CELL_STYLE}>-</span>,
-              <span style={ENGLISH_CELL_STYLE}>{formatEmployeeDateCell(employee["POSTING DOB NO"])}</span>,
+              ) : <span className="english-cell">-</span>,
+              <span className="english-cell">{formatEmployeeDateCell(employee["POSTING DOB NO"])}</span>,
               <HindiText text={withoutDob} />,
-              <span style={ENGLISH_CELL_STYLE}>{displayEmployeeCell(employee.EDUCATION)}</span>,
-              <span style={ENGLISH_CELL_STYLE}>{formatEmployeeDateCell(employee["DATE OF JOINING"])}</span>,
-              <span style={{ ...ENGLISH_CELL_STYLE, color: "#15803D", fontWeight: "bold" }}>
+              <span className="english-cell">{displayEmployeeCell(employee.EDUCATION)}</span>,
+              <span className="english-cell">{formatEmployeeDateCell(employee["DATE OF JOINING"])}</span>,
+              <span className="english-cell smart-doc-cell">
                 {formatEmployeeDateCell(employee.DOC || employee["DATE OF CONFIRMATION"])}
               </span>
             ];
@@ -92,7 +96,7 @@ export default function SmartEmployeeTable({
           })}
           {employees.length === 0 && (
             <tr>
-              <td colSpan={SMART_EMPLOYEE_COLUMNS.length} style={{ textAlign: "center", padding: "18px", color: "#64748B" }}>
+              <td colSpan={SMART_EMPLOYEE_COLUMNS.length} className="smart-empty-row">
                 {english ? "No employee records found." : "कोई कर्मचारी रिकॉर्ड नहीं मिला।"}
               </td>
             </tr>

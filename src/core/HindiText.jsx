@@ -1,39 +1,32 @@
 import { isDevlysText } from "./isDevlysText";
 
-export default function HindiText({ text, style = {}, className = "" }) {
+/**
+ * [COMPONENT] HindiText — DevLys 010, Unicode Hindi एवं English पाठ को सही फ़ॉन्ट में रेंडर करता है।
+ * Splits on whitespace so DevLys words containing ',' (which maps to 'ए') remain intact.
+ */
+export default function HindiText({ text, className = "" }) {
   if (text === null || text === undefined || String(text).trim() === "") {
-    return (
-      <span
-        className={className}
-        style={{ fontFamily: "'Times New Roman', Times, serif", ...style }}
-      >
-        -
-      </span>
-    );
+    return <span className={`english-text ${className}`.trim()}>-</span>;
   }
 
   const str = String(text);
   const parts = str.split(/(\s+)/);
 
   return (
-    <span className={className} style={style}>
+    <span className={className}>
       {parts.map((part, i) => {
         if (!part) return null;
         if (/^\s+$/.test(part)) return <span key={i}>{part}</span>;
         const isUnicodeHindi = /[\u0900-\u097F]/.test(part);
         const isLegacyHindi = !isUnicodeHindi && isDevlysText(part);
+        const partClass = isLegacyHindi
+          ? "devlys-text"
+          : isUnicodeHindi
+            ? "unicode-hindi-text"
+            : "english-text";
+
         return (
-          <span
-            key={i}
-            style={{
-              fontFamily: isLegacyHindi
-                ? "'DevLys 010', sans-serif"
-                : isUnicodeHindi
-                  ? "'Noto Sans Devanagari', sans-serif"
-                  : "'Times New Roman', Times, serif",
-              ...(isLegacyHindi ? { fontSize: "17px", lineHeight: 1.45 } : {})
-            }}
-          >
+          <span key={i} className={partClass}>
             {part}
           </span>
         );

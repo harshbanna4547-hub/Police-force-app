@@ -1,6 +1,9 @@
 import { useState } from "react";
 import EmployeeEditModal from "../core/EmployeeEditModal";
 
+/**
+ * [COMPONENT] PortalModuleContent — सक्रिय मॉड्यूल को रेंडर करता है एवं वैश्विक संपादन मोडल जोड़ता है
+ */
 export default function PortalModuleContent({
   activeView,
   portalData,
@@ -48,12 +51,12 @@ export default function PortalModuleContent({
   };
 
   if (activeView === "HOME") {
-    return <p style={{ margin: "8px 0", color: "#64748B" }}>मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
+    return <p className="module-muted-text">मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
   }
 
   const selectedModule = modules.find((module) => module.id === activeView && module.enabled);
   if (!selectedModule) {
-    return <p style={{ margin: "8px 0", color: "#64748B" }}>मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
+    return <p className="module-muted-text">मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
   }
 
   const propsByModule = {

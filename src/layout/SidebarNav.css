@@ -1,0 +1,141 @@
+/* === SIDEBAR LAYOUT & MOBILE DRAWER (साइडबार लेआउट एवं मोबाइल ड्रॉअर) === */
+.portal-sidebar {
+  background-color: #0B1E3D;
+  color: #ffffff;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    display: block;
+  }
+}
+
+.sidebar-profile-section {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar-profile-card {
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.sidebar-profile-title {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.sidebar-profile-district {
+  display: block;
+  margin-top: 5px;
+  color: #BFDBFE;
+  font-size: 0.8rem;
+}
+
+.sidebar-switch-btn {
+  margin-top: 9px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 7px;
+  background: transparent;
+  color: #ffffff;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.sidebar-nav-list {
+  flex: 1;
+  padding: 12px 10px;
+}
+
+.sidebar-nav-btn {
+  width: 100%;
+  padding: 11px 12px;
+  margin-bottom: 6px;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  background: transparent;
+  color: #ffffff;
+  font-weight: normal;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-nav-btn.is-active {
+  background: #1D63DC;
+  font-weight: bold;
+}
+
+.sidebar-modules-toggle {
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.sidebar-sub-btn {
+  width: 100%;
+  padding: 9px 12px;
+  margin-bottom: 4px;
+  border: none;
+  border-radius: 8px;
+  text-align: left;
+  background: transparent;
+  color: #ffffff;
+  font-weight: normal;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-sub-btn.is-active {
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: bold;
+}
+
+.sidebar-footer-wrap {
+  margin-top: auto;
+}
+
+.sidebar-dev-btn {
+  width: calc(100% - 20px);
+  padding: 11px 12px;
+  margin: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.sidebar-dev-btn.is-active {
+  background: #1D63DC;
+  font-weight: bold;
+}
+
+.sidebar-footer-caption {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  color: #CBD5E1;
+  font-size: 0.78rem;
+  text-align: center;
+}

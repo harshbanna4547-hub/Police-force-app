@@ -1,4 +1,4 @@
-/* src/index.css - Mobile, Tablet & PC Responsive Styling */
+/* === GLOBAL FONT REGISTRATION (DevLys 010 + Times New Roman) === */
 @font-face {
   font-family: "DevLys 010";
   src: url("/fonts/DevLys010.ttf") format("truetype"), local("DevLys 010");
@@ -11,6 +11,15 @@
   font-family: 'DevLys 010', sans-serif;
   font-size: 17px;
   line-height: 1.45;
+}
+
+.unicode-hindi-text {
+  font-family: 'Noto Sans Devanagari', sans-serif;
+}
+
+.english-text,
+.english-cell {
+  font-family: 'Times New Roman', Times, serif;
 }
 
 * {

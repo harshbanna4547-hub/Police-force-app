@@ -54,6 +54,22 @@
   margin-left: 4px;
 }
 
+.smart-belt-cell {
+  font-weight: bold;
+  color: #0369a1;
+}
+
+.smart-doc-cell {
+  font-weight: bold;
+  color: #15803d;
+}
+
+.smart-empty-row {
+  text-align: center !important;
+  padding: 18px !important;
+  color: #64748b;
+}
+
 @media (min-width: 641px) and (max-width: 1024px) {
   .smart-employee-table {
     min-width: 0;
