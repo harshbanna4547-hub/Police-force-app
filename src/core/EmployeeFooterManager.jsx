@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import EmployeeEditModal from "./EmployeeEditModal";
 import NewEmployeeSmartForm from "./NewEmployeeSmartForm";
-import { devToHindi } from "../utils/devlysConverter";
+import HindiText from "./HindiText";
+import { matchesEmployeeSearch } from "../forceLogic";
 
 const REMOVE_REASONS = [
   "Retirement",
@@ -41,13 +41,12 @@ function getBeltNumber(employee) {
 export default function EmployeeFooterManager({
   records,
   activeProfile,
-  editingEmployee,
   setEditingEmployee,
-  onUpdateEmployee,
   onSaveSmartEmployee,
   onRemoveEmployee,
   onDirectExcelConnect,
-  fileName
+  fileName,
+  language = "hi"
 }) {
   const [isSmartFormOpen, setIsSmartFormOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState(null);
@@ -55,15 +54,14 @@ export default function EmployeeFooterManager({
   const [postFilter, setPostFilter] = useState("ALL");
   const [employeeToRemove, setEmployeeToRemove] = useState(null);
   const [removeReason, setRemoveReason] = useState(REMOVE_REASONS[0]);
+  const english = language === "en";
 
   const searchResults = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase();
+    const query = search.trim();
     return records.filter((employee) => {
       if (!matchesPostFilter(employee, postFilter)) return false;
       if (!query) return true;
-      const name = devToHindi(employee.NAME).toLocaleLowerCase();
-      const belt = String(getBeltNumber(employee)).toLocaleLowerCase();
-      return name.includes(query) || belt.includes(query);
+      return matchesEmployeeSearch(employee, query, ["NAME", "BELT NO", "CADER", "POSTING"]);
     }).slice(0, 30);
   }, [records, search, postFilter]);
 
@@ -77,46 +75,53 @@ export default function EmployeeFooterManager({
 
   const handleRemoveEmployee = () => {
     if (!employeeToRemove) return;
-    const employeeName = devToHindi(employeeToRemove.NAME) || "चयनित कर्मचारी";
-    if (!window.confirm(`क्या आप ${employeeName} को "${removeReason}" कारण से मुख्य रिकॉर्ड से हटाना चाहते हैं?`)) return;
+    if (!window.confirm(english
+      ? `Remove selected employee from active records due to "${removeReason}"?`
+      : `क्या आप चयनित कर्मचारी को "${removeReason}" कारण से मुख्य रिकॉर्ड से हटाना चाहते हैं?`)) return;
     if (!onRemoveEmployee(employeeToRemove, removeReason)) return;
     setPickerMode(null);
     setEmployeeToRemove(null);
-    alert(`✔ ${employeeName} को मुख्य कर्मचारी सूची से हटा दिया गया। कारण: ${removeReason}`);
+    alert(english
+      ? `✔ Employee moved to Archive. Reason: ${removeReason}`
+      : `✔ कर्मचारी को मुख्य सूची से हटाकर अभिलेख में दर्ज कर दिया गया। कारण: ${removeReason}`);
   };
 
   return (
     <>
-        <footer className="employee-quick-management" style={{ margin: "0 0 18px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(115deg, #0B1E3D, #173D73)", boxShadow: "0 8px 22px rgba(11,30,61,0.18)", color: "#fff" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
-            <div>
-              <strong style={{ display: "block", fontSize: "0.98rem" }}>👮 Employee Quick Management</strong>
-              <span style={{ display: "block", marginTop: "3px", color: "#BFDBFE", fontSize: "0.8rem" }}>{records.length} कर्मचारी • तेज़ी से प्रबंधन करें</span>
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              <button
-                type="button"
-                onClick={onDirectExcelConnect}
-                style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#0EA5E9", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
-              >
-                📂 {fileName ? "Replace Master Sheet" : "Upload Master Sheet"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsSmartFormOpen(true)}
-                style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#16A34A", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
-              >
-                ➕ Add New Employee
-              </button>
-              <button type="button" onClick={() => openPicker("REMOVE")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#DC2626", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-                🗑️ Remove Employee
-              </button>
-              <button type="button" onClick={() => openPicker("SEARCH")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#2563EB", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
-                🔍 Quick Search &amp; Edit
-              </button>
-            </div>
+      <div className="employee-quick-management" style={{ margin: "0 0 18px", padding: "14px 18px", borderRadius: "14px", background: "linear-gradient(115deg, #0B1E3D, #173D73)", boxShadow: "0 8px 22px rgba(11,30,61,0.18)", color: "#fff" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div>
+            <strong style={{ display: "block", fontSize: "0.98rem" }}>
+              👮 {english ? "Employee Quick Management" : "कर्मचारी त्वरित प्रबंधन"}
+            </strong>
+            <span style={{ display: "block", marginTop: "3px", color: "#BFDBFE", fontSize: "0.8rem" }}>
+              {records.length} {english ? "employees • Quick actions" : "कर्मचारी • तेज़ी से प्रबंधन करें"}
+            </span>
           </div>
-        </footer>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={onDirectExcelConnect}
+              style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#0EA5E9", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
+            >
+              📂 {fileName ? (english ? "Replace Master Sheet" : "Master Sheet बदलें") : (english ? "Upload Master Sheet" : "Master Sheet अपलोड करें")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsSmartFormOpen(true)}
+              style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#16A34A", color: "#fff", fontWeight: "bold", cursor: "pointer" }}
+            >
+              ➕ {english ? "Add New Employee" : "नया कर्मचारी जोड़ें"}
+            </button>
+            <button type="button" onClick={() => openPicker("REMOVE")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#DC2626", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
+              🗑️ {english ? "Remove Employee" : "कर्मचारी हटाएं"}
+            </button>
+            <button type="button" onClick={() => openPicker("SEARCH")} style={{ border: 0, borderRadius: "8px", padding: "9px 12px", background: "#2563EB", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
+              🔍 {english ? "Quick Search & Edit" : "खोजें एवं संपादित करें"}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {pickerMode && (
         <div
@@ -127,19 +132,21 @@ export default function EmployeeFooterManager({
           <section style={{ width: "100%", maxWidth: "620px", maxHeight: "85vh", overflowY: "auto", background: "#fff", borderRadius: "12px", padding: "18px", boxShadow: "0 20px 50px rgba(0,0,0,0.25)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
               <h2 style={{ margin: 0, color: "#0B1E3D", fontSize: "1.1rem" }}>
-                {pickerMode === "REMOVE" ? "🗑️ कर्मचारी हटाएं" : "🔍 कर्मचारी खोजें और संपादित करें"}
+                {pickerMode === "REMOVE"
+                  ? (english ? "🗑️ Remove Employee" : "🗑️ कर्मचारी हटाएं")
+                  : (english ? "🔍 Search & Edit Employee" : "🔍 कर्मचारी खोजें और संपादित करें")}
               </h2>
-              <button type="button" onClick={() => setPickerMode(null)} aria-label="बंद करें" style={{ border: 0, background: "transparent", fontSize: "1.35rem", cursor: "pointer", color: "#475569" }}>✕</button>
+              <button type="button" onClick={() => setPickerMode(null)} aria-label="Close" style={{ border: 0, background: "transparent", fontSize: "1.35rem", cursor: "pointer", color: "#475569" }}>✕</button>
             </div>
             <input
               autoFocus
               type="search"
               value={search}
               onChange={(event) => { setSearch(event.target.value); setEmployeeToRemove(null); }}
-              placeholder="नाम या बेल्ट नं. से खोजें..."
+              placeholder={english ? "Search by name or belt no..." : "नाम या बेल्ट नं. से खोजें..."}
               style={{ width: "100%", boxSizing: "border-box", padding: "10px 12px", border: "1px solid #CBD5E1", borderRadius: "8px", fontSize: "0.95rem", marginBottom: "10px" }}
             />
-            <div role="group" aria-label="पद के अनुसार फ़िल्टर" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
+            <div role="group" aria-label="Filter by post" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "10px" }}>
               {POST_FILTERS.map((filter) => (
                 <button
                   type="button"
@@ -163,7 +170,7 @@ export default function EmployeeFooterManager({
             </div>
             {pickerMode === "REMOVE" && (
               <label style={{ display: "block", marginBottom: "10px", color: "#334155", fontWeight: "bold", fontSize: "0.88rem" }}>
-                हटाने का कारण
+                {english ? "Reason" : "हटाने का कारण"}
                 <select value={removeReason} onChange={(event) => setRemoveReason(event.target.value)} style={{ display: "block", width: "100%", marginTop: "5px", padding: "9px", border: "1px solid #CBD5E1", borderRadius: "7px", background: "#fff" }}>
                   {REMOVE_REASONS.map((reason) => <option key={reason} value={reason}>{reason}</option>)}
                 </select>
@@ -201,34 +208,29 @@ export default function EmployeeFooterManager({
                         </strong>
                       )}
                       <span style={{ minWidth: 0 }}>
-                        <strong style={{ display: "block", color: "#0F172A" }}>{devToHindi(employee.NAME) || "(नाम नहीं)"}</strong>
-                        <small style={{ display: "block", color: "#64748B" }}>पदस्थापन: {devToHindi(employee.POSTING) || "-"}</small>
+                        <strong style={{ display: "block", color: "#0F172A" }}><HindiText text={employee.NAME} /></strong>
+                        <small style={{ display: "block", color: "#64748B" }}>
+                          {english ? "Posting" : "पदस्थापन"}: <HindiText text={employee.POSTING} />
+                        </small>
                       </span>
                     </span>
                     <span style={{ color: selected ? "#1D4ED8" : "#15803D", fontWeight: "bold", whiteSpace: "nowrap" }}>
-                      {pickerMode === "SEARCH" ? "✏️ चुनें" : selected ? "✓ चुना गया" : "चुनें"}
+                      {pickerMode === "SEARCH" ? (english ? "✏️ Select" : "✏️ चुनें") : selected ? (english ? "✓ Selected" : "✓ चुना गया") : (english ? "Select" : "चुनें")}
                     </span>
                   </button>
                 );
-              }) : <p style={{ margin: 0, padding: "16px", color: "#64748B", textAlign: "center" }}>कोई कर्मचारी नहीं मिला।</p>}
+              }) : <p style={{ margin: 0, padding: "16px", color: "#64748B", textAlign: "center" }}>{english ? "No employee found." : "कोई कर्मचारी नहीं मिला।"}</p>}
             </div>
             {pickerMode === "REMOVE" && (
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "14px" }}>
-                <button type="button" onClick={() => setPickerMode(null)} style={{ padding: "8px 14px", border: "1px solid #CBD5E1", borderRadius: "7px", background: "#fff", cursor: "pointer" }}>रद्द करें</button>
-                <button type="button" onClick={handleRemoveEmployee} disabled={!employeeToRemove} style={{ padding: "8px 14px", border: 0, borderRadius: "7px", background: employeeToRemove ? "#DC2626" : "#94A3B8", color: "#fff", fontWeight: "bold", cursor: employeeToRemove ? "pointer" : "not-allowed" }}>🗑️ हटाने की पुष्टि करें</button>
+                <button type="button" onClick={() => setPickerMode(null)} style={{ padding: "8px 14px", border: "1px solid #CBD5E1", borderRadius: "7px", background: "#fff", cursor: "pointer" }}>{english ? "Cancel" : "रद्द करें"}</button>
+                <button type="button" onClick={handleRemoveEmployee} disabled={!employeeToRemove} style={{ padding: "8px 14px", border: 0, borderRadius: "7px", background: employeeToRemove ? "#DC2626" : "#94A3B8", color: "#fff", fontWeight: "bold", cursor: employeeToRemove ? "pointer" : "not-allowed" }}>🗑️ {english ? "Confirm Remove" : "हटाने की पुष्टि करें"}</button>
               </div>
             )}
           </section>
         </div>
       )}
 
-      {editingEmployee && (
-        <EmployeeEditModal
-          employee={editingEmployee}
-          onSave={onUpdateEmployee}
-          onClose={() => setEditingEmployee(null)}
-        />
-      )}
       {isSmartFormOpen && (
         <NewEmployeeSmartForm
           records={records}

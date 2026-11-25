@@ -1,11 +1,14 @@
-import { devToHindi } from "../utils/devlysConverter";
+import { useState } from "react";
+import EmployeeEditModal from "../core/EmployeeEditModal";
 
 export default function PortalModuleContent({
   activeView,
   portalData,
   districtId,
-  modules
+  modules,
+  language = "hi"
 }) {
+  const [editInitialTab, setEditInitialTab] = useState("personal");
   const {
     activeProfile,
     allSheets,
@@ -39,6 +42,11 @@ export default function PortalModuleContent({
     removeEmployee
   } = portalData;
 
+  const openEmployeeEditor = (employee, tab = "personal") => {
+    setEditInitialTab(tab);
+    setEditingEmployee(employee);
+  };
+
   if (activeView === "HOME") {
     return <p style={{ margin: "8px 0", color: "#64748B" }}>मॉड्यूल खोलने के लिए बाईं ओर साइडबार से चुनें।</p>;
   }
@@ -57,9 +65,9 @@ export default function PortalModuleContent({
       setUnitRankSanc,
       onSaveSanctioned,
       onSaveUnitRankSanc,
-      devToHindi,
-      onEditEmployee: setEditingEmployee,
-      onArchiveEmployee: removeEmployee
+      onEditEmployee: openEmployeeEditor,
+      onArchiveEmployee: removeEmployee,
+      language
     },
     TRANSFER: {
       records,
@@ -70,18 +78,18 @@ export default function PortalModuleContent({
       setAttRecords,
       depRecords,
       setDepRecords,
-      devToHindi
+      language
     },
-    BHARTI: { records, setRecords, allSheets, setAllSheets, devToHindi },
-    TRAINING: { records, allSheets, setAllSheets, devToHindi, activeProfile },
-    LEAVE: { records, plLeaveRows, setPlLeaveRows, allSheets, setAllSheets, devToHindi },
-    INCREMENT: { records, allSheets, setAllSheets, devToHindi },
-    ACP: { records, allSheets, setAllSheets, devToHindi },
-    PUNISHMENT: { records, allSheets, setAllSheets, devToHindi },
-    PROMOTION: { records, setRecords, allSheets, setAllSheets, devToHindi },
-    SENIORITY: { seniorityList: reports.seniorityList, devToHindi },
-    ROSTER: { records, reports, plSummary: reports.plSummary, allSheets, setAllSheets, devToHindi },
-    REPORTS: { records, devToHindi },
+    BHARTI: { records, setRecords, allSheets, setAllSheets, language },
+    TRAINING: { records, allSheets, setAllSheets, activeProfile, language },
+    LEAVE: { records, plLeaveRows, setPlLeaveRows, allSheets, setAllSheets, language },
+    INCREMENT: { records, allSheets, setAllSheets, language },
+    ACP: { records, allSheets, setAllSheets, language },
+    PUNISHMENT: { records, allSheets, setAllSheets, language },
+    PROMOTION: { records, setRecords, allSheets, setAllSheets, language },
+    SENIORITY: { seniorityList: reports.seniorityList, records, language },
+    ROSTER: { records, reports, plSummary: reports.plSummary, allSheets, setAllSheets, language },
+    REPORTS: { records, language },
     STORAGE: {
       activeProfile,
       records,
@@ -94,26 +102,48 @@ export default function PortalModuleContent({
       onSaveToExcel,
       onExportMasterFile,
       isExportingMaster,
-      onRemoveDistrictData
+      onRemoveDistrictData,
+      language
     },
-    POSTING: { records, sanctioned, unitRankSanc, onEditEmployee: setEditingEmployee, onArchiveEmployee: removeEmployee },
+    POSTING: {
+      records,
+      sanctioned,
+      unitRankSanc,
+      onEditEmployee: openEmployeeEditor,
+      onArchiveEmployee: removeEmployee,
+      language
+    },
     EMPLOYEES: {
       records,
       activeProfile,
       editingEmployee,
-      setEditingEmployee,
+      setEditingEmployee: openEmployeeEditor,
       onUpdateEmployee: updateEmployeeRecord,
       onSaveSmartEmployee: addNewEmployee,
       onRemoveEmployee: removeEmployee,
       onDirectExcelConnect: portalData.onDirectExcelConnect,
       fileName,
-      onEditEmployee: setEditingEmployee,
-      onArchiveEmployee: removeEmployee
+      onEditEmployee: openEmployeeEditor,
+      onArchiveEmployee: removeEmployee,
+      language
     },
-    ARCHIVE: { records, allSheets, onArchiveEmployee: removeEmployee },
-    DEV_SERVICES: { districtId, portalData }
+    ARCHIVE: { records, allSheets, onArchiveEmployee: removeEmployee, language },
+    DEV_SERVICES: { districtId, portalData, language }
   };
   const ActiveModule = selectedModule.component;
 
-  return <ActiveModule {...propsByModule[activeView]} />;
+  return (
+    <>
+      <ActiveModule {...propsByModule[activeView]} />
+      {editingEmployee && (
+        <EmployeeEditModal
+          key={`${editingEmployee._uid || editingEmployee.NAME}-${editInitialTab}`}
+          employee={editingEmployee}
+          initialTab={editInitialTab}
+          onSave={updateEmployeeRecord}
+          onClose={() => setEditingEmployee(null)}
+        />
+      )}
+    </>
+  );
 }
