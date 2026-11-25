@@ -24,6 +24,7 @@ export default function SidebarNav({
   return (
     <>
       <Sidebar
+        className="portal-sidebar-nav"
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
         activeView={activeView}

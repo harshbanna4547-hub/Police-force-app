@@ -245,8 +245,14 @@ export default function StrengthModule({
             </div>
           </div>
 
-          <div className="table-responsive-box" style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.9rem" }}>
+          <div style={{ width: "100%", maxWidth: "100%", minWidth: 0 }}>
+            <table className="strength-summary-table">
+              <colgroup>
+                <col style={{ width: "46%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "18%" }} />
+                <col style={{ width: "18%" }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
                   <th style={{ padding: "10px", textAlign: "left", border: "1px solid #CBD5E1" }}>संवर्ग / पद का नाम</th>

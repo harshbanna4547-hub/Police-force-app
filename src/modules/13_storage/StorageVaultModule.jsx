@@ -2,7 +2,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { installFontInApp, loadAllInstalledFonts, removeInstalledFont } from "../../utils/fontInstaller";
-import { getDistrictStorageBackupFolderId, openDriveVaultDB } from "../../utils/vaultStorage";
+import {
+  getDistrictStorageBackupFolderId,
+  openDriveVaultDB,
+  saveDistrictOfflineBackup
+} from "../../utils/vaultStorage";
 import { getStorageItemSummary } from "./storageLogic";
 import "./storage.css";
 
@@ -37,6 +41,7 @@ export default function StorageVaultModule({
   records,
   allSheets,
   onLoadExcelBlob,
+  onRestoreBackup,
   fileName,
   hasData,
   hasUnsavedChanges,
@@ -160,6 +165,38 @@ export default function StorageVaultModule({
     e.target.value = "";
     await loadAllItems();
     alert(`✔ ${fileList.length} फ़ाइल(ें) फोल्डर में अपलोड हो गईं!`);
+  };
+
+  const handleMasterExcelUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const buffer = await file.arrayBuffer();
+      await onLoadExcelBlob(buffer, file.name, { saveToStorage: true });
+      await loadAllItems();
+    } catch (error) {
+      console.error("Master Excel upload failed:", error);
+      alert(`Master Excel अपलोड नहीं हो सकी: ${error.message}`);
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const handleRestoreBackup = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const backup = JSON.parse(await file.text());
+      await onRestoreBackup(backup);
+      await saveDistrictOfflineBackup(activeProfile, backup);
+      await loadAllItems();
+      alert(`✔ "${file.name}" Backup सफलतापूर्वक Restore और Backup फ़ोल्डर में सेव हो गया।`);
+    } catch (error) {
+      console.error("District backup restore failed:", error);
+      alert(`Backup Restore नहीं हो सका: ${error.message}`);
+    } finally {
+      e.target.value = "";
+    }
   };
   const handleCreateNewDoc = async (docType) => {
     const rawName = prompt(docType === "EXCEL" ? "नई Excel फ़ाइल का नाम लिखें:" : "नई Word फ़ाइल का नाम लिखें:");
@@ -324,6 +361,16 @@ export default function StorageVaultModule({
           <label style={{ backgroundColor: "#16A34A", color: "#fff", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
             ⬆️ Upload Files
             <input type="file" multiple onChange={handleUploadFiles} style={{ display: "none" }} />
+          </label>
+
+          <label style={{ backgroundColor: "#0284C7", color: "#fff", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+            📊 Upload Master Excel File
+            <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} style={{ display: "none" }} />
+          </label>
+
+          <label style={{ backgroundColor: "#7C3AED", color: "#fff", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+            🔄 Restore Backup (.json)
+            <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} style={{ display: "none" }} />
           </label>
 
           <button onClick={() => handleCreateNewDoc("EXCEL")} style={{ backgroundColor: "#059669", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>

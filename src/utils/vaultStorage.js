@@ -64,6 +64,45 @@ export async function getDistrictStorageItems(districtName) {
   });
 }
 
+export async function saveDistrictMasterExcelFile(districtName, fileName, data, mimeType = "") {
+  if (!(data instanceof ArrayBuffer) && !ArrayBuffer.isView(data)) {
+    throw new Error("Master Excel फ़ाइल का डेटा अमान्य है।");
+  }
+  const updatedAt = new Date();
+  const datePrefix = updatedAt.toISOString().slice(0, 10);
+  const safeName = String(fileName || "Master.xlsx").replace(/[\\/:*?"<>|]/g, "_");
+  const datedName = `${datePrefix}_${safeName}`;
+  const district = String(districtName || "").trim();
+  if (!district) throw new Error("जिला पहचान खाली नहीं हो सकती।");
+  const bytes = data instanceof ArrayBuffer
+    ? data
+    : data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+  const db = await openDriveVaultDB();
+
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(DRIVE_STORE_NAME, "readwrite");
+    tx.objectStore(DRIVE_STORE_NAME).put({
+      id: `master_upload_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      parentId: "ROOT",
+      kind: "FILE",
+      name: datedName,
+      oneDriveFileName: datedName,
+      oneDriveFolder: "",
+      mime: mimeType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      sizeKB: (bytes.byteLength / 1024).toFixed(1),
+      district,
+      updatedAt: updatedAt.toISOString(),
+      data: bytes
+    });
+    tx.oncomplete = () => {
+      window.dispatchEvent(new Event("police-vault-updated"));
+      resolve();
+    };
+    tx.onerror = () => reject(tx.error);
+  });
+  return datedName;
+}
+
 export async function saveDistrictOfflineBackup(districtName, payload, timestamp = new Date()) {
   const { current } = getDistrictVaultKeys(districtName);
   const district = current.replace(/^police_data_/, "");

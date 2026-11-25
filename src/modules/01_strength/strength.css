@@ -4,7 +4,7 @@
   width: 100%;
 }
 
-.strength-module table,
+.strength-module table:not(.strength-summary-table),
 .office-ps-strength table {
   min-width: 680px;
 }

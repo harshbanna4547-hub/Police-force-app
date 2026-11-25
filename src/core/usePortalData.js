@@ -9,6 +9,7 @@ import {
   loadDistrictVault,
   removeDistrictVault,
   replaceDistrictStorageItems,
+  saveDistrictMasterExcelFile,
   saveDistrictVault,
   writeBackToExcelFile
 } from "../utils/vaultStorage";
@@ -970,6 +971,12 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
       const cleanDep = (sheets.Deputation || []).filter((row) => String(row.NAME || "").trim() !== "");
       const cleanPl = sheets.PL_Leave_Account || [];
 
+      const savedMasterName = await saveDistrictMasterExcelFile(
+        activeProfile,
+        file.name,
+        buffer,
+        file.type
+      );
       setAllSheets(sheets);
       setRecords(hydrated.records);
       setAttRecords(cleanAtt);
@@ -989,7 +996,7 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
         originalWorkbook: original
       });
       setHasUnsavedChanges(false);
-      alert(`✔ ${activeProfile} के लिए "${file.name}" स्थायी रूप से सेव (Overwrite) हो गई है!`);
+      alert(`✔ ${activeProfile} के लिए "${file.name}" लोड और "${savedMasterName}" नाम से Storage Vault में सेव हो गई है!`);
     } catch (error) {
       if (error.name !== "AbortError") alert("फ़ाइल पढ़ने में त्रुटि: " + error.message);
     }
@@ -1047,7 +1054,7 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     alert(`${activeProfile} का डेटा हटा दिया गया है।`);
   };
 
-  const loadExcelBlob = async (buffer, name) => {
+  const loadExcelBlob = async (buffer, name, { saveToStorage = false } = {}) => {
     const { workbook, sheets: rawSheets } = readWorkbook(buffer);
     const mainSheetName = rawSheets["Master_All_Data"] ? "Master_All_Data" : workbook.SheetNames.at(0) || "Master_All_Data";
     const main = (rawSheets[mainSheetName] || []).filter((row) => String(row.NAME || "").trim() !== "");
@@ -1075,8 +1082,49 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
       unitRankSanc,
       originalWorkbook: original
     });
-    alert(`✔ "${name}" अब ${activeProfile} पोर्टल पर सक्रिय हो गई है!`);
+    const savedMasterName = saveToStorage
+      ? await saveDistrictMasterExcelFile(activeProfile, name, buffer)
+      : "";
+    alert(savedMasterName
+      ? `✔ "${name}" अब ${activeProfile} पोर्टल पर सक्रिय और "${savedMasterName}" नाम से Storage Vault में सेव है!`
+      : `✔ "${name}" अब ${activeProfile} पोर्टल पर सक्रिय हो गई है!`);
   };
+
+  const restoreDistrictBackup = useCallback(async (backup) => {
+    if (!backup || typeof backup !== "object" || Array.isArray(backup)) {
+      throw new Error("Backup JSON का प्रारूप अमान्य है।");
+    }
+    if (backup.district && String(backup.district).toUpperCase() !== String(districtId).toUpperCase()) {
+      throw new Error(`यह Backup ${backup.district} जिले का है, ${districtId} का नहीं।`);
+    }
+    const payload = backup.payload && typeof backup.payload === "object"
+      ? backup.payload
+      : backup;
+    const sourceSheets = payload.allSheets && typeof payload.allSheets === "object"
+      ? payload.allSheets
+      : {};
+    const sourceRecords = Array.isArray(payload.records)
+      ? payload.records
+      : Array.isArray(sourceSheets.Master_All_Data)
+        ? sourceSheets.Master_All_Data
+        : null;
+    if (!sourceRecords) {
+      throw new Error("Backup JSON में कर्मचारी records या Master_All_Data शीट नहीं मिली।");
+    }
+
+    const updatedAt = new Date().toISOString();
+    const restoredPayload = {
+      ...payload,
+      records: sourceRecords,
+      allSheets: sourceSheets,
+      updatedAt
+    };
+    await applyOfficeVault(restoredPayload);
+    const persistedVault = await loadDistrictVault(districtId);
+    if (persistedVault) void syncOneDriveData(persistedVault);
+    setHasUnsavedChanges(false);
+    return true;
+  }, [applyOfficeVault, districtId, syncOneDriveData]);
 
   const reports = useMemo(
     () => generateAllReportsData(records, depRecords, plLeaveRows),
@@ -1159,6 +1207,7 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     onSaveToExcel: handleSaveToExcel,
     onExportMasterFile: exportMaster,
     onRemoveDistrictData: handleRemoveDistrictData,
-    onLoadExcelBlob: loadExcelBlob
+    onLoadExcelBlob: loadExcelBlob,
+    onRestoreBackup: restoreDistrictBackup
   };
 }

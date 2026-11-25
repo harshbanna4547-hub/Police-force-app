@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 export default function Sidebar({
+  className = "",
   sidebarOpen,
   setSidebarOpen,
   activeView,
@@ -28,7 +29,7 @@ export default function Sidebar({
         />
       )}
       <aside
-        className={`portal-sidebar ${sidebarOpen ? "is-open" : "is-closed"}`}
+        className={`portal-sidebar ${className} ${sidebarOpen ? "is-open" : "is-closed"}`}
         style={{
           width: sidebarOpen ? "280px" : "0px",
           minWidth: sidebarOpen ? "280px" : "0px",

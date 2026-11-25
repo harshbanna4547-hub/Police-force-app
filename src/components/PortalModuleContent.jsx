@@ -82,7 +82,20 @@ export default function PortalModuleContent({
     SENIORITY: { seniorityList: reports.seniorityList, devToHindi },
     ROSTER: { records, reports, plSummary: reports.plSummary, allSheets, setAllSheets, devToHindi },
     REPORTS: { records, devToHindi },
-    STORAGE: { activeProfile, records, allSheets, onLoadExcelBlob, fileName, hasData: records.length > 0, hasUnsavedChanges, onSaveToExcel, onExportMasterFile, isExportingMaster, onRemoveDistrictData },
+    STORAGE: {
+      activeProfile,
+      records,
+      allSheets,
+      onLoadExcelBlob,
+      onRestoreBackup: portalData.onRestoreBackup,
+      fileName,
+      hasData: records.length > 0,
+      hasUnsavedChanges,
+      onSaveToExcel,
+      onExportMasterFile,
+      isExportingMaster,
+      onRemoveDistrictData
+    },
     POSTING: { records, sanctioned, unitRankSanc, onEditEmployee: setEditingEmployee, onArchiveEmployee: removeEmployee },
     EMPLOYEES: {
       records,
