@@ -44,13 +44,6 @@ function getClient() {
   return clientPromise;
 }
 
-export async function getOneDriveAccount() {
-  const client = await getClient();
-  const account = client.getActiveAccount() || client.getAllAccounts()[0] || null;
-  if (account) client.setActiveAccount(account);
-  return account;
-}
-
 async function getAccessToken() {
   const client = await getClient();
   const account = client.getActiveAccount() || client.getAllAccounts()[0];
@@ -69,7 +62,7 @@ async function getAccessToken() {
   }
 }
 
-export async function connectOneDriveAccount() {
+export async function authenticateOneDriveAccount() {
   const client = await getClient();
   const account = client.getActiveAccount() || client.getAllAccounts()[0];
   if (account) {

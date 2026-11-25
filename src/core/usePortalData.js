@@ -17,8 +17,7 @@ import {
 } from "./lanSyncClient.js";
 import {
   OneDriveSyncError,
-  connectOneDriveAccount,
-  getOneDriveAccount,
+  authenticateOneDriveAccount,
   synchronizeOneDriveStorage,
   synchronizeOneDriveVault
 } from "./oneDriveDbEngine.js";
@@ -241,9 +240,12 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
   const [unitRankSanc, setUnitRankSanc] = useState({});
   const [loadedDistrictId, setLoadedDistrictId] = useState("");
   const [persistenceError, setPersistenceError] = useState("");
-  const [cloudSyncStatus, setCloudSyncStatus] = useState("OneDrive से कनेक्ट करें");
-  const [isOneDriveConnected, setIsOneDriveConnected] = useState(false);
+  const [cloudSyncStatus, setCloudSyncStatus] = useState("OneDrive से डेटा सिंक हो रहा है…");
+  const [cloudSyncState, setCloudSyncState] = useState(() => (
+    navigator.onLine ? "syncing" : "offline"
+  ));
   const [isCloudSyncing, setIsCloudSyncing] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => navigator.onLine);
   const [lanSyncStatus, setLanSyncStatus] = useState("offline");
 
   const fileHandleRef = useRef(null);
@@ -257,6 +259,21 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
   const oneDriveSyncRunner = useRef(null);
   const activeDistrictId = useRef(districtId);
   activeDistrictId.current = districtId;
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => {
+      setIsOnline(false);
+      setCloudSyncState("offline");
+      setCloudSyncStatus("इंटरनेट उपलब्ध नहीं; बदलाव इस डिवाइस में सुरक्षित हैं");
+    };
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
   const isDistrictDataReady = Boolean(districtId && loadedDistrictId === districtId);
 
   const applyOfficeVault = useCallback(async (officeVault) => {
@@ -362,6 +379,8 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
       return false;
     }
     oneDriveSyncInProgress.current = true;
+    setIsCloudSyncing(true);
+    setCloudSyncState("syncing");
     setCloudSyncStatus("OneDrive से डेटा सिंक हो रहा है…");
     let databaseReady = false;
     const markDatabaseReady = () => {
@@ -394,26 +413,29 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
         await replaceDistrictStorageItems(activeProfile, storageItems);
         window.dispatchEvent(new Event("police-vault-cloud-updated"));
       }
-      setIsOneDriveConnected(true);
+      setCloudSyncState("synced");
       setCloudSyncStatus("OneDrive Live Synced");
       return true;
     } catch (error) {
       markDatabaseReady();
       if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
+        setCloudSyncState("offline");
         setCloudSyncStatus("इंटरनेट उपलब्ध नहीं; बदलाव इस डिवाइस में सुरक्षित हैं");
       } else if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
-        setIsOneDriveConnected(false);
+        setCloudSyncState("setup-required");
         setCloudSyncStatus("VITE_ONEDRIVE_CLIENT_ID कॉन्फ़िगर नहीं है");
       } else if (error instanceof OneDriveSyncError && error.code === "AUTH_REQUIRED") {
-        setIsOneDriveConnected(false);
-        setCloudSyncStatus("OneDrive से कनेक्ट करें");
+        setCloudSyncState("auth-required");
+        setCloudSyncStatus("OneDrive sign-in आवश्यक है। नीचे के Wi-Fi संकेतक पर क्लिक करें।");
       } else {
         console.error("OneDrive sync failed:", error);
+        setCloudSyncState("error");
         setCloudSyncStatus(`OneDrive sync असफल: ${error.message}`);
       }
       return false;
     } finally {
       oneDriveSyncInProgress.current = false;
+      setIsCloudSyncing(false);
       if (oneDriveSyncPending.current) {
         const pendingDistrict = oneDrivePendingDistrict.current;
         const pendingVault = oneDrivePendingVault.current;
@@ -507,23 +529,6 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
 
     return () => { mounted = false; };
   }, [districtId, activeProfile, syncLanData, syncOneDriveData]);
-
-  useEffect(() => {
-    let active = true;
-    getOneDriveAccount()
-      .then((account) => {
-        if (active) setIsOneDriveConnected(Boolean(account));
-      })
-      .catch((error) => {
-        if (!active) return;
-        if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
-          setCloudSyncStatus("VITE_ONEDRIVE_CLIENT_ID कॉन्फ़िगर नहीं है");
-        } else {
-          console.error("OneDrive account status could not be checked:", error);
-        }
-      });
-    return () => { active = false; };
-  }, []);
 
   const districtVaultPayload = useMemo(() => ({
       fileName,
@@ -926,37 +931,33 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     ...districtVaultPayload,
     unitRankSanc: value
   });
-  const syncCloudBackup = useCallback(async () => {
+  const reauthenticateOneDrive = useCallback(async () => {
     if (!districtId) {
-      setCloudSyncStatus("पहले जिला चुनें।");
-      return;
-    }
-
-    setIsCloudSyncing(true);
-    setCloudSyncStatus("OneDrive बैकअप चल रहा है…");
-    try {
-      const backupPayload = { ...districtVaultPayload, updatedAt: new Date().toISOString() };
-      await saveDistrictVault(districtId, backupPayload);
-      const synced = await syncOneDriveData(backupPayload);
-      if (synced) setPersistenceError("");
-    } catch (error) {
-      console.error("Manual OneDrive backup failed:", error);
-      setCloudSyncStatus(`OneDrive बैकअप असफल: ${error.message}`);
-    } finally {
-      setIsCloudSyncing(false);
-    }
-  }, [districtId, districtVaultPayload, syncOneDriveData]);
-
-  const connectToOneDriveDb = useCallback(async () => {
-    if (!districtId) {
+      setCloudSyncState("error");
       setCloudSyncStatus("पहले जिला चुनें।");
       return false;
     }
 
     setIsCloudSyncing(true);
+    setCloudSyncState("syncing");
+    setCloudSyncStatus("OneDrive से साइन-इन हो रहा है…");
     try {
-      await connectOneDriveAccount();
-      setIsOneDriveConnected(true);
+      await authenticateOneDriveAccount();
+    } catch (error) {
+      console.error("OneDrive authentication failed:", error);
+      if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
+        setCloudSyncState("setup-required");
+      } else if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
+        setCloudSyncState("offline");
+      } else {
+        setCloudSyncState("auth-required");
+      }
+      setCloudSyncStatus(`OneDrive साइन-इन असफल: ${error.message}`);
+      setIsCloudSyncing(false);
+      return false;
+    }
+
+    try {
       const localVault = await loadDistrictVault(districtId);
       const sourceVault = localVault || {
         ...districtVaultPayload,
@@ -967,8 +968,16 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
       if (synced) setPersistenceError("");
       return synced;
     } catch (error) {
-      console.error("OneDrive connection failed:", error);
-      setIsOneDriveConnected(false);
+      console.error("OneDrive data could not be synced after authentication:", error);
+      if (error instanceof OneDriveSyncError && error.code === "CONFIG_MISSING") {
+        setCloudSyncState("setup-required");
+      } else if (error instanceof OneDriveSyncError && error.code === "OFFLINE") {
+        setCloudSyncState("offline");
+      } else if (error instanceof OneDriveSyncError && error.code === "AUTH_REQUIRED") {
+        setCloudSyncState("auth-required");
+      } else {
+        setCloudSyncState("error");
+      }
       setCloudSyncStatus(`OneDrive कनेक्शन असफल: ${error.message}`);
       return false;
     } finally {
@@ -1000,13 +1009,13 @@ export default function usePortalData({ districtId = "", districtName = "" } = {
     setUnitRankSanc,
     persistenceError,
     cloudSyncStatus,
+    cloudSyncState,
     isCloudSyncing,
-    isOneDriveConnected,
-    onConnectOneDriveDb: connectToOneDriveDb,
+    isOnline,
+    onReauthenticateOneDrive: reauthenticateOneDrive,
     lanSyncStatus: districtId === OFFICE_DISTRICT_ID ? lanSyncStatus : "disabled",
     onSaveSanctioned: saveSanctionedSettings,
     onSaveUnitRankSanc: saveUnitRankSettings,
-    onCloudSync: syncCloudBackup,
     reports,
     totalSanc,
     downloadReports,

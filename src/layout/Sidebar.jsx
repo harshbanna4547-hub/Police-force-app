@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { OFFICE_SERVER_TOKEN_KEY, saveOfficeServerConfig } from "../core/lanSyncClient.js";
 
 export default function Sidebar({
   sidebarOpen,
@@ -10,36 +9,37 @@ export default function Sidebar({
   activeProfile,
   currentDistrict,
   language,
+  cloudSyncState,
   cloudSyncStatus,
+  isCloudSyncing,
+  isOnline,
+  onReauthenticateOneDrive,
   onOpenDistrictSwitcher
 }) {
   const [modulesOpen, setModulesOpen] = useState(false);
-  const [officeKey, setOfficeKey] = useState("");
-  const [officeKeyStatus, setOfficeKeyStatus] = useState("");
-  const [officeKeyConfigured, setOfficeKeyConfigured] = useState(() => {
-    try {
-      return Boolean(window.localStorage.getItem(OFFICE_SERVER_TOKEN_KEY));
-    } catch (error) {
-      console.error("Office Access Key status could not be read:", error);
-      return false;
-    }
-  });
   const visibleModules = modules.filter((module) => module.enabled !== false);
+  const syncIndicatorState = !isOnline || cloudSyncState === "offline"
+    ? "offline"
+    : isCloudSyncing || cloudSyncState === "syncing"
+      ? "syncing"
+      : cloudSyncState;
+  const syncIndicator = {
+    synced: { label: "Online • Synced", color: "#166534", background: "#DCFCE7", border: "#86EFAC" },
+    syncing: { label: "Syncing...", color: "#1D4ED8", background: "#DBEAFE", border: "#93C5FD" },
+    offline: { label: "Offline (Local Saved)", color: "#991B1B", background: "#FEE2E2", border: "#FCA5A5" },
+    "auth-required": { label: "Sign-in Required", color: "#92400E", background: "#FEF3C7", border: "#FCD34D" },
+    "setup-required": { label: "Setup Required", color: "#475569", background: "#F1F5F9", border: "#CBD5E1" },
+    error: { label: "Sync Issue", color: "#991B1B", background: "#FEE2E2", border: "#FCA5A5" }
+  }[syncIndicatorState] || {
+    label: "Sync Issue",
+    color: "#991B1B",
+    background: "#FEE2E2",
+    border: "#FCA5A5"
+  };
+  const canReauthenticate = syncIndicatorState === "auth-required" && isOnline;
   const selectView = (view) => {
     setActiveView(view);
     if (window.matchMedia("(max-width: 768px)").matches) setSidebarOpen(false);
-  };
-  const saveOfficeKey = (event) => {
-    event.preventDefault();
-    try {
-      saveOfficeServerConfig(officeKey);
-      setOfficeKey("");
-      setOfficeKeyConfigured(true);
-      setOfficeKeyStatus("Access Key इस डिवाइस पर सुरक्षित हो गई।");
-      window.dispatchEvent(new Event("police-vault-updated"));
-    } catch (error) {
-      setOfficeKeyStatus(error.message);
-    }
   };
 
   return (
@@ -158,31 +158,38 @@ export default function Sidebar({
               )}
             </nav>
 
-            <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem" }}>
-              <p style={{ margin: "0 0 9px", textAlign: "center" }}>{cloudSyncStatus}</p>
-              <details>
-                <summary style={{ cursor: "pointer", textAlign: "center" }}>
-                  {officeKeyConfigured ? "Office Access Key बदलें" : "OneDrive sync कनेक्ट करें"}
-                </summary>
-                <form onSubmit={saveOfficeKey} style={{ display: "grid", gap: "8px", marginTop: "10px" }}>
-                  <label htmlFor="office-access-key">सर्वर संचालक से मिली Access Key एक बार दर्ज करें। Microsoft Sign-In आवश्यक नहीं है।</label>
-                  <input
-                    id="office-access-key"
-                    type="password"
-                    autoComplete="new-password"
-                    value={officeKey}
-                    onChange={(event) => setOfficeKey(event.target.value)}
-                    required
-                    minLength={32}
-                    style={{ width: "100%", boxSizing: "border-box", padding: "8px", borderRadius: "6px", border: "1px solid #94A3B8" }}
-                  />
-                  <button type="submit" style={{ padding: "8px", border: "0", borderRadius: "6px", background: "#1D63DC", color: "white", cursor: "pointer" }}>
-                    Access Key सेव करें
-                  </button>
-                  {officeKeyStatus && <span role="status">{officeKeyStatus}</span>}
-                </form>
-              </details>
-              <p style={{ margin: "10px 0 0", textAlign: "center" }}>District Police Portal</p>
+            <footer style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.15)", color: "#CBD5E1", fontSize: "0.75rem", display: "flex", justifyContent: "center" }}>
+              <button
+                type="button"
+                aria-label={syncIndicator.label}
+                title={cloudSyncStatus}
+                disabled={!canReauthenticate || isCloudSyncing}
+                onClick={canReauthenticate ? onReauthenticateOneDrive : undefined}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  padding: "8px 12px",
+                  border: `1px solid ${syncIndicator.border}`,
+                  borderRadius: "999px",
+                  background: syncIndicator.background,
+                  color: syncIndicator.color,
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: canReauthenticate ? "pointer" : "default",
+                  opacity: isCloudSyncing ? 0.75 : 1
+                }}
+              >
+                <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M2 8.82a16 16 0 0 1 20 0" />
+                  <path d="M5 12.86a10 10 0 0 1 14 0" />
+                  <path d="M8.5 16.4a5 5 0 0 1 7 0" />
+                  <circle cx="12" cy="20" r="1" fill="currentColor" stroke="none" />
+                  {syncIndicatorState === "offline" && <path d="m3 3 18 18" />}
+                </svg>
+                <span aria-live="polite">{syncIndicator.label}</span>
+              </button>
             </footer>
           </>
         )}

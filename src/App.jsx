@@ -106,7 +106,6 @@ export default function App() {
         modules={modules}
         currentDistrict={currentDistrict}
         onDistrictChange={handleDistrictChange}
-        lanSyncStatus={portalData.lanSyncStatus}
         language={language}
       />
       <div className="app-main-content" style={{ minWidth: 0, flex: 1, width: "100%", display: "flex", flexDirection: "column", overflowX: "hidden" }}>
