@@ -1,17 +1,18 @@
 /* ==========================================================================
-   MINIMAL ROYAL BLUE + SOFT MAGENTA + LIGHT PURPLE FROSTED GLASS PILLARS
-   Non-Clickable Top Headers · Zero Arrows/Count Badges · Ice & Fire Hover
+   MINIMALIST EDITORIAL & CLASSIC ROYAL BLUE DASHBOARD PILLAR CARDS
+   Calm Ice-Slate / Charcoal Canvas · Non-Clickable Royal Blue Header
+   Zero Chevrons/Badges · Subtle Ice (#38bdf8) & Fire (#f43f5e / #8b5cf6) Hover
    ========================================================================== */
 
-@keyframes iceFireGlow {
+@keyframes iceFireSweep {
   0% {
-    background-position: 0% 50%;
+    background-position: 0% 0%;
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 0% 100%;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: 0% 0%;
   }
 }
 
@@ -19,14 +20,7 @@
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
-  padding: clamp(16px, 2vw, 30px);
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(37, 99, 235, 0.14) 0%, transparent 48%),
-    radial-gradient(circle at 86% 22%, rgba(217, 70, 239, 0.12) 0%, transparent 45%),
-    radial-gradient(circle at 52% 84%, rgba(139, 92, 246, 0.13) 0%, transparent 52%),
-    linear-gradient(160deg, #f4f7ff 0%, #f8f5ff 52%, #fdf4ff 100%);
-  border: 1px solid rgba(139, 92, 246, 0.18);
+  padding: clamp(14px, 1.8vw, 26px) 0 32px;
 }
 
 .bento-section-header {
@@ -34,78 +28,76 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 18px;
+  padding: 0 4px;
 }
 
 .bento-section-title {
-  margin: 0 0 4px;
+  margin: 0 0 5px;
   font-family: var(--font-ui);
-  color: var(--text-strong, #0b1e3d);
-  font-size: clamp(16px, 1.4vw, 24px);
+  color: var(--text-strong, #0f172a);
+  font-size: clamp(17px, 1.45vw, 25px);
   font-weight: 800;
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
 }
 
 .bento-section-subtitle {
   margin: 0;
-  color: var(--muted, #475569);
-  font-size: clamp(12px, 0.9vw, 15px);
+  color: var(--muted, #64748b);
+  font-size: clamp(12.5px, 0.92vw, 15px);
+  line-height: 1.45;
 }
 
-/* === SLIM CARD WIDTH & GENEROUS GRID SPACING === */
+/* === SLIM, TALL & WELL-SPACED PILLAR GRID === */
 .rajifms-pillar-grid {
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(225px, 248px));
+  grid-template-columns: repeat(auto-fill, minmax(230px, 255px));
   justify-content: center;
-  gap: 30px 36px;
-  padding: 20px 28px;
+  gap: 28px 34px;
+  padding: 8px 6px 20px;
 }
 
-/* === MINIMAL FROSTED-GLASS PILLAR CARD WITH 3D DEPTH === */
+/* === MINIMALIST EDITORIAL WHITE PILLAR CARD === */
 .rajifms-pillar-card {
   width: 100%;
-  max-width: 248px;
+  max-width: 255px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  border-radius: 18px;
+  border-radius: 20px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  box-shadow: 0 14px 34px rgba(79, 70, 229, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  transition: transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 0.24s ease,
-    border-color 0.24s ease;
+  background: var(--surface-raised, #ffffff);
+  border: 1px solid var(--border, rgba(226, 232, 240, 0.9));
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.05);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
 }
 
 .rajifms-pillar-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(139, 92, 246, 0.45);
-  box-shadow: 0 20px 42px rgba(79, 70, 229, 0.16), 0 0 0 1px rgba(217, 70, 239, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: translateY(-4px);
+  border-color: rgba(29, 78, 216, 0.28);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.09);
 }
 
-/* === NON-CLICKABLE ROYAL BLUE + LIGHT PURPLE + SOFT MAGENTA HEADER === */
+/* === AUTHORITATIVE CLASSIC ROYAL BLUE HEADER (Non-Clickable) === */
 .rajifms-pillar-header {
   width: 100%;
   min-height: 118px;
-  padding: 18px 14px;
+  padding: 20px 16px;
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.32);
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.92) 0%, rgba(139, 92, 246, 0.90) 56%, rgba(217, 70, 239, 0.86) 100%);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
   color: #ffffff;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 7px;
+  gap: 8px;
   cursor: default;
   pointer-events: none;
   user-select: none;
@@ -115,9 +107,9 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.36);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.16);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -127,8 +119,9 @@
 
 .rajifms-header-title {
   font-family: var(--font-ui);
-  font-size: 0.97rem;
+  font-size: 0.98rem;
   font-weight: 800;
+  letter-spacing: -0.01em;
   line-height: 1.25;
   color: #ffffff;
 }
@@ -136,30 +129,28 @@
 .rajifms-header-subtitle {
   font-size: 0.72rem;
   font-weight: 600;
-  color: rgba(243, 232, 255, 0.94);
-  line-height: 1.2;
+  color: rgba(219, 234, 254, 0.92);
+  line-height: 1.25;
 }
 
-/* === FROSTED GLASS SUB-ITEM CONTAINER & ICE-AND-FIRE HOVER === */
+/* === CLEAN SUB-MODULE LIST & SUBTLE ICE-AND-FIRE HOVER === */
 .rajifms-subrow-list {
   flex: 1;
   min-height: 175px;
-  padding: 6px 0;
+  padding: 8px 0;
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
-  background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--surface-raised, #ffffff);
 }
 
 .rajifms-subrow-btn {
   position: relative;
   width: 100%;
   min-height: 48px;
-  padding: 13px 16px;
+  padding: 13px 18px;
   border: none;
-  border-bottom: 1px solid rgba(139, 92, 246, 0.14);
+  border-bottom: 1px solid var(--border, rgba(226, 232, 240, 0.9));
   background: transparent;
   color: var(--text, #1e293b);
   display: flex;
@@ -170,23 +161,27 @@
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 1.35;
-  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.22s ease;
+  letter-spacing: 0.005em;
+  line-height: 1.38;
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 0.22s ease,
+    box-shadow 0.22s ease,
+    color 0.18s ease;
 }
 
+/* Ice (#38bdf8) & Fire (#f43f5e / #8b5cf6) animated left edge bar */
 .rajifms-subrow-btn::before {
   content: "";
   position: absolute;
   left: 0;
-  top: 6px;
-  bottom: 6px;
+  top: 7px;
+  bottom: 7px;
   width: 3.5px;
   border-radius: 0 4px 4px 0;
   opacity: 0;
-  background: linear-gradient(180deg, #38bdf8, #3b82f6, #a855f7, #e879f9);
-  background-size: 200% 200%;
-  transition: opacity 0.22s ease;
+  background: linear-gradient(180deg, #38bdf8 0%, #8b5cf6 52%, #f43f5e 100%);
+  background-size: 100% 220%;
+  transition: opacity 0.2s ease;
 }
 
 .rajifms-subrow-btn:last-child {
@@ -194,88 +189,64 @@
 }
 
 .rajifms-subrow-btn:hover {
-  transform: translateX(4px);
-  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(139, 92, 246, 0.11) 52%, rgba(232, 121, 249, 0.12) 100%);
-  background-size: 200% 100%;
-  animation: iceFireGlow 2.4s ease infinite;
+  transform: translateX(5px);
+  color: #0f172a;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.08) 0%, rgba(139, 92, 246, 0.05) 60%, rgba(244, 63, 94, 0.05) 100%);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.22);
 }
 
 .rajifms-subrow-btn:hover::before {
   opacity: 1;
-  animation: iceFireGlow 2.2s ease infinite;
+  animation: iceFireSweep 2.2s ease infinite;
 }
 
 .rajifms-subrow-text {
   min-width: 0;
   width: 100%;
-  transition: color 0.2s ease;
 }
 
-.rajifms-subrow-btn:hover .rajifms-subrow-text {
-  background: linear-gradient(90deg, #2563eb 0%, #38bdf8 30%, #8b5cf6 65%, #d946ef 100%);
-  background-size: 220% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  font-weight: 700;
-  animation: iceFireGlow 2.2s linear infinite;
-}
-
-/* === DARK MODE GLASS COMPATIBILITY === */
-.app-shell[data-theme="dark"] .bento-dashboard-section {
-  background:
-    radial-gradient(circle at 12% 18%, rgba(37, 99, 235, 0.22) 0%, transparent 48%),
-    radial-gradient(circle at 86% 22%, rgba(217, 70, 239, 0.16) 0%, transparent 45%),
-    radial-gradient(circle at 52% 84%, rgba(139, 92, 246, 0.18) 0%, transparent 52%),
-    linear-gradient(160deg, #090f22 0%, #10132e 55%, #160d2a 100%);
-  border-color: rgba(139, 92, 246, 0.26);
-}
-
+/* === DARK THEME REFINED CHARCOAL-SLATE & CHAMPAGNE/SKY COMPATIBILITY === */
 .app-shell[data-theme="dark"] .rajifms-pillar-card {
-  background: rgba(15, 23, 42, 0.72);
-  border-color: rgba(139, 92, 246, 0.26);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: var(--surface-raised, #1f2636);
+  border-color: var(--border, rgba(148, 163, 184, 0.18));
+  box-shadow: var(--shadow-card);
+}
+
+.app-shell[data-theme="dark"] .rajifms-pillar-card:hover {
+  border-color: rgba(96, 165, 250, 0.42);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .app-shell[data-theme="dark"] .rajifms-subrow-list {
-  background: rgba(15, 23, 42, 0.72);
+  background: var(--surface-raised, #1f2636);
 }
 
 .app-shell[data-theme="dark"] .rajifms-subrow-btn {
-  color: #e2e8f0;
-  border-bottom-color: rgba(139, 92, 246, 0.18);
+  color: var(--text, #e2e8f0);
+  border-bottom-color: var(--border, rgba(148, 163, 184, 0.16));
 }
 
-.app-shell[data-theme="dark"] .rajifms-subrow-btn:hover .rajifms-subrow-text {
-  background: linear-gradient(90deg, #38bdf8 0%, #60a5fa 32%, #c084fc 68%, #f0abfc 100%);
-  background-size: 220% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
+.app-shell[data-theme="dark"] .rajifms-subrow-btn:hover {
+  color: #f8fafc;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.12) 0%, rgba(139, 92, 246, 0.1) 60%, rgba(244, 63, 94, 0.08) 100%);
+  box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rajifms-subrow-btn:hover,
-  .rajifms-subrow-btn:hover::before,
-  .rajifms-subrow-btn:hover .rajifms-subrow-text {
+  .rajifms-subrow-btn:hover::before {
     animation: none;
   }
 }
 
 /* === MOBILE RESPONSIVENESS === */
 @media (max-width: 640px) {
-  .bento-dashboard-section {
-    padding: 14px;
-    border-radius: 16px;
-  }
-
   .rajifms-pillar-grid {
-    grid-template-columns: minmax(220px, 265px);
+    grid-template-columns: minmax(230px, 270px);
     gap: 20px;
-    padding: 14px 8px;
+    padding: 8px 4px 16px;
   }
 
   .rajifms-pillar-card {
-    max-width: 265px;
+    max-width: 270px;
   }
 }

@@ -1,71 +1,75 @@
 /* ==========================================================================
-   PORTAL DESIGN SYSTEM & THEME TOKENS (पोर्टल थीम एवं डिज़ाइन टोकन)
-   Edit colors, radii, fonts, and shadows here to customize the entire portal.
+   PORTAL DESIGN SYSTEM & MINIMALIST EDITORIAL TOKENS (न्यूनतम संपादकीय थीम)
+   Light Mode: Soft ice-slate canvas (#f3f6f9) + pure white cards (#ffffff)
+   Dark Mode:  Charcoal-navy canvas (#161b26) + elevated slate (#1f2636)
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* --- Typography (फ़ॉन्ट व्यवस्था: आधुनिक UI + DevLys 010 + Times New Roman) --- */
+  /* --- Typography (फ़ॉन्ट व्यवस्था: Plus Jakarta Sans / Inter + DevLys 010 + Times New Roman) --- */
   --font-ui: "Plus Jakarta Sans", "Inter", "Noto Sans Devanagari", "Arimo", system-ui, sans-serif;
   --font-devlys: "DevLys 010", "Kruti Dev 010", sans-serif;
   --font-numeric: "Times New Roman", "Tinos", Times, serif;
 
-  /* --- Surfaces & Backgrounds (पृष्ठ एवं फ्रॉस्टेड ग्लास रंग) --- */
-  --page: #f4f6ff;
-  --surface: #f8faff;
-  --surface-raised: rgba(255, 255, 255, 0.88);
-  --surface-muted: #eef2ff;
+  /* --- Light Mode Surfaces & Canvas --- */
+  --page: #f3f6f9;
+  --surface: #f8fafc;
+  --surface-raised: #ffffff;
+  --surface-muted: #f1f5f9;
   --surface-tint: #eff6ff;
 
-  /* --- Text & Borders (टेक्स्ट एवं बॉर्डर रंग) --- */
-  --text: #0f172a;
-  --text-strong: #0b1e3d;
+  /* --- Text & Hairline Borders --- */
+  --text: #1e293b;
+  --text-strong: #0f172a;
   --muted: #64748b;
-  --border: rgba(139, 92, 246, 0.16);
-  --border-strong: rgba(99, 102, 241, 0.28);
+  --border: rgba(226, 232, 240, 0.9);
+  --border-strong: rgba(203, 213, 225, 0.95);
 
-  /* --- Brand & Minimal Blue / Magenta / Light Purple Accents --- */
-  --navy-950: #091428;
-  --navy-900: #0f172a;
+  /* --- Authoritative Classic Royal Blue & Ice/Fire Hover Accents --- */
+  --navy-950: #0f172a;
+  --navy-900: #161b26;
   --navy-800: #1e3a8a;
-  --royal-blue: #2563eb;
-  --magenta-soft: #d946ef;
-  --purple-light: #8b5cf6;
-  --ice-cyan: #38bdf8;
-  --royal-blue-soft: rgba(37, 99, 235, 0.12);
-  --hero-gradient: linear-gradient(135deg, #2563eb 0%, #8b5cf6 54%, #d946ef 100%);
+  --royal-blue: #1d4ed8;
+  --royal-blue-soft: rgba(29, 78, 216, 0.08);
+  --hero-gradient: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+  --ice-accent: #38bdf8;
+  --fire-accent: #f43f5e;
+  --violet-accent: #8b5cf6;
 
-  /* --- Radii & Frosted Elevation Shadows --- */
-  --radius-header: 18px;
-  --radius-hero: 24px;
-  --radius-card: 22px;
+  /* --- Radii & Soft Diffused 3D Shadows --- */
+  --radius-header: 20px;
+  --radius-hero: 20px;
+  --radius-card: 20px;
   --radius-control: 12px;
   --radius-pill: 999px;
 
-  --shadow-header: 0 12px 30px rgba(79, 70, 229, 0.09);
-  --shadow-hero: 0 18px 42px rgba(79, 70, 229, 0.18);
-  --shadow-card: 0 14px 34px rgba(79, 70, 229, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  --shadow-card-hover: 0 18px 40px rgba(139, 92, 246, 0.18), 0 0 0 1px rgba(217, 70, 239, 0.24);
+  --shadow-header: 0 8px 24px rgba(15, 23, 42, 0.04);
+  --shadow-hero: 0 14px 34px rgba(15, 23, 42, 0.12);
+  --shadow-card: 0 12px 32px rgba(15, 23, 42, 0.05);
+  --shadow-card-hover: 0 18px 38px rgba(15, 23, 42, 0.09);
 }
 
-/* === DARK THEME TOKENS (डार्क मोड रंग टोकन) === */
+/* === DARK THEME TOKENS (चारकोल-नेवी डार्क मोड) === */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #09101d;
-  --surface: #0f172a;
-  --surface-raised: #162238;
-  --surface-muted: #1b2942;
-  --surface-tint: #1e2d4a;
+  --page: #161b26;
+  --surface: #1b2230;
+  --surface-raised: #1f2636;
+  --surface-muted: #262f42;
+  --surface-tint: rgba(96, 165, 250, 0.12);
 
   --text: #e2e8f0;
   --text-strong: #f8fafc;
   --muted: #94a3b8;
-  --border: #26354d;
-  --border-strong: #334663;
+  --border: rgba(148, 163, 184, 0.18);
+  --border-strong: rgba(148, 163, 184, 0.3);
 
-  --shadow-header: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-hero: 0 18px 42px rgba(0, 0, 0, 0.45);
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.25);
-  --shadow-card-hover: 0 16px 34px rgba(0, 0, 0, 0.42);
+  --accent-champagne: #d4b483;
+  --accent-sky: #60a5fa;
+
+  --shadow-header: 0 10px 28px rgba(0, 0, 0, 0.3);
+  --shadow-hero: 0 18px 40px rgba(0, 0, 0, 0.42);
+  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.28);
+  --shadow-card-hover: 0 18px 40px rgba(0, 0, 0, 0.42);
 }

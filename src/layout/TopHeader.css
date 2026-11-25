@@ -15,11 +15,9 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: clamp(8px, 1vw, 16px);
-  background: var(--surface-raised, rgba(255, 255, 255, 0.85));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border, rgba(139, 92, 246, 0.16));
-  border-radius: var(--radius-header, 18px);
+  background: var(--surface-raised, #ffffff);
+  border: 1px solid var(--border, rgba(226, 232, 240, 0.9));
+  border-radius: var(--radius-header, 20px);
   box-shadow: var(--shadow-header);
 }
 
@@ -39,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%));
   color: #ffffff;
   border: none;
   border-radius: 11px;
