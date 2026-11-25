@@ -40,10 +40,10 @@
 }
 
 .training-primary-tab.is-active {
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #435339 0%, #273123 100%));
   border-color: transparent;
   color: #ffffff;
-  box-shadow: 0 6px 16px rgba(30, 58, 138, 0.25);
+  box-shadow: 0 6px 16px rgba(39, 49, 35, 0.24);
 }
 
 /* === SUB-TAB & NOMINATION LIFECYCLE PILLS (सब-टैब एवं 4-चरण नामांकन पिल्स) === */
@@ -75,8 +75,8 @@
 }
 
 .training-subtab-btn.is-active {
-  background-color: #1d63dc;
-  border-color: #1d63dc;
+  background-color: var(--royal-blue, #435339);
+  border-color: var(--royal-blue, #435339);
   color: #ffffff;
 }
 

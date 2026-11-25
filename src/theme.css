@@ -1,33 +1,34 @@
 /* ==========================================================================
-   MINIMALIST EDITORIAL & ORGANIC LUXURY DESIGN TOKENS
-   Light Mode: Warm Alabaster Canvas (#f5f2eb) + Pure White Cards + Olive-Espresso
-   Dark Mode:  Deep Twinkle Charcoal-Navy (#141821) + Champagne Sand (#d8b489)
+   MINIMALIST EDITORIAL & TACTILE 3D DEPTH DESIGN SYSTEM TOKENS
+   Applied globally across Dashboard AND every operational module.
+   Light Mode: Warm Alabaster Canvas (#f3efe7) + Pure Ivory Cards + 3D Depth Shadows
+   Dark Mode:  Twinkle Charcoal-Navy (#141821) + Champagne Sand (#d8b489)
    ========================================================================== */
 
 :root {
   color-scheme: light;
 
-  /* --- Typography (Editorial Serif Display + Crisp UI Sans + DevLys 010 + Times New Roman) --- */
+  /* --- Typography --- */
   --font-editorial: "Playfair Display", "Cormorant Garamond", "Noto Serif Devanagari", Georgia, serif;
   --font-ui: "Plus Jakarta Sans", "Inter", "Noto Sans Devanagari", "Arimo", system-ui, sans-serif;
   --font-devlys: "DevLys 010", "Kruti Dev 010", sans-serif;
   --font-numeric: "Times New Roman", "Tinos", Times, serif;
 
-  /* --- Light Mode: Warm Alabaster, Linen Ivory & Sage Mist --- */
-  --page: #f5f2eb;
+  /* --- Light Mode Surfaces --- */
+  --page: #f3efe7;
   --surface: #faf8f4;
   --surface-raised: #ffffff;
   --surface-muted: #eeebe2;
   --surface-tint: #eef1e9;
 
-  /* --- Text & Subtle Hairline Stone Borders --- */
+  /* --- Text & Hairline Stone Borders --- */
   --text: #272a25;
   --text-strong: #151814;
   --muted: #6c7066;
   --border: rgba(30, 34, 26, 0.09);
   --border-strong: rgba(30, 34, 26, 0.17);
 
-  /* --- Calm Botanical Olive, Espresso & Slate Accents --- */
+  /* --- Botanical Olive, Espresso & Slate Palette --- */
   --navy-950: #151814;
   --navy-900: #1f241d;
   --navy-800: #3d4d35;
@@ -40,17 +41,18 @@
   --ice-accent: #38bdf8;
   --fire-accent: #e06d44;
 
-  /* --- Soft Editorial Radii & Diffused Shadows --- */
+  /* --- Multi-Layer Tactile 3D Depth Shadows & Radii --- */
   --radius-header: 20px;
   --radius-hero: 24px;
   --radius-card: 24px;
   --radius-control: 14px;
   --radius-pill: 999px;
 
-  --shadow-header: 0 8px 24px rgba(28, 30, 24, 0.04);
-  --shadow-hero: 0 16px 36px rgba(28, 30, 24, 0.1);
-  --shadow-card: 0 12px 32px rgba(28, 30, 24, 0.05);
-  --shadow-card-hover: 0 20px 42px rgba(28, 30, 24, 0.09);
+  --shadow-header: 0 12px 28px -8px rgba(28, 30, 24, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-hero: 0 20px 44px -12px rgba(28, 30, 24, 0.16), 0 4px 14px rgba(28, 30, 24, 0.06);
+  --shadow-card: 0 18px 40px -14px rgba(28, 30, 24, 0.1), 0 4px 12px rgba(28, 30, 24, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.92);
+  --shadow-card-hover: 0 24px 48px -12px rgba(28, 30, 24, 0.15), 0 6px 16px rgba(67, 83, 57, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  --shadow-inset: inset 0 2px 5px rgba(28, 30, 24, 0.05), inset 0 -1px 0 rgba(255, 255, 255, 0.75);
 }
 
 /* === DARK THEME TOKENS (Twinkle Charcoal-Navy + Warm Champagne Sand) === */
@@ -71,8 +73,9 @@
   --accent-champagne: #d8b489;
   --accent-sky: #8ea3b0;
 
-  --shadow-header: 0 10px 28px rgba(0, 0, 0, 0.3);
-  --shadow-hero: 0 18px 40px rgba(0, 0, 0, 0.44);
-  --shadow-card: 0 12px 32px rgba(0, 0, 0, 0.28);
-  --shadow-card-hover: 0 20px 44px rgba(0, 0, 0, 0.42);
+  --shadow-header: 0 14px 32px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(216, 180, 137, 0.08);
+  --shadow-hero: 0 22px 46px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(216, 180, 137, 0.12);
+  --shadow-card: 0 18px 40px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(216, 180, 137, 0.1);
+  --shadow-card-hover: 0 24px 50px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(216, 180, 137, 0.18);
+  --shadow-inset: inset 0 2px 6px rgba(0, 0, 0, 0.35);
 }

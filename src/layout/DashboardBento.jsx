@@ -1,3 +1,4 @@
+import ModuleResourceCompanion from "../components/shared/ModuleResourceCompanion";
 import "./DashboardBento.css";
 
 /**
@@ -217,6 +218,9 @@ export default function DashboardBento({ modules = [], onOpenModule, language = 
           );
         })}
       </div>
+
+      {/* === OFFICIAL GOVT PORTALS & SERVICE RULES GATEWAY === */}
+      <ModuleResourceCompanion variant="dashboard" language={language} />
     </section>
   );
 }

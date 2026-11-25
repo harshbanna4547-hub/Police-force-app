@@ -62,6 +62,37 @@ h1, h2, h3, h4, nav, button {
   font-family: var(--font-ui);
 }
 
+.app-shell main h2,
+.app-shell main h3 {
+  font-family: var(--font-editorial, "Playfair Display", Georgia, serif);
+  letter-spacing: -0.015em;
+  color: var(--text-strong, #151814);
+}
+
+.app-shell main input,
+.app-shell main select,
+.app-shell main textarea {
+  border-radius: 10px;
+  border: 1px solid var(--border-strong, rgba(30, 34, 26, 0.17));
+  background-color: var(--surface, #faf8f4);
+  color: var(--text, #272a25);
+  box-shadow: var(--shadow-inset);
+}
+
+/* Global Editorial Elevation for Every Sub-Module Root & Section */
+.app-shell main .module-panel,
+.app-shell main .training-module,
+.app-shell main .strength-module,
+.app-shell main .transfer-card,
+.app-shell main .employee-archive section,
+.app-shell main .posting-unit-card,
+.app-shell main .strength-vacancy-card {
+  border-radius: var(--radius-card, 24px);
+  border-color: var(--border, rgba(30, 34, 26, 0.09));
+  box-shadow: var(--shadow-card);
+  background-color: var(--surface-raised, #ffffff);
+}
+
 table,
 th,
 td,

@@ -1,8 +1,8 @@
 .transfer-module {
-  --transfer-navy: #0b1e3d;
-  --transfer-blue: #1d63dc;
+  --transfer-navy: var(--navy-900, #1f241d);
+  --transfer-blue: var(--royal-blue, #435339);
   --transfer-green: #15803d;
-  color: #0f172a;
+  color: var(--text, #272a25);
   min-width: 0;
 }
 
@@ -15,7 +15,7 @@
   margin-bottom: 16px;
   border-radius: var(--radius-hero, 24px);
   color: #fff;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #435339 0%, #273123 100%));
   box-shadow: var(--shadow-hero);
 }
 

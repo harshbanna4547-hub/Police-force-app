@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import EmployeeEditModal from "../core/EmployeeEditModal";
+import ModuleResourceCompanion from "./shared/ModuleResourceCompanion";
 
 /**
  * [COMPONENT] PortalModuleContent — सक्रिय मॉड्यूल, बॉटम बैक बटन, ग्लोबल राइट-क्लिक मेन्यू एवं संपादन मोडल
@@ -192,6 +193,15 @@ export default function PortalModuleContent({
   return (
     <div className="portal-module-stage" onContextMenu={handleGlobalContextMenu}>
       <ActiveModule key={activeKey} {...propsByModule[activeView]} />
+
+      {/* === IN-MODULE ESTABLISHMENT ARTICLE, VECTOR ART & GOVT PORTALS === */}
+      {activeView !== "STORAGE" && (
+        <ModuleResourceCompanion
+          variant="module"
+          moduleId={activeView}
+          language={language}
+        />
+      )}
 
       {/* === DUAL BACK NAVIGATION: BOTTOM GLASSMORPHIC BACK BAR === */}
       <div className="module-bottom-back-bar">

@@ -37,9 +37,10 @@
 
 .leave-kpi-card {
   padding: 12px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--border, #cbd5e1);
-  background: var(--surface, #f8fafc);
+  border-radius: 16px;
+  border: 1px solid var(--border, rgba(30, 34, 26, 0.09));
+  background: var(--surface, #faf8f4);
+  box-shadow: var(--shadow-inset);
   text-align: center;
 }
 
@@ -48,7 +49,7 @@
   margin-top: 4px;
   font-family: "Times New Roman", Times, serif;
   font-size: 1.45rem;
-  color: #1d63dc;
+  color: var(--royal-blue, #435339);
 }
 
 .leave-kpi-card.is-warning {
@@ -87,9 +88,9 @@
   gap: 8px;
   margin-bottom: 14px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--surface-tint, #eff6ff);
-  border: 1px solid #bfdbfe;
+  border-radius: 14px;
+  background: var(--surface-tint, #eef1e9);
+  border: 1px solid var(--border-strong, rgba(30, 34, 26, 0.14));
 }
 
 .leave-balance-pill {
