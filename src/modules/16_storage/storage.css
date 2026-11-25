@@ -22,7 +22,7 @@
   display: none;
 }
 
-/* === 1. WINDOWS 11 BLOOM WALLPAPER & DESKTOP STAGE === */
+/* === 1. WINDOWS 11 WALLPAPERS (4 Built-In Themes) & DESKTOP STAGE === */
 .win11-desktop-stage {
   position: relative;
   flex: 1;
@@ -30,11 +30,35 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: background 0.35s ease;
+}
+
+.win11-desktop-stage.wp-bloom {
   background:
     radial-gradient(circle at 68% 42%, rgba(56, 189, 248, 0.55) 0%, rgba(37, 99, 235, 0.12) 45%, transparent 68%),
     radial-gradient(circle at 46% 62%, rgba(99, 102, 241, 0.45) 0%, transparent 58%),
-    radial-gradient(circle at 75% 75%, rgba(14, 165, 233, 0.38) 0%, transparent 55%),
     linear-gradient(145deg, #06142e 0%, #0b2d69 48%, #0f4ea6 100%);
+}
+
+.win11-desktop-stage.wp-dark-glow {
+  background:
+    radial-gradient(circle at 60% 45%, rgba(59, 130, 246, 0.35) 0%, transparent 58%),
+    radial-gradient(circle at 30% 70%, rgba(139, 92, 246, 0.28) 0%, transparent 52%),
+    linear-gradient(145deg, #020617 0%, #090d1f 50%, #111827 100%);
+}
+
+.win11-desktop-stage.wp-sunset {
+  background:
+    radial-gradient(circle at 72% 35%, rgba(251, 146, 60, 0.62) 0%, transparent 56%),
+    radial-gradient(circle at 35% 75%, rgba(236, 72, 153, 0.42) 0%, transparent 56%),
+    linear-gradient(145deg, #2e1065 0%, #7c2d12 52%, #b45309 100%);
+}
+
+.win11-desktop-stage.wp-emerald {
+  background:
+    radial-gradient(circle at 65% 40%, rgba(16, 185, 129, 0.55) 0%, transparent 58%),
+    radial-gradient(circle at 32% 72%, rgba(6, 182, 212, 0.4) 0%, transparent 55%),
+    linear-gradient(145deg, #022c22 0%, #065f46 50%, #0e7490 100%);
 }
 
 /* Layered Windows 11 Bloom SVG Overlay */
@@ -53,12 +77,12 @@
   z-index: 2;
   flex: 1;
   min-height: 0;
-  padding: 18px 18px 24px;
+  padding: 14px 16px 20px;
   display: grid;
   grid-auto-flow: column;
-  grid-template-rows: repeat(auto-fill, 104px);
-  grid-auto-columns: 98px;
-  gap: 8px 6px;
+  grid-template-rows: repeat(auto-fill, 94px);
+  grid-auto-columns: 96px;
+  gap: 8px 8px;
   align-content: start;
   justify-content: start;
   overflow-x: auto;
@@ -721,20 +745,79 @@
   white-space: nowrap;
 }
 
-/* Windows 11 Start Quick Menu Popover */
+/* Windows 11 Start Menu Popover (Search, Pinned Apps & App Store) */
 .win11-start-menu {
   position: absolute;
   left: 12px;
   bottom: 54px;
   z-index: 40;
-  width: min(300px, calc(100% - 24px));
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(15, 23, 42, 0.9);
+  width: min(360px, calc(100% - 24px));
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(22px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.56);
   color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.win11-start-search {
+  width: 100%;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.win11-start-search::placeholder {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+.win11-start-store-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  background: linear-gradient(135deg, #1d63dc 0%, #1e40af 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.win11-wallpaper-pills {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  padding: 4px 6px 6px;
+}
+
+.win11-wp-pill {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: center;
+}
+
+.win11-wp-pill.is-active {
+  background: #1d63dc;
+  border-color: #1d63dc;
+  color: #ffffff;
 }
 
 .win11-start-header {

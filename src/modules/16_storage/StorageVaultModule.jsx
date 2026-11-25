@@ -2,25 +2,62 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import InbuiltOfficeEditor from "../../components/shared/InbuiltOfficeEditor";
+import DesktopWindowFrame from "../storage/apps/DesktopWindowFrame";
+import ExcelApp from "../storage/apps/ExcelApp";
+import WordApp from "../storage/apps/WordApp";
+import PhotoViewerApp from "../storage/apps/PhotoViewerApp";
+import MediaPlayerApp from "../storage/apps/MediaPlayerApp";
+import CodeEditorApp from "../storage/apps/CodeEditorApp";
+import CalculatorApp from "../storage/apps/CalculatorApp";
+import StickyNotesApp from "../storage/apps/StickyNotesApp";
+import GamesApp from "../storage/apps/GamesApp";
+import AppStoreApp from "../storage/apps/AppStoreApp";
 import {
   getDistrictStorageBackupFolderId,
   openDriveVaultDB,
   saveDistrictOfflineBackup
 } from "../../utils/vaultStorage";
 import {
+  APP_STORE_CATALOG,
   buildCopySubtree,
   canMoveItemToTarget,
   collectDescendantIds,
+  deduplicateRootFolders,
   formatIstClockDate,
-  getOfficeEditorKind,
   getStorageItemSummary,
+  getVaultFileAppKind,
   getVaultItemPath,
   isStrengthVaultFolder,
   RECYCLE_BIN_ID,
   stripTrashMetadata,
+  WALLPAPER_PRESETS,
   WINDOWS_11_DEFAULT_FOLDERS
 } from "./storageLogic";
 import "./storage.css";
+
+const WALLPAPER_KEY = "win11_desktop_wallpaper";
+const INSTALLED_APPS_KEY = "win11_installed_apps";
+const PINNED_APPS_KEY = "win11_pinned_apps";
+
+function readStoredList(key, fallback) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || "null");
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    // ignore storage errors
+  }
+  return fallback;
+}
+
+function readStoredWallpaper() {
+  try {
+    const saved = localStorage.getItem(WALLPAPER_KEY);
+    if (WALLPAPER_PRESETS.some((w) => w.id === saved)) return saved;
+  } catch {
+    // ignore
+  }
+  return "bloom";
+}
 
 function dateOnly(value) {
   const text = String(value || "");
@@ -37,24 +74,27 @@ function getFileIcon(item) {
   if (/\.(xlsx?|xlsm|xlsb|xltx?|xltm|csv)$/i.test(n)) return "📊";
   if (n.endsWith(".doc") || n.endsWith(".docx")) return "📝";
   if (n.endsWith(".pdf")) return "📕";
-  if (/\.(jpg|jpeg|png|webp)$/i.test(n)) return "🖼️";
+  if (/\.(jpg|jpeg|png|webp|gif)$/i.test(n)) return "🖼️";
+  if (/\.(mp4|webm|mp3|wav|ogg)$/i.test(n)) return "🎬";
+  if (/\.(json|js|jsx|css|html|txt|md)$/i.test(n)) return "💻";
   return "📄";
 }
 
 function hasRootPrefixMatch(existingRootFolders, targetName) {
   const prefix = targetName.split(".")[0].trim();
-  const isBackup = targetName.toLowerCase().includes("backup");
+  const isBackup = targetName.toLowerCase() === "backup";
   return existingRootFolders.some((entry) => {
     const name = String(entry.name || "");
     if (name === targetName) return true;
-    if (isBackup && name.toLowerCase() === "backup") return true;
-    return prefix && name.startsWith(`${prefix}.`);
+    if (isBackup && name.toLowerCase().includes("backup")) return true;
+    return /^\d+$/.test(prefix) && name.startsWith(`${prefix}.`);
   });
 }
 
 /**
- * [MODULE] StorageVaultModule — Authentic Windows 11 Desktop & File Explorer Workspace
- * Keeps all IndexedDB `drive_items` writes firing `police-vault-updated` for live OneDrive sync.
+ * [MODULE] StorageVaultModule — Windows 11 Web Desktop Environment
+ * Features folder deduplication, 4 wallpapers, App Store, Start Menu,
+ * and draggable windowed apps (Excel Pro, Word Pro, Photo Viewer, Media Player, VS Code Lite, Calculator, Sticky Notes, Games).
  */
 export default function StorageVaultModule({
   activeProfile,
@@ -76,18 +116,28 @@ export default function StorageVaultModule({
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("GRID"); // GRID | LIST
 
-  // Windows 11 Window Manager & Navigation History
+  // Windows 11 File Explorer Window & History
   const [explorerMode, setExplorerMode] = useState("CLOSED"); // CLOSED | NORMAL | MINIMIZED | MAXIMIZED
   const [navHistory, setNavHistory] = useState(["ROOT"]);
   const [navIndex, setNavIndex] = useState(0);
   const currentFolderId = navHistory[navIndex] || "ROOT";
 
-  // Desktop & Explorer Selection, Start Menu, Clipboard, Context Menu, Office App
+  // Personalization, Start Menu, Store & Draggable App Windows
+  const [wallpaper, setWallpaper] = useState(readStoredWallpaper);
+  const [installedApps, setInstalledApps] = useState(() =>
+    readStoredList(INSTALLED_APPS_KEY, APP_STORE_CATALOG.filter((a) => a.defaultInstalled).map((a) => a.id))
+  );
+  const [pinnedApps, setPinnedApps] = useState(() =>
+    readStoredList(PINNED_APPS_KEY, APP_STORE_CATALOG.filter((a) => a.defaultPinned).map((a) => a.id))
+  );
+  const [openWindows, setOpenWindows] = useState([]); // [{ id, appId, title, icon, item?, minimized }]
+  const [pdfModalItem, setPdfModalItem] = useState(null);
+
   const [selectedId, setSelectedId] = useState(null);
   const [startMenuOpen, setStartMenuOpen] = useState(false);
-  const [officeItem, setOfficeItem] = useState(null);
-  const [clipboard, setClipboard] = useState(null); // { mode: "CUT" | "COPY", itemId, name }
-  const [contextMenu, setContextMenu] = useState(null); // { x, y, type, item }
+  const [startSearch, setStartSearch] = useState("");
+  const [clipboard, setClipboard] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null);
   const [renamingId, setRenamingId] = useState(null);
   const [renameDraft, setRenameDraft] = useState("");
   const [moveTargetItem, setMoveTargetItem] = useState(null);
@@ -95,6 +145,92 @@ export default function StorageVaultModule({
 
   const fileInputRef = useRef(null);
   const contextMenuRef = useRef(null);
+
+  const changeWallpaper = (wpId) => {
+    setWallpaper(wpId);
+    try {
+      localStorage.setItem(WALLPAPER_KEY, wpId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const toggleInstallApp = (appId) => {
+    const nextInstalled = installedApps.includes(appId)
+      ? installedApps.filter((id) => id !== appId)
+      : [...installedApps, appId];
+    setInstalledApps(nextInstalled);
+    const nextPinned = nextInstalled.includes(appId)
+      ? pinnedApps
+      : pinnedApps.filter((id) => id !== appId);
+    setPinnedApps(nextPinned);
+    if (!nextInstalled.includes(appId)) {
+      setOpenWindows((prev) => prev.filter((w) => w.appId !== appId));
+    }
+    try {
+      localStorage.setItem(INSTALLED_APPS_KEY, JSON.stringify(nextInstalled));
+      localStorage.setItem(PINNED_APPS_KEY, JSON.stringify(nextPinned));
+    } catch {
+      // ignore
+    }
+  };
+
+  const togglePinApp = (appId) => {
+    const nextPinned = pinnedApps.includes(appId)
+      ? pinnedApps.filter((id) => id !== appId)
+      : [...pinnedApps, appId];
+    setPinnedApps(nextPinned);
+    try {
+      localStorage.setItem(PINNED_APPS_KEY, JSON.stringify(nextPinned));
+    } catch {
+      // ignore
+    }
+  };
+
+  const openDesktopApp = (appId, item = null) => {
+    setStartMenuOpen(false);
+    const catalogMeta = APP_STORE_CATALOG.find((a) => a.id === appId);
+    const metaMap = {
+      "excel-pro": { title: item?.name || "MS Excel Pro", icon: "📊", width: "wide" },
+      "word-pro": { title: item?.name || "MS Word Pro", icon: "📝", width: "wide" },
+      "photo-viewer": { title: item?.name || "Photo Viewer", icon: "🖼️", width: "wide" },
+      "media-player": { title: item?.name || "Media Player", icon: "🎬", width: "wide" },
+      "vscode-lite": { title: item?.name || "VS Code Lite", icon: "💻", width: "wide" },
+      calculator: { title: "Calculator", icon: "🧮", width: "compact" },
+      "sticky-notes": { title: "Sticky Notes", icon: "🗒️", width: "wide" },
+      games: { title: "Classic Games", icon: "🎮", width: "wide" },
+      "app-store": { title: "Microsoft App Store", icon: "🛍️", width: "wide" }
+    };
+    const info = metaMap[appId] || { title: catalogMeta?.title || appId, icon: catalogMeta?.icon || "🪟", width: "wide" };
+    const winKey = item ? `${appId}_${item.id}` : appId;
+
+    setOpenWindows((prev) => {
+      const exists = prev.find((w) => w.id === winKey);
+      if (exists) {
+        return [...prev.filter((w) => w.id !== winKey), { ...exists, item: item || exists.item, minimized: false }];
+      }
+      return [...prev, { id: winKey, appId, title: info.title, icon: info.icon, width: info.width, item, minimized: false }];
+    });
+  };
+
+  const focusWindow = (winId) => {
+    setOpenWindows((prev) => {
+      const target = prev.find((w) => w.id === winId);
+      if (!target) return prev;
+      return [...prev.filter((w) => w.id !== winId), { ...target, minimized: false }];
+    });
+  };
+
+  const toggleTaskbarWindow = (winId) => {
+    setOpenWindows((prev) => {
+      const target = prev.find((w) => w.id === winId);
+      if (!target) return prev;
+      if (target.minimized) {
+        return [...prev.filter((w) => w.id !== winId), { ...target, minimized: false }];
+      }
+      return prev.map((w) => (w.id === winId ? { ...w, minimized: true } : w));
+    });
+  };
 
   const navigateExplorerTo = useCallback((folderId) => {
     setExplorerMode((prev) => (prev === "MAXIMIZED" ? "MAXIMIZED" : "NORMAL"));
@@ -120,7 +256,17 @@ export default function StorageVaultModule({
     const tx = db.transaction("drive_items", "readonly");
     const req = tx.objectStore("drive_items").getAll();
     req.onsuccess = async () => {
-      const existing = getStorageItemSummary(req.result, activeProfile);
+      let existing = getStorageItemSummary(req.result, activeProfile);
+
+      // Deduplicate legacy duplicate folders (e.g., duplicate "09. Training")
+      const redundantIds = deduplicateRootFolders(existing);
+      if (redundantIds.length > 0) {
+        const cleanTx = db.transaction("drive_items", "readwrite");
+        const cleanStore = cleanTx.objectStore("drive_items");
+        redundantIds.forEach((id) => cleanStore.delete(id));
+        existing = existing.filter((x) => !redundantIds.includes(x.id));
+      }
+
       const rootFolders = existing.filter(
         (x) => (x.parentId === "ROOT" || x.originalParentId === "ROOT") && x.kind === "FOLDER"
       );
@@ -131,7 +277,7 @@ export default function StorageVaultModule({
         const store = writeTx.objectStore("drive_items");
         const backupId = getDistrictStorageBackupFolderId(activeProfile);
         missingFolders.forEach((fName, idx) => {
-          const isBackup = fName.toLowerCase().includes("backup");
+          const isBackup = fName.toLowerCase() === "backup";
           store.put({
             id: isBackup ? backupId : `mod_fld_${idx}_${Date.now()}`,
             parentId: "ROOT",
@@ -164,13 +310,11 @@ export default function StorageVaultModule({
     };
   }, [loadAllItems]);
 
-  // Live IST Date & Time Clock on Windows 11 Taskbar
   useEffect(() => {
     const timer = window.setInterval(() => setClockLabel(formatIstClockDate()), 15000);
     return () => window.clearInterval(timer);
   }, []);
 
-  // Dismiss Context Menu cleanly on outside click, Escape, scroll, or blur
   useEffect(() => {
     if (!contextMenu) return undefined;
     const closeMenu = () => setContextMenu(null);
@@ -194,7 +338,6 @@ export default function StorageVaultModule({
     };
   }, [contextMenu]);
 
-  // Clamp context menu coordinates via ref cleanly (Zero Inline JSX Styles)
   useLayoutEffect(() => {
     const el = contextMenuRef.current;
     if (!el || !contextMenu) return;
@@ -355,7 +498,7 @@ export default function StorageVaultModule({
     }
     await saveItemToDB(createdItem);
     await loadAllItems();
-    setOfficeItem(createdItem);
+    openDesktopApp(docType === "EXCEL" ? "excel-pro" : "word-pro", createdItem);
   };
 
   const handleSaveOfficeFile = async (updatedItem) => {
@@ -366,7 +509,8 @@ export default function StorageVaultModule({
       updatedAt: new Date().toISOString()
     };
     await saveItemToDB(nextItem);
-    setOfficeItem(nextItem);
+    setOpenWindows((prev) => prev.map((w) => (w.item?.id === nextItem.id ? { ...w, item: nextItem, title: nextItem.name } : w)));
+    if (pdfModalItem?.id === nextItem.id) setPdfModalItem(nextItem);
     await loadAllItems();
   };
 
@@ -395,7 +539,6 @@ export default function StorageVaultModule({
     alert("✔ वर्तमान पोर्टल का पूरा डेटा इस फोल्डर में Excel फ़ाइल के रूप में सेव हो गया है!");
   };
 
-  // Inline Rename Actions
   const startInlineRename = (item) => {
     setRenamingId(item.id);
     setRenameDraft(item.name);
@@ -421,7 +564,6 @@ export default function StorageVaultModule({
     URL.revokeObjectURL(url);
   };
 
-  // Clipboard & Folder Move Actions
   const handleCutItem = (item) => {
     setClipboard({ mode: "CUT", itemId: item.id, name: item.name });
     setContextMenu(null);
@@ -467,7 +609,6 @@ export default function StorageVaultModule({
     await loadAllItems();
   };
 
-  // Recycle Bin Actions
   const handleMoveToRecycleBin = async (item) => {
     setContextMenu(null);
     const now = new Date().toISOString();
@@ -563,7 +704,6 @@ export default function StorageVaultModule({
     await loadAllItems();
   };
 
-  // Desktop Root Icons vs File Explorer Visible Items
   const desktopRootItems = useMemo(() => {
     const active = items.filter((i) => !i.isTrashed && i.parentId === "ROOT");
     return [...active].sort((a, b) => {
@@ -571,6 +711,16 @@ export default function StorageVaultModule({
       return a.name.localeCompare(b.name);
     });
   }, [items]);
+
+  const galleryPhotos = useMemo(
+    () => items.filter((i) => !i.isTrashed && i.kind === "FILE" && getVaultFileAppKind(i.name, i.mime) === "PHOTO"),
+    [items]
+  );
+
+  const mediaFiles = useMemo(
+    () => items.filter((i) => !i.isTrashed && i.kind === "FILE" && getVaultFileAppKind(i.name, i.mime) === "MEDIA"),
+    [items]
+  );
 
   const breadcrumbs = useMemo(() => {
     if (currentFolderId === RECYCLE_BIN_ID) return [];
@@ -630,10 +780,13 @@ export default function StorageVaultModule({
       navigateExplorerTo(item.id);
       return;
     }
-    if (getOfficeEditorKind(item.name, item.mime)) {
-      setOfficeItem(item);
-      return;
-    }
+    const kind = getVaultFileAppKind(item.name, item.mime);
+    if (kind === "EXCEL") return openDesktopApp("excel-pro", item);
+    if (kind === "WORD") return openDesktopApp("word-pro", item);
+    if (kind === "PHOTO") return openDesktopApp("photo-viewer", item);
+    if (kind === "MEDIA") return openDesktopApp("media-player", item);
+    if (kind === "CODE") return openDesktopApp("vscode-lite", item);
+    if (kind === "PDF") return setPdfModalItem(item);
     handleDownload(item);
   };
 
@@ -654,16 +807,29 @@ export default function StorageVaultModule({
   };
 
   const toggleExplorerTaskbar = () => {
-    if (explorerVisible) {
-      setExplorerMode("MINIMIZED");
-    } else {
-      setExplorerMode("NORMAL");
-    }
+    setExplorerMode(explorerVisible ? "MINIMIZED" : "NORMAL");
   };
 
   const activeFolderDestinations = useMemo(
     () => items.filter((i) => !i.isTrashed && i.kind === "FOLDER").sort((a, b) => a.name.localeCompare(b.name)),
     [items]
+  );
+
+  const installedCatalog = useMemo(
+    () => APP_STORE_CATALOG.filter((app) => installedApps.includes(app.id)),
+    [installedApps]
+  );
+
+  const filteredStartApps = useMemo(() => {
+    const q = startSearch.trim().toLowerCase();
+    return q
+      ? installedCatalog.filter((a) => a.title.toLowerCase().includes(q) || a.desc.toLowerCase().includes(q))
+      : installedCatalog;
+  }, [installedCatalog, startSearch]);
+
+  const pinnedDesktopApps = useMemo(
+    () => installedCatalog.filter((a) => pinnedApps.includes(a.id)),
+    [installedCatalog, pinnedApps]
   );
 
   const explorerWindowTitle = inRecycleBin
@@ -672,9 +838,10 @@ export default function StorageVaultModule({
       ? breadcrumbs[breadcrumbs.length - 1].name
       : `This PC — ${activeProfile} District Vault`;
 
+  const wpClass = WALLPAPER_PRESETS.find((w) => w.id === wallpaper)?.className || "wp-bloom";
+
   return (
-    <section className="win11-desktop-shell" aria-label="Windows 11 Storage Desktop">
-      {/* Hidden Global Upload Input shared by Wallpaper Menu, Explorer Ribbon & Taskbar Start */}
+    <section className="win11-desktop-shell" aria-label="Windows 11 Web Desktop">
       <input
         ref={fileInputRef}
         type="file"
@@ -683,26 +850,26 @@ export default function StorageVaultModule({
         className="win11-hidden-input"
       />
 
-      {/* === 1. WINDOWS 11 BLOOM DESKTOP STAGE === */}
+      {/* === 1. WINDOWS 11 DESKTOP STAGE === */}
       <div
-        className="win11-desktop-stage"
+        className={`win11-desktop-stage ${wpClass}`}
         onClick={() => {
           setSelectedId(null);
           setStartMenuOpen(false);
         }}
         onContextMenu={(e) => openContextMenu(e, "EMPTY")}
       >
-        {/* Decorative Windows 11 Blue Bloom Wallpaper SVG */}
+        {/* Decorative Bloom Overlay */}
         <svg className="win11-bloom-svg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <defs>
             <radialGradient id="win11PetalA" cx="62%" cy="46%" r="48%">
-              <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.62" />
-              <stop offset="55%" stopColor="#2563eb" stopOpacity="0.28" />
+              <stop offset="0%" stopColor="#60a5fa" stopOpacity="0.48" />
+              <stop offset="55%" stopColor="#2563eb" stopOpacity="0.18" />
               <stop offset="100%" stopColor="#07193a" stopOpacity="0" />
             </radialGradient>
             <radialGradient id="win11PetalB" cx="48%" cy="54%" r="42%">
-              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.52" />
-              <stop offset="60%" stopColor="#1d4ed8" stopOpacity="0.2" />
+              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.38" />
+              <stop offset="60%" stopColor="#1d4ed8" stopOpacity="0.14" />
               <stop offset="100%" stopColor="#07193a" stopOpacity="0" />
             </radialGradient>
           </defs>
@@ -712,7 +879,7 @@ export default function StorageVaultModule({
 
         {/* Left-Aligned Top-to-Bottom Desktop Icons Grid */}
         <div className="win11-desktop-icons">
-          {/* Pinned 1: 💻 This PC (District Vault) */}
+          {/* Pinned 1: 💻 This PC */}
           <div
             role="button"
             tabIndex={0}
@@ -765,7 +932,28 @@ export default function StorageVaultModule({
             <span className="win11-tile-label">Recycle Bin</span>
           </div>
 
-          {/* District Folders & Root User Files */}
+          {/* Pinned Built-in Store Apps on Desktop */}
+          {pinnedDesktopApps.map((app) => (
+            <div
+              key={`pin-${app.id}`}
+              role="button"
+              tabIndex={0}
+              onClick={(e) => {
+                e.stopPropagation();
+                openDesktopApp(app.id);
+              }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                openDesktopApp(app.id);
+              }}
+              className="win11-desktop-tile"
+            >
+              <span className="win11-tile-icon">{app.icon}</span>
+              <span className="win11-tile-label">{app.title}</span>
+            </div>
+          ))}
+
+          {/* Deduplicated District Folders & Root User Files */}
           {desktopRootItems.map((item) => {
             const isCut = clipboard?.mode === "CUT" && clipboard.itemId === item.id;
             const isRenaming = renamingId === item.id;
@@ -824,7 +1012,6 @@ export default function StorageVaultModule({
             onClick={(e) => e.stopPropagation()}
             className={`win11-explorer-window${explorerMode === "MAXIMIZED" ? " is-maximized" : ""}`}
           >
-            {/* Window Title Bar */}
             <header className="win11-window-titlebar">
               <div className="win11-window-title-left">
                 <span>{inRecycleBin ? "🗑️" : currentFolderId === "ROOT" ? "💻" : "📁"}</span>
@@ -869,76 +1056,39 @@ export default function StorageVaultModule({
               </div>
             </header>
 
-            {/* Navigation Arrows + Breadcrumb Address Bar + Search */}
             <div className="win11-explorer-navrow">
               <div className="win11-nav-arrows">
-                <button
-                  type="button"
-                  aria-label="Back"
-                  disabled={navIndex <= 0}
-                  onClick={navigateBack}
-                  className="win11-nav-icon-btn"
-                >
+                <button type="button" aria-label="Back" disabled={navIndex <= 0} onClick={navigateBack} className="win11-nav-icon-btn">
                   ⬅️
                 </button>
-                <button
-                  type="button"
-                  aria-label="Forward"
-                  disabled={navIndex >= navHistory.length - 1}
-                  onClick={navigateForward}
-                  className="win11-nav-icon-btn"
-                >
+                <button type="button" aria-label="Forward" disabled={navIndex >= navHistory.length - 1} onClick={navigateForward} className="win11-nav-icon-btn">
                   ➡️
                 </button>
-                <button
-                  type="button"
-                  aria-label="Up One Level"
-                  disabled={currentFolderId === "ROOT" && !search.trim()}
-                  onClick={navigateUp}
-                  className="win11-nav-icon-btn"
-                >
+                <button type="button" aria-label="Up" disabled={currentFolderId === "ROOT" && !search.trim()} onClick={navigateUp} className="win11-nav-icon-btn">
                   ⬆️
                 </button>
               </div>
 
               <div className="win11-address-bar">
-                <button
-                  type="button"
-                  onClick={() => { setSearch(""); navigateExplorerTo("ROOT"); }}
-                  className="win11-crumb-btn"
-                >
+                <button type="button" onClick={() => { setSearch(""); navigateExplorerTo("ROOT"); }} className="win11-crumb-btn">
                   💻 This PC
                 </button>
                 <span className="win11-crumb-sep">&gt;</span>
-                <button
-                  type="button"
-                  onClick={() => { setSearch(""); navigateExplorerTo("ROOT"); }}
-                  className="win11-crumb-btn"
-                >
+                <button type="button" onClick={() => { setSearch(""); navigateExplorerTo("ROOT"); }} className="win11-crumb-btn">
                   District Vault
                 </button>
-
                 {inRecycleBin && (
                   <>
                     <span className="win11-crumb-sep">&gt;</span>
-                    <button
-                      type="button"
-                      onClick={() => { setSearch(""); navigateExplorerTo(RECYCLE_BIN_ID); }}
-                      className="win11-crumb-btn"
-                    >
+                    <button type="button" onClick={() => { setSearch(""); navigateExplorerTo(RECYCLE_BIN_ID); }} className="win11-crumb-btn">
                       🗑️ Recycle Bin
                     </button>
                   </>
                 )}
-
                 {breadcrumbs.map((b) => (
                   <React.Fragment key={b.id}>
                     <span className="win11-crumb-sep">&gt;</span>
-                    <button
-                      type="button"
-                      onClick={() => { setSearch(""); navigateExplorerTo(b.id); }}
-                      className="win11-crumb-btn"
-                    >
+                    <button type="button" onClick={() => { setSearch(""); navigateExplorerTo(b.id); }} className="win11-crumb-btn">
                       {b.name}
                     </button>
                   </React.Fragment>
@@ -954,7 +1104,6 @@ export default function StorageVaultModule({
               />
             </div>
 
-            {/* Explorer Command Ribbon (or Recycle Bin Controls) */}
             {inRecycleBin ? (
               <div className="win11-recycle-bar">
                 <span className="win11-recycle-label">
@@ -963,20 +1112,10 @@ export default function StorageVaultModule({
                     : `रीसायकल बिन (${trashedTopItems.length} आइटम) — Restore या स्थायी Delete हेतु राइट-क्लिक करें`}
                 </span>
                 <div className="win11-cmd-group">
-                  <button
-                    type="button"
-                    disabled={!trashedTopItems.length}
-                    onClick={handleRestoreAllRecycleBin}
-                    className="win11-cmd-btn is-green"
-                  >
+                  <button type="button" disabled={!trashedTopItems.length} onClick={handleRestoreAllRecycleBin} className="win11-cmd-btn is-green">
                     ♻️ Restore All
                   </button>
-                  <button
-                    type="button"
-                    disabled={!trashedTopItems.length}
-                    onClick={handleEmptyRecycleBin}
-                    className="win11-cmd-btn is-danger"
-                  >
+                  <button type="button" disabled={!trashedTopItems.length} onClick={handleEmptyRecycleBin} className="win11-cmd-btn is-danger">
                     🧹 Empty Recycle Bin
                   </button>
                 </div>
@@ -1006,15 +1145,12 @@ export default function StorageVaultModule({
                 {clipboard && (
                   <div className="win11-clipboard-pill">
                     <span>{clipboard.mode === "CUT" ? "✂️" : "📋"} {clipboard.name}</span>
-                    <button type="button" onClick={() => setClipboard(null)} className="win11-clipboard-clear">
-                      ✕
-                    </button>
+                    <button type="button" onClick={() => setClipboard(null)} className="win11-clipboard-clear">✕</button>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Contextual 01. Strength Folder ONLY Master Excel Controls */}
             {inStrengthFolder && !inRecycleBin && (
               <div className="win11-strength-bar">
                 <span className="win11-strength-label">
@@ -1051,7 +1187,6 @@ export default function StorageVaultModule({
               </div>
             )}
 
-            {/* Explorer Content Viewport (Supports Right-Click on Empty Canvas) */}
             <div
               className="win11-explorer-body"
               onContextMenu={(e) => openContextMenu(e, inRecycleBin ? "RECYCLE_EMPTY" : "EMPTY_EXPLORER")}
@@ -1195,60 +1330,90 @@ export default function StorageVaultModule({
           </div>
         )}
 
-        {/* Windows 11 Start / Quick Menu Popover */}
-        {startMenuOpen && (
-          <div
-            className="win11-start-menu"
-            role="menu"
-            onClick={(e) => e.stopPropagation()}
+        {/* === 3. DRAGGABLE WINDOWS 11 BUILT-IN APPS === */}
+        {openWindows.map((win) => (
+          <DesktopWindowFrame
+            key={win.id}
+            title={win.title}
+            icon={win.icon}
+            initialWidth={win.width || "wide"}
+            minimized={win.minimized}
+            onFocus={() => focusWindow(win.id)}
+            onMinimize={() => setOpenWindows((prev) => prev.map((w) => (w.id === win.id ? { ...w, minimized: true } : w)))}
+            onClose={() => setOpenWindows((prev) => prev.filter((w) => w.id !== win.id))}
           >
+            {win.appId === "excel-pro" && (
+              <ExcelApp key={win.item?.id || "new-xlsx"} item={win.item} onSaveFile={handleSaveOfficeFile} language={language} />
+            )}
+            {win.appId === "word-pro" && (
+              <WordApp key={win.item?.id || "new-doc"} item={win.item} onSaveFile={handleSaveOfficeFile} language={language} />
+            )}
+            {win.appId === "photo-viewer" && (
+              <PhotoViewerApp key={win.item?.id || "photo"} item={win.item} galleryItems={galleryPhotos} language={language} />
+            )}
+            {win.appId === "media-player" && (
+              <MediaPlayerApp key={win.item?.id || "media"} item={win.item} mediaList={mediaFiles} language={language} />
+            )}
+            {win.appId === "vscode-lite" && (
+              <CodeEditorApp key={win.item?.id || "code"} item={win.item} onSaveFile={handleSaveOfficeFile} language={language} />
+            )}
+            {win.appId === "calculator" && <CalculatorApp />}
+            {win.appId === "sticky-notes" && <StickyNotesApp language={language} />}
+            {win.appId === "games" && <GamesApp />}
+            {win.appId === "app-store" && (
+              <AppStoreApp
+                installedApps={installedApps}
+                pinnedApps={pinnedApps}
+                onToggleInstall={toggleInstallApp}
+                onTogglePin={togglePinApp}
+                onLaunchApp={(appId) => openDesktopApp(appId)}
+                language={language}
+              />
+            )}
+          </DesktopWindowFrame>
+        ))}
+
+        {/* === WINDOWS 11 START MENU (Search + Pinned Apps + App Store) === */}
+        {startMenuOpen && (
+          <div className="win11-start-menu" role="menu" onClick={(e) => e.stopPropagation()}>
+            <input
+              type="search"
+              value={startSearch}
+              onChange={(e) => setStartSearch(e.target.value)}
+              placeholder={english ? "🔍 Search apps & tools..." : "🔍 ऐप व टूल खोजें..."}
+              className="win11-start-search"
+            />
+
             <div className="win11-start-header">
-              ⊞ {activeProfile} · {english ? "Quick Office Actions" : "त्वरित कार्य मेन्यू"}
+              ⊞ {activeProfile} · {english ? "Installed & Pinned Apps" : "पिन किए गए व इंस्टॉल ऐप्स"}
             </div>
+
             <div className="win11-start-grid">
-              <button
-                type="button"
-                onClick={() => { setStartMenuOpen(false); handleCreateFolder(); }}
-                className="win11-start-tile"
-              >
-                📁 + New Folder
+              <button type="button" onClick={() => { setStartMenuOpen(false); navigateExplorerTo("ROOT"); }} className="win11-start-tile">
+                💻 This PC
               </button>
-              <button
-                type="button"
-                onClick={() => { setStartMenuOpen(false); handleCreateNewDoc("EXCEL"); }}
-                className="win11-start-tile"
-              >
-                📊 + New Excel
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStartMenuOpen(false); handleCreateNewDoc("WORD"); }}
-                className="win11-start-tile"
-              >
-                📝 + New Word
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStartMenuOpen(false); fileInputRef.current?.click(); }}
-                className="win11-start-tile"
-              >
-                ⬆️ Upload Files
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStartMenuOpen(false); navigateExplorerTo("ROOT"); }}
-                className="win11-start-tile"
-              >
-                💻 Open This PC
-              </button>
-              <button
-                type="button"
-                onClick={() => { setStartMenuOpen(false); navigateExplorerTo(RECYCLE_BIN_ID); }}
-                className="win11-start-tile"
-              >
+              <button type="button" onClick={() => { setStartMenuOpen(false); navigateExplorerTo(RECYCLE_BIN_ID); }} className="win11-start-tile">
                 🗑️ Recycle Bin
               </button>
+              {filteredStartApps.map((app) => (
+                <button
+                  key={`start-${app.id}`}
+                  type="button"
+                  onClick={() => openDesktopApp(app.id)}
+                  className="win11-start-tile"
+                >
+                  {app.icon} {app.title}
+                </button>
+              ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() => openDesktopApp("app-store")}
+              className="win11-start-store-btn"
+            >
+              🛍️ {english ? "App Store (Install / Pin Apps)" : "App Store (ऐप्स इंस्टॉल व पिन करें)"}
+            </button>
           </div>
         )}
       </div>
@@ -1279,39 +1444,25 @@ export default function StorageVaultModule({
               onClick={toggleExplorerTaskbar}
               className={`win11-task-app-btn${explorerMode !== "CLOSED" ? " is-open" : ""}`}
             >
-              📁 File Explorer
+              📁 Explorer
             </button>
-            <button
-              type="button"
-              onClick={() => handleCreateNewDoc("EXCEL")}
-              className="win11-task-app-btn"
-            >
-              📊 New Excel
+            <button type="button" onClick={() => openDesktopApp("app-store")} className="win11-task-app-btn">
+              🛍️ Store
             </button>
-            <button
-              type="button"
-              onClick={() => handleCreateNewDoc("WORD")}
-              className="win11-task-app-btn"
-            >
-              📝 New Word
-            </button>
-            <button
-              type="button"
-              onClick={() => navigateExplorerTo(RECYCLE_BIN_ID)}
-              className={`win11-task-app-btn${explorerVisible && inRecycleBin ? " is-open" : ""}`}
-            >
-              🗑️ Recycle Bin {trashedTopItems.length > 0 ? `(${trashedTopItems.length})` : ""}
+            <button type="button" onClick={() => navigateExplorerTo(RECYCLE_BIN_ID)} className={`win11-task-app-btn${explorerVisible && inRecycleBin ? " is-open" : ""}`}>
+              🗑️ Bin {trashedTopItems.length > 0 ? `(${trashedTopItems.length})` : ""}
             </button>
 
-            {officeItem && (
+            {openWindows.map((win) => (
               <button
+                key={`tb-${win.id}`}
                 type="button"
-                onClick={() => setOfficeItem({ ...officeItem })}
-                className="win11-task-app-btn is-open"
+                onClick={() => toggleTaskbarWindow(win.id)}
+                className={`win11-task-app-btn${!win.minimized ? " is-open" : ""}`}
               >
-                {getFileIcon(officeItem)} {officeItem.name}
+                {win.icon} {win.title}
               </button>
-            )}
+            ))}
           </div>
         </div>
 
@@ -1323,7 +1474,7 @@ export default function StorageVaultModule({
         </div>
       </footer>
 
-      {/* === 3. WINDOWS 11 CONTEXT MENU PORTAL === */}
+      {/* === WINDOWS 11 FROSTED CONTEXT MENU PORTAL === */}
       {contextMenu && createPortal(
         <div
           ref={contextMenuRef}
@@ -1333,20 +1484,10 @@ export default function StorageVaultModule({
         >
           {contextMenu.type === "THIS_PC" && (
             <>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => { setContextMenu(null); navigateExplorerTo("ROOT"); }}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" onClick={() => { setContextMenu(null); navigateExplorerTo("ROOT"); }} className="storage-context-item">
                 📂 Open This PC
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => { setContextMenu(null); loadAllItems(); }}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" onClick={() => { setContextMenu(null); loadAllItems(); }} className="storage-context-item">
                 🔄 Refresh
               </button>
             </>
@@ -1366,7 +1507,7 @@ export default function StorageVaultModule({
               >
                 📂 Open
               </button>
-              {contextMenu.item.kind === "FILE" && getOfficeEditorKind(contextMenu.item.name, contextMenu.item.mime) === "EXCEL" && onLoadExcelBlob && (
+              {contextMenu.item.kind === "FILE" && getVaultFileAppKind(contextMenu.item.name, contextMenu.item.mime) === "EXCEL" && onLoadExcelBlob && (
                 <button
                   type="button"
                   role="menuitem"
@@ -1380,39 +1521,21 @@ export default function StorageVaultModule({
                   ⚡ Load Master Data in Portal
                 </button>
               )}
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => startInlineRename(contextMenu.item)}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" onClick={() => startInlineRename(contextMenu.item)} className="storage-context-item">
                 ✏️ Rename
               </button>
               <div className="storage-context-divider" />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => handleCutItem(contextMenu.item)}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" onClick={() => handleCutItem(contextMenu.item)} className="storage-context-item">
                 ✂️ Cut
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => handleCopyItem(contextMenu.item)}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" onClick={() => handleCopyItem(contextMenu.item)} className="storage-context-item">
                 📋 Copy
               </button>
               <button
                 type="button"
                 role="menuitem"
                 disabled={!clipboard}
-                onClick={() => {
-                  const destFolderId = contextMenu.item.kind === "FOLDER" ? contextMenu.item.id : activeWriteFolderId;
-                  handlePasteInto(destFolderId);
-                }}
+                onClick={() => handlePasteInto(contextMenu.item.kind === "FOLDER" ? contextMenu.item.id : activeWriteFolderId)}
                 className="storage-context-item"
               >
                 📥 Paste
@@ -1477,7 +1600,7 @@ export default function StorageVaultModule({
                 }}
                 className="storage-context-item"
               >
-                📊 New Excel Sheet
+                📊 New Excel
               </button>
               <button
                 type="button"
@@ -1489,7 +1612,7 @@ export default function StorageVaultModule({
                 }}
                 className="storage-context-item"
               >
-                📝 New Word Document
+                📝 New Word
               </button>
               <button
                 type="button"
@@ -1512,6 +1635,23 @@ export default function StorageVaultModule({
               >
                 📥 Paste {clipboard ? `(${clipboard.name})` : ""}
               </button>
+              <div className="storage-context-divider" />
+              <div className="storage-context-item">🎨 Change Wallpaper</div>
+              <div className="win11-wallpaper-pills">
+                {WALLPAPER_PRESETS.map((wp) => (
+                  <button
+                    key={wp.id}
+                    type="button"
+                    onClick={() => {
+                      changeWallpaper(wp.id);
+                      setContextMenu(null);
+                    }}
+                    className={`win11-wp-pill${wallpaper === wp.id ? " is-active" : ""}`}
+                  >
+                    {english ? wp.label : wp.hiLabel}
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
                 role="menuitem"
@@ -1528,20 +1668,10 @@ export default function StorageVaultModule({
 
           {contextMenu.type === "RECYCLE_ITEM" && contextMenu.item && (
             <>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => handleRestoreItem(contextMenu.item)}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" onClick={() => handleRestoreItem(contextMenu.item)} className="storage-context-item">
                 ♻️ Restore to Original Path
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => handleDeletePermanently(contextMenu.item)}
-                className="storage-context-item is-danger"
-              >
+              <button type="button" role="menuitem" onClick={() => handleDeletePermanently(contextMenu.item)} className="storage-context-item is-danger">
                 ❌ Delete Permanently
               </button>
             </>
@@ -1563,22 +1693,10 @@ export default function StorageVaultModule({
                   📂 Open Recycle Bin
                 </button>
               )}
-              <button
-                type="button"
-                role="menuitem"
-                disabled={!trashedTopItems.length}
-                onClick={handleRestoreAllRecycleBin}
-                className="storage-context-item"
-              >
+              <button type="button" role="menuitem" disabled={!trashedTopItems.length} onClick={handleRestoreAllRecycleBin} className="storage-context-item">
                 ♻️ Restore All Items
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                disabled={!trashedTopItems.length}
-                onClick={handleEmptyRecycleBin}
-                className="storage-context-item is-danger"
-              >
+              <button type="button" role="menuitem" disabled={!trashedTopItems.length} onClick={handleEmptyRecycleBin} className="storage-context-item is-danger">
                 🧹 Empty Recycle Bin
               </button>
             </>
@@ -1587,7 +1705,7 @@ export default function StorageVaultModule({
         document.body
       )}
 
-      {/* [MOVE TO FOLDER PICKER MODAL] */}
+      {/* Move to Folder Picker Modal */}
       {moveTargetItem && (
         <div
           className="storage-move-backdrop"
@@ -1625,11 +1743,7 @@ export default function StorageVaultModule({
               })}
             </div>
             <div className="storage-move-footer">
-              <button
-                type="button"
-                onClick={() => setMoveTargetItem(null)}
-                className="win11-cmd-btn"
-              >
+              <button type="button" onClick={() => setMoveTargetItem(null)} className="win11-cmd-btn">
                 ✕ {english ? "Cancel" : "रद्द करें"}
               </button>
             </div>
@@ -1637,12 +1751,12 @@ export default function StorageVaultModule({
         </div>
       )}
 
-      {/* [IN-APP OFFICE SUITE MODAL] */}
-      {officeItem && (
+      {/* PDF Viewer Fallback Modal */}
+      {pdfModalItem && (
         <InbuiltOfficeEditor
-          item={officeItem}
+          item={pdfModalItem}
           onSaveFile={handleSaveOfficeFile}
-          onClose={() => setOfficeItem(null)}
+          onClose={() => setPdfModalItem(null)}
           language={language}
         />
       )}
