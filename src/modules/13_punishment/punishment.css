@@ -1,2 +1,29 @@
-.punishment-module { min-width: 0; }
-.punishment-module .module-table { min-width: 760px; }
+/* === PUNISHMENT MODULE STYLES (विभागीय सज़ा / स्वच्छ छवि मॉड्यूल) === */
+.punishment-module {
+  min-width: 0;
+}
+
+.punishment-module .module-table {
+  min-width: 760px;
+}
+
+.punishment-filter-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.punishment-filter-btn {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.punishment-filter-btn.is-active {
+  background: #0b1e3d;
+  color: #fff;
+}

@@ -59,7 +59,7 @@ export default function PunishmentModule({ records = [], allSheets = {}, setAllS
   };
 
   return (
-    <div className="punishment-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="punishment-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "⚖️ Departmental Punishment & Clean Record" : "⚖️ विभागीय सज़ा / दण्ड रिकॉर्ड (17 CC / 16 CC)"}
         search={search}
@@ -71,64 +71,75 @@ export default function PunishmentModule({ records = [], allSheets = {}, setAllS
         language={language}
       />
 
-      <form onSubmit={handleSave} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "10px", marginBottom: "16px", backgroundColor: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <input type="text" required placeholder={english ? "Belt No." : "बेल्ट नं."} value={belt} onChange={(e) => setBelt(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" required placeholder={english ? "Employee Name" : "कर्मचारी का नाम"} value={name} onChange={(e) => setName(e.target.value)} style={{ padding: "8px" }} />
-        <select value={sajaType} onChange={(e) => setSajaType(e.target.value)} style={{ padding: "8px" }}>
+      {/* [FORM] New Punishment Entry (नया सज़ा विवरण दर्ज करने का फॉर्म) */}
+      <form onSubmit={handleSave} className="module-form-card">
+        <input type="text" required placeholder={english ? "Belt No." : "बेल्ट नं."} value={belt} onChange={(e) => setBelt(e.target.value)} />
+        <input type="text" required placeholder={english ? "Employee Name" : "कर्मचारी का नाम"} value={name} onChange={(e) => setName(e.target.value)} />
+        <select value={sajaType} onChange={(e) => setSajaType(e.target.value)}>
           <option>17 CC - Censure (निंदा)</option>
           <option>17 CC - Increment Stop (वेतन वृद्धि रोक)</option>
           <option>16 CC - Major Penalty</option>
           <option>Suspension (निलंबन)</option>
         </select>
-        <input type="text" required placeholder={english ? "DOB / Order No." : "DOB / आदेश नं."} value={orderNo} onChange={(e) => setOrderNo(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder={english ? "Date (DD-MM-YYYY)" : "दिनांक (DD-MM-YYYY)"} value={orderDate} onChange={(e) => setOrderDate(e.target.value)} style={{ padding: "8px" }} />
-        <input type="text" placeholder={english ? "Brief Reason" : "संक्षिप्त कारण"} value={reason} onChange={(e) => setReason(e.target.value)} style={{ padding: "8px" }} />
-        <button type="submit" style={{ backgroundColor: "#DC2626", color: "#fff", border: "none", padding: "8px 14px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer" }}>
+        <input type="text" required placeholder={english ? "DOB / Order No." : "DOB / आदेश नं."} value={orderNo} onChange={(e) => setOrderNo(e.target.value)} />
+        <input type="text" placeholder={english ? "Date (DD-MM-YYYY)" : "दिनांक (DD-MM-YYYY)"} value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+        <input type="text" placeholder={english ? "Brief Reason" : "संक्षिप्त कारण"} value={reason} onChange={(e) => setReason(e.target.value)} />
+        <button type="submit" className="module-btn-danger">
           ➕ {english ? "Save Punishment" : "सज़ा रिकॉर्ड सेव करें"}
         </button>
       </form>
 
-      <div style={{ display: "flex", gap: "8px", margin: "8px 0 12px" }}>
-        <button type="button" onClick={() => setCleanOnly(false)} style={{ padding: "8px 12px", border: 0, borderRadius: "6px", cursor: "pointer", background: cleanOnly ? "#E2E8F0" : "#0B1E3D", color: cleanOnly ? "#1E293B" : "#fff" }}>
+      {/* [TOGGLE] Punishment Records vs Clean Record Filter (सज़ा बनाम स्वच्छ छवि टैब) */}
+      <div className="punishment-filter-tabs">
+        <button
+          type="button"
+          onClick={() => setCleanOnly(false)}
+          className={`punishment-filter-btn${!cleanOnly ? " is-active" : ""}`}
+        >
           {english ? `Punishment Records (${rows.length})` : `सजा रिकॉर्ड (${rows.length})`}
         </button>
-        <button type="button" onClick={() => setCleanOnly(true)} style={{ padding: "8px 12px", border: 0, borderRadius: "6px", cursor: "pointer", background: cleanOnly ? "#0B1E3D" : "#E2E8F0", color: cleanOnly ? "#fff" : "#1E293B" }}>
+        <button
+          type="button"
+          onClick={() => setCleanOnly(true)}
+          className={`punishment-filter-btn${cleanOnly ? " is-active" : ""}`}
+        >
           {english ? `Clean Record (${cleanRows.length})` : `स्वच्छ छवि (${cleanRows.length})`}
         </button>
       </div>
 
-      <div className="table-responsive-box">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      {/* [TABLE] Punishment / Clean Force List (सज़ा एवं स्वच्छ छवि तालिका) */}
+      <div className="module-table-wrap table-responsive-box">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px" }}>{english ? "Belt No." : "BELT NO"}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "NAME"}</th>
+            <tr>
+              <th>{english ? "Belt No." : "BELT NO"}</th>
+              <th className="module-cell-left">{english ? "Name" : "NAME"}</th>
               {!cleanOnly && (
                 <>
-                  <th style={{ padding: "8px" }}>{english ? "Punishment Type" : "सज़ा प्रकार"}</th>
-                  <th style={{ padding: "8px" }}>{english ? "Order No." : "आदेश नं."}</th>
-                  <th style={{ padding: "8px" }}>{english ? "Date" : "दिनांक"}</th>
-                  <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Reason" : "कारण"}</th>
+                  <th>{english ? "Punishment Type" : "सज़ा प्रकार"}</th>
+                  <th>{english ? "Order No." : "आदेश नं."}</th>
+                  <th>{english ? "Date" : "दिनांक"}</th>
+                  <th className="module-cell-left">{english ? "Reason" : "कारण"}</th>
                 </>
               )}
-              {cleanOnly && <th style={{ padding: "8px" }}>{english ? "Status" : "स्थिति"}</th>}
+              {cleanOnly && <th>{english ? "Status" : "स्थिति"}</th>}
             </tr>
           </thead>
           <tbody>
             {displayedRows.map((r, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={r["NAME"]} /></td>
+              <tr key={i}>
+                <td className="module-cell-center module-cell-tnr">{r["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={r["NAME"]} /></td>
                 {cleanOnly ? (
-                  <td style={{ padding: "6px", textAlign: "center", color: "#15803D" }}>
+                  <td className="module-cell-center module-cell-accent-green">
                     {english ? "No Punishment Record" : "कोई दर्ज सजा नहीं"}
                   </td>
                 ) : (
                   <>
-                    <td style={{ padding: "6px", textAlign: "center", color: "#B91C1C", fontWeight: "bold" }}>{r["PUNISHMENT_TYPE"]}</td>
-                    <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["ORDER_NO"]}</td>
-                    <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["ORDER_DATE"])}</td>
-                    <td style={{ padding: "6px" }}><HindiText text={r["BRIEF_REASON"]} /></td>
+                    <td className="module-cell-center module-cell-accent-red">{r["PUNISHMENT_TYPE"]}</td>
+                    <td className="module-cell-center module-cell-tnr">{r["ORDER_NO"]}</td>
+                    <td className="module-cell-center module-cell-tnr">{formatDateOnly(r["ORDER_DATE"])}</td>
+                    <td><HindiText text={r["BRIEF_REASON"]} /></td>
                   </>
                 )}
               </tr>

@@ -52,7 +52,7 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
   };
 
   return (
-    <div className="roster-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="roster-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "🏢 PS-Wise Strength & Duty Roster" : "🏢 थाना-वार नफरी एवं ड्यूटी रोस्टर"}
         search={search}
@@ -66,80 +66,83 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
           <button
             type="button"
             onClick={() => downloadAllReportsExcel(reports)}
-            style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "7px 12px", borderRadius: "6px", fontWeight: "bold", fontSize: "0.82rem", cursor: "pointer" }}
+            className="module-btn-success"
           >
             📥 {english ? "Download All 8 Reports (Excel)" : "सभी 8 रिपोर्ट्स Excel"}
           </button>
         )}
       />
 
-      <form onSubmit={addDuty} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: "10px", margin: "14px 0", background: "#F8FAFC", padding: "14px", borderRadius: "8px" }}>
-        <input required type="date" value={dutyDate} onChange={(event) => setDutyDate(event.target.value)} style={{ padding: "8px", fontFamily: "'Times New Roman', Times, serif" }} />
-        <select required value={belt} onChange={(event) => setBelt(event.target.value)} style={{ padding: "8px" }}>
+      {/* [FORM] Add Daily / Weekly Duty Entry (दैनिक / साप्ताहिक ड्यूटी जोड़ने का फॉर्म) */}
+      <form onSubmit={addDuty} className="module-form-card">
+        <input required type="date" value={dutyDate} onChange={(event) => setDutyDate(event.target.value)} className="module-cell-tnr" />
+        <select required value={belt} onChange={(event) => setBelt(event.target.value)}>
           <option value="">{english ? "Select Employee" : "कर्मचारी चुनें"}</option>
           {genderFilteredRecords.map((record) => (
             <option
               key={record._uid || record["BELT NO"]}
               value={String(record["BELT NO"] || "").trim().toUpperCase()}
-              style={isDevlysText(record.NAME) ? { fontFamily: "'DevLys 010', sans-serif", fontSize: "17px" } : undefined}
+              className={isDevlysText(record.NAME) ? "devlys-text" : undefined}
             >
               {record["BELT NO"]} — {record.NAME}
             </option>
           ))}
         </select>
-        <select value={shift} onChange={(event) => setShift(event.target.value)} style={{ padding: "8px" }}>
+        <select value={shift} onChange={(event) => setShift(event.target.value)}>
           <option value="दैनिक">{english ? "Daily" : "दैनिक"}</option>
           <option value="साप्ताहिक">{english ? "Weekly" : "साप्ताहिक"}</option>
         </select>
-        <select value={dutyType} onChange={(event) => setDutyType(event.target.value)} style={{ padding: "8px" }}>
+        <select value={dutyType} onChange={(event) => setDutyType(event.target.value)}>
           <option value="गश्त">{english ? "Patrol" : "गश्त"}</option>
           <option value="संतरी">{english ? "Sentry" : "संतरी"}</option>
           <option value="कोर्ट">{english ? "Court" : "कोर्ट"}</option>
           <option value="VIP ड्यूटी">{english ? "VIP Duty" : "VIP ड्यूटी"}</option>
         </select>
-        <button type="submit" style={{ background: "#16A34A", color: "#fff", border: 0, borderRadius: "6px", padding: "8px 14px", fontWeight: "bold", cursor: "pointer" }}>
+        <button type="submit" className="module-btn-success">
           {english ? "Add Duty" : "ड्यूटी जोड़ें"}
         </button>
       </form>
 
-      <div className="table-responsive-box" style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      {/* [TABLE 1] Station-Wise Strength Summary (थाना-वार नफरी विवरण) */}
+      <div className="module-table-wrap table-responsive-box">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px" }}>{english ? "S.N." : "क्र.सं."}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "PS / Branch / Office" : "थाना / शाखा / कार्यालय"}</th>
-              <th style={{ padding: "8px" }}>HC (M)</th>
-              <th style={{ padding: "8px" }}>MHC (F)</th>
-              <th style={{ padding: "8px" }}>FC (M)</th>
-              <th style={{ padding: "8px" }}>MFC (F)</th>
-              <th style={{ padding: "8px" }}>MT</th>
-              <th style={{ padding: "8px" }}>RT</th>
-              <th style={{ padding: "8px" }}>{english ? "Total" : "कुल नफरी"}</th>
+            <tr>
+              <th>{english ? "S.N." : "क्र.सं."}</th>
+              <th className="module-cell-left">{english ? "PS / Branch / Office" : "थाना / शाखा / कार्यालय"}</th>
+              <th>HC (M)</th>
+              <th>MHC (F)</th>
+              <th>FC (M)</th>
+              <th>MFC (F)</th>
+              <th>MT</th>
+              <th>RT</th>
+              <th>{english ? "Total" : "कुल नफरी"}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["क्र.सं."]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={r["थाना / शाखा / कार्यालय"]} /></td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["HC (पुरुष)"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["MHC (महिला)"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["FC (पुरुष)"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["MFC (महिला)"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["MT (चालक)"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{r["Recruit (RT)"]}</td>
-                <td style={{ padding: "6px", textAlign: "center", fontWeight: "bold", backgroundColor: "#F1F5F9", fontFamily: "'Times New Roman', Times, serif" }}>{r["कुल कार्यरत नफरी"]}</td>
+              <tr key={i}>
+                <td className="module-cell-center module-cell-tnr">{r["क्र.सं."]}</td>
+                <td className="module-cell-bold"><HindiText text={r["थाना / शाखा / कार्यालय"]} /></td>
+                <td className="module-cell-center module-cell-tnr">{r["HC (पुरुष)"]}</td>
+                <td className="module-cell-center module-cell-tnr">{r["MHC (महिला)"]}</td>
+                <td className="module-cell-center module-cell-tnr">{r["FC (पुरुष)"]}</td>
+                <td className="module-cell-center module-cell-tnr">{r["MFC (महिला)"]}</td>
+                <td className="module-cell-center module-cell-tnr">{r["MT (चालक)"]}</td>
+                <td className="module-cell-center module-cell-tnr">{r["Recruit (RT)"]}</td>
+                <td className="module-cell-center module-cell-tnr roster-total-cell">{r["कुल कार्यरत नफरी"]}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
+      {/* [TABLE 2] Daily / Weekly Duty Log (दैनिक / साप्ताहिक ड्यूटी लॉग) */}
       <h3>{english ? `Daily / Weekly Duty (${dutyRows.length})` : `दैनिक / साप्ताहिक ड्यूटी (${dutyRows.length})`}</h3>
-      <div className="table-responsive-box" style={{ overflowX: "auto", marginTop: "10px", marginBottom: "20px" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+      <div className="module-table-wrap table-responsive-box roster-duty-wrap">
+        <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
+            <tr>
               {[
                 english ? "Date" : "दिनांक",
                 english ? "Shift" : "अवधि",
@@ -147,18 +150,18 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
                 english ? "Belt No." : "बेल्ट नं.",
                 english ? "Name" : "नाम",
                 english ? "Duty" : "ड्यूटी"
-              ].map((heading) => <th key={heading} style={{ padding: "8px" }}>{heading}</th>)}
+              ].map((heading) => <th key={heading}>{heading}</th>)}
             </tr>
           </thead>
           <tbody>
             {dutyExportRows.map((row, index) => (
-              <tr key={`${row["BELT NO"]}-${row["दिनांक"]}-${index}`} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["दिनांक"]}</td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row["अवधि"]}</td>
-                <td style={{ padding: "6px" }}><HindiText text={row["थाना / कार्यालय"]} /></td>
-                <td style={{ padding: "6px", textAlign: "center", fontFamily: "'Times New Roman', Times, serif" }}>{row["BELT NO"]}</td>
-                <td style={{ padding: "6px", fontWeight: "bold" }}><HindiText text={row["NAME"]} /></td>
-                <td style={{ padding: "6px", textAlign: "center" }}>{row["ड्यूटी"]}</td>
+              <tr key={`${row["BELT NO"]}-${row["दिनांक"]}-${index}`}>
+                <td className="module-cell-center module-cell-tnr">{row["दिनांक"]}</td>
+                <td className="module-cell-center">{row["अवधि"]}</td>
+                <td><HindiText text={row["थाना / कार्यालय"]} /></td>
+                <td className="module-cell-center module-cell-tnr">{row["BELT NO"]}</td>
+                <td className="module-cell-bold"><HindiText text={row["NAME"]} /></td>
+                <td className="module-cell-center">{row["ड्यूटी"]}</td>
               </tr>
             ))}
           </tbody>

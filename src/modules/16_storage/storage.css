@@ -1,4 +1,275 @@
+/* === STORAGE VAULT MODULE STYLES (स्टोरेज वॉल्ट एवं फ़ॉन्ट इंस्टॉलर) === */
 .storage-vault-module {
   min-width: 0;
   width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.storage-view-toggle {
+  background-color: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* --- Top Action Bar (ऊपरी कार्यवाही पट्टी) --- */
+.storage-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.storage-action-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.storage-btn {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.84rem;
+  cursor: pointer;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.storage-btn:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.storage-btn-sky { background-color: #0284c7; padding: 8px 14px; }
+.storage-btn-purple { background-color: #7c3aed; padding: 8px 14px; }
+.storage-btn-navy { background-color: #0b1e3d; color: #ffd700; padding: 8px 14px; }
+.storage-btn-green { background-color: #16a34a; padding: 8px 14px; }
+.storage-btn-emerald { background-color: #059669; }
+.storage-btn-blue { background-color: #2563eb; }
+.storage-btn-danger-soft {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+}
+
+.storage-hidden-input {
+  display: none;
+}
+
+/* --- Inbuilt Hindi Font Installer Banner (हिंदी फ़ॉन्ट इंस्टॉलर पट्टी) --- */
+.storage-font-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  background-color: #fef3c7;
+  border: 1px solid #f59e0b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.storage-font-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.storage-font-title {
+  color: #92400e;
+}
+
+.storage-font-select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid #d97706;
+  background: #fff;
+}
+
+.storage-font-install-btn {
+  background-color: #d97706;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+
+.storage-font-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.storage-font-chip {
+  background-color: #fff;
+  border: 1px solid #d97706;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  color: #78350f;
+}
+
+.storage-font-remove-btn {
+  margin-left: 6px;
+  border: none;
+  background: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* --- Breadcrumbs & Empty Folder State (ब्रेडक्रम्ब नेविगेशन) --- */
+.storage-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background-color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.9rem;
+}
+
+.storage-crumb-link {
+  cursor: pointer;
+  font-weight: bold;
+  color: #1d63dc;
+}
+
+.storage-crumb-sep {
+  color: #94a3b8;
+}
+
+.storage-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+.storage-empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 8px;
+}
+
+.storage-empty-title {
+  font-weight: bold;
+}
+
+/* --- Grid View Cards (ग्रिड व्यू कार्ड्स) --- */
+.storage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.storage-card {
+  background-color: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+}
+
+.storage-card.is-folder {
+  background-color: #eff6ff;
+}
+
+.storage-card-body {
+  text-align: center;
+  cursor: default;
+}
+
+.storage-card-body.is-folder {
+  cursor: pointer;
+}
+
+.storage-card-icon {
+  font-size: 2.4rem;
+  margin-bottom: 6px;
+}
+
+.storage-card-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #0f172a;
+  word-break: break-word;
+}
+
+.storage-card-meta {
+  font-size: 0.74rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.storage-card-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.storage-mini-btn {
+  border: none;
+  padding: 4px 8px;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+}
+
+.storage-mini-btn-blue { background-color: #1d63dc; }
+.storage-mini-btn-green { background-color: #16a34a; }
+.storage-mini-btn-sky { background-color: #0284c7; font-weight: 600; }
+.storage-mini-btn-muted { background-color: #e2e8f0; color: #1e293b; font-weight: 600; }
+.storage-mini-btn-danger { background-color: #fee2e2; color: #dc2626; font-weight: 600; }
+
+/* --- List Table View (लिस्ट व्यू तालिका) --- */
+.storage-list-name {
+  font-weight: bold;
+  color: #0f172a;
+  cursor: default;
+}
+
+.storage-list-name.is-folder {
+  color: #1d63dc;
+  cursor: pointer;
+}
+
+.storage-list-actions {
+  white-space: nowrap;
+}
+
+.storage-list-actions .storage-mini-btn {
+  font-size: 0.78rem;
+  margin-right: 5px;
+}
+
+.storage-list-actions .storage-mini-btn:last-child {
+  margin-right: 0;
 }

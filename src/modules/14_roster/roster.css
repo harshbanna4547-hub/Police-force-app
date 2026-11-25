@@ -1,3 +1,37 @@
-.roster-module { min-width: 0; }
-.roster-module .module-table { min-width: 850px; }
-.roster-module > section { margin-top: 20px; }
+/* === ROSTER & PI-300 CHART MODULE STYLES (रोस्टर एवं 300 PL चार्ट) === */
+.roster-module {
+  min-width: 0;
+}
+
+.roster-module .module-table {
+  min-width: 850px;
+}
+
+.roster-module > section {
+  margin-top: 20px;
+}
+
+.roster-total-cell {
+  background-color: #f1f5f9;
+  font-weight: 700;
+}
+
+.roster-duty-wrap {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.roster-pl-chart {
+  margin-top: 16px;
+}
+
+.roster-pl-title {
+  margin-top: 0;
+  color: #0b1e3d;
+}
+
+.roster-pl-balance-cell {
+  background-color: #f0fdf4;
+  color: #15803d;
+  font-weight: 700;
+}

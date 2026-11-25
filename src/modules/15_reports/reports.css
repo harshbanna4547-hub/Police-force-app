@@ -1,2 +1,15 @@
-.reports-module { min-width: 0; }
-.reports-module .module-table { min-width: 800px; }
+/* === REPORTS MODULE STYLES (पदस्थापन एवं कार्यकाल सूची) === */
+.reports-module {
+  min-width: 0;
+}
+
+.reports-module .module-table {
+  min-width: 800px;
+}
+
+.reports-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}

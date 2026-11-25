@@ -1,0 +1,367 @@
+/* === NEW EMPLOYEE SMART FORM MODAL (नवीन अधिकारी / कर्मचारी स्मार्ट फॉर्म) === */
+.smart-form-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1350;
+  background: rgba(15, 23, 42, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.smart-form-modal {
+  width: 100%;
+  max-width: 1240px;
+  max-height: 96vh;
+  overflow-y: auto;
+  background: #f1f5f9;
+  border-radius: 14px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.32);
+}
+
+.smart-form-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 15px 20px;
+  background: linear-gradient(100deg, #1456b8, #1d63dc);
+  color: #fff;
+  border-radius: 14px 14px 0 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.smart-form-body {
+  padding: 16px;
+}
+
+/* --- Section Tabs (विवरण टैब पट्टी) --- */
+.smart-form-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.smart-form-tab-btn {
+  padding: 8px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #f8fafc;
+  color: #334155;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-tab-btn.is-active {
+  background: #1d63dc;
+  color: #fff;
+  border-color: #1d63dc;
+}
+
+/* --- Form Cards & Inputs (फॉर्म कार्ड एवं इनपुट फ़ील्ड) --- */
+.smart-form-section {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.smart-form-section-title {
+  margin: 0 0 12px;
+  color: #0b1e3d;
+  font-size: 1rem;
+}
+
+.smart-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+
+.smart-form-label {
+  display: block;
+  color: #334155;
+  font-weight: 700;
+  font-size: 0.84rem;
+}
+
+.smart-form-control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 10px;
+  margin-top: 5px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 0.92rem;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.smart-form-control:disabled {
+  background: #e2e8f0;
+}
+
+.smart-form-control-devlys {
+  font-family: "DevLys 010", "Kruti Dev 010", sans-serif;
+  font-size: 1.1rem;
+}
+
+.smart-form-fieldset {
+  margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+.smart-form-legend {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: #334155;
+}
+
+.smart-form-radio-option {
+  display: block;
+  margin: 4px 0;
+  cursor: pointer;
+}
+
+.smart-form-hint-success {
+  display: block;
+  color: #15803d;
+  margin-top: 4px;
+}
+
+.smart-form-hint-info {
+  display: block;
+  color: #0369a1;
+  margin-top: 4px;
+}
+
+.smart-form-status {
+  display: block;
+  margin-top: 8px;
+  color: #166534;
+}
+
+.smart-form-status.is-warn {
+  color: #b45309;
+}
+
+.smart-form-geo-note {
+  display: block;
+  margin-top: 8px;
+  color: #92400e;
+}
+
+/* --- Sub-history Tabs & Aside Excel Panel (PL / प्रशिक्षण / सज़ा एवं Excel) --- */
+.smart-form-history-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.smart-form-subtabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.smart-form-subtab-btn {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-subtab-btn.is-active {
+  background: #0b1e3d;
+  color: #ffd700;
+}
+
+.smart-form-summary-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  font-weight: bold;
+  color: #166534;
+}
+
+.smart-form-add-btn {
+  align-self: end;
+  padding: 9px;
+  border: 0;
+  border-radius: 7px;
+  background: #0284c7;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-aside {
+  align-self: start;
+  padding: 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 9px;
+  background: #eff6ff;
+}
+
+.smart-form-aside-title {
+  display: block;
+  margin-bottom: 9px;
+  color: #1e3a8a;
+}
+
+.smart-form-upload-label {
+  display: block;
+  padding: 9px 10px;
+  border-radius: 7px;
+  background: #0284c7;
+  color: #fff;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.smart-form-upload-label.is-uploading {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.smart-form-hidden-input {
+  display: none;
+}
+
+.smart-form-sample-btn {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid #93c5fd;
+  border-radius: 7px;
+  background: #fff;
+  color: #1d4ed8;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-aside-note {
+  display: block;
+  margin-top: 8px;
+  color: #475569;
+  line-height: 1.4;
+}
+
+/* --- Entry List (जोड़ी गई प्रविष्टियों की सूची) --- */
+.smart-form-entry-list {
+  margin-top: 14px;
+}
+
+.smart-form-entry-heading {
+  display: block;
+  margin-bottom: 6px;
+  color: #334155;
+}
+
+.smart-form-entry-empty {
+  color: #64748b;
+}
+
+.smart-form-entry-stack {
+  display: grid;
+  gap: 6px;
+}
+
+.smart-form-entry-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #f8fafc;
+  font-size: 0.85rem;
+}
+
+.smart-form-entry-remove-btn {
+  border: 0;
+  border-radius: 5px;
+  padding: 4px 7px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* --- Sticky Footer Buttons (नीचे के सेव/प्रिंट बटन) --- */
+.smart-form-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #fff;
+  border-top: 1px solid #cbd5e1;
+  border-radius: 0 0 14px 14px;
+}
+
+.smart-form-footer-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.smart-form-btn-save {
+  padding: 9px 13px;
+  border: 0;
+  border-radius: 7px;
+  background: #16a34a;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-btn-print {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-btn-sample {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: #eab308;
+  color: #1f2937;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.smart-form-btn-close {
+  padding: 9px 14px;
+  border: 1px solid #fca5a5;
+  border-radius: 7px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-weight: bold;
+  cursor: pointer;
+}

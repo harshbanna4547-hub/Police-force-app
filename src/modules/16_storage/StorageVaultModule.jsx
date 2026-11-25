@@ -345,7 +345,7 @@ export default function StorageVaultModule({
   })), [visibleItems]);
 
   return (
-    <div className="storage-vault-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "14px", padding: "18px", border: "1px solid var(--border, #E2E8F0)", boxShadow: "0 2px 8px rgba(15,23,42,0.04)" }}>
+    <div className="storage-vault-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "🗄️ Storage Vault" : "🗄️ स्टोरेज वॉल्ट"}
         search={search}
@@ -358,88 +358,90 @@ export default function StorageVaultModule({
           <button
             type="button"
             onClick={() => setViewMode(viewMode === "GRID" ? "LIST" : "GRID")}
-            style={{ backgroundColor: "#F1F5F9", border: "1px solid #CBD5E1", padding: "7px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer" }}
+            className="storage-view-toggle"
           >
             {viewMode === "GRID" ? "☰ List" : "⊞ Grid"}
           </button>
         )}
       />
-      {/* ऊपरी Action Toolbar */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px", marginBottom: "12px" }}>
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+
+      {/* [TOOLBAR] Vault Action Controls (फ़ोल्डर, अपलोड, बैकअप एवं मास्टर Excel बटन) */}
+      <div className="storage-action-bar">
+        <div className="storage-action-group">
           {hasData && (
-            <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} style={{ backgroundColor: "#0284C7", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: isExportingMaster ? "wait" : "pointer", fontSize: "0.84rem" }}>
+            <button type="button" onClick={onExportMasterFile} disabled={isExportingMaster} className="storage-btn storage-btn-sky">
               {isExportingMaster ? "⏳ Exporting..." : "📥 Export Master File"}
             </button>
           )}
           {fileName && hasUnsavedChanges && (
-            <button type="button" onClick={onSaveToExcel} style={{ backgroundColor: "#7C3AED", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+            <button type="button" onClick={onSaveToExcel} className="storage-btn storage-btn-purple">
               💾 Save Excel Changes
             </button>
           )}
           {fileName && (
-            <button type="button" onClick={onRemoveDistrictData} style={{ backgroundColor: "#FEE2E2", color: "#B91C1C", border: "1px solid #FCA5A5", padding: "8px 12px", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", fontSize: "0.84rem" }}>
+            <button type="button" onClick={onRemoveDistrictData} className="storage-btn storage-btn-danger-soft">
               🗑️ Remove District Data
             </button>
           )}
-          <button onClick={handleCreateFolder} style={{ backgroundColor: "#0B1E3D", color: "#FFD700", border: "none", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <button type="button" onClick={handleCreateFolder} className="storage-btn storage-btn-navy">
             📁+ New Folder
           </button>
 
-          <label style={{ backgroundColor: "#16A34A", color: "#fff", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <label className="storage-btn storage-btn-green">
             ⬆️ Upload Files
-            <input type="file" multiple onChange={handleUploadFiles} style={{ display: "none" }} />
+            <input type="file" multiple onChange={handleUploadFiles} className="storage-hidden-input" />
           </label>
 
-          <label style={{ backgroundColor: "#0284C7", color: "#fff", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <label className="storage-btn storage-btn-sky">
             📊 Upload Master Excel File
-            <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} style={{ display: "none" }} />
+            <input type="file" accept=".xlsx,.xls" onChange={handleMasterExcelUpload} className="storage-hidden-input" />
           </label>
 
-          <label style={{ backgroundColor: "#7C3AED", color: "#fff", padding: "8px 14px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <label className="storage-btn storage-btn-purple">
             🔄 Restore Backup (.json)
-            <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} style={{ display: "none" }} />
+            <input type="file" accept=".json,application/json" onChange={handleRestoreBackup} className="storage-hidden-input" />
           </label>
 
-          <button onClick={() => handleCreateNewDoc("EXCEL")} style={{ backgroundColor: "#059669", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <button type="button" onClick={() => handleCreateNewDoc("EXCEL")} className="storage-btn storage-btn-emerald">
             📊+ New Excel
           </button>
 
-          <button onClick={() => handleCreateNewDoc("WORD")} style={{ backgroundColor: "#2563EB", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <button type="button" onClick={() => handleCreateNewDoc("WORD")} className="storage-btn storage-btn-blue">
             📝+ New Word
           </button>
 
-          <button onClick={handleSaveLivePortalBackup} style={{ backgroundColor: "#7C3AED", color: "#fff", border: "none", padding: "8px 12px", borderRadius: "8px", fontWeight: "bold", cursor: "pointer", fontSize: "0.84rem" }}>
+          <button type="button" onClick={handleSaveLivePortalBackup} className="storage-btn storage-btn-purple">
             💾 Save Live Data Here
           </button>
         </div>
       </div>
 
-      {/* Inbuilt Hindi Font Installer पट्टी */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", backgroundColor: "#FEF3C7", border: "1px solid #F59E0B", padding: "10px 14px", borderRadius: "10px", marginBottom: "12px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <strong style={{ color: "#92400E" }}>🔤 Inbuilt Hindi Font Installer:</strong>
-          <select value={fontChoice} onChange={(e) => setFontChoice(e.target.value)} style={{ padding: "5px 8px", borderRadius: "6px", border: "1px solid #D97706" }}>
+      {/* [FONTS] Inbuilt Hindi Font Installer Banner (हिंदी फ़ॉन्ट इंस्टॉलर पट्टी) */}
+      <div className="storage-font-banner">
+        <div className="storage-font-controls">
+          <strong className="storage-font-title">🔤 Inbuilt Hindi Font Installer:</strong>
+          <select value={fontChoice} onChange={(e) => setFontChoice(e.target.value)} className="storage-font-select">
             <option value="DevLys 010">DevLys 010</option>
             <option value="Kruti Dev 010">Kruti Dev 010</option>
             <option value="Mangal">Mangal (Unicode)</option>
           </select>
-          <label style={{ backgroundColor: "#D97706", color: "#fff", padding: "6px 12px", borderRadius: "6px", fontWeight: "bold", cursor: "pointer", fontSize: "0.82rem" }}>
+          <label className="storage-font-install-btn">
             ➕ .TTF फ़ॉन्ट फ़ाइल चुनें (Install)
-            <input type="file" accept=".ttf,.otf,.woff,.woff2" onChange={handleFontInstall} style={{ display: "none" }} />
+            <input type="file" accept=".ttf,.otf,.woff,.woff2" onChange={handleFontInstall} className="storage-hidden-input" />
           </label>
         </div>
 
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+        <div className="storage-font-chips">
           {installedFonts.map((f) => (
-            <span key={f.fontName} style={{ backgroundColor: "#fff", border: "1px solid #D97706", padding: "3px 10px", borderRadius: "12px", fontSize: "0.78rem", fontWeight: "bold", color: "#78350F" }}>
+            <span key={f.fontName} className="storage-font-chip">
               ✔ {f.fontName}
               <button
+                type="button"
                 onClick={async () => {
                   await removeInstalledFont(f.fontName);
                   setInstalledFonts(await loadAllInstalledFonts());
                 }}
-                style={{ marginLeft: "6px", border: "none", background: "none", color: "#DC2626", cursor: "pointer", fontWeight: "bold" }}
+                className="storage-font-remove-btn"
               >
                 ✕
               </button>
@@ -448,15 +450,15 @@ export default function StorageVaultModule({
         </div>
       </div>
 
-      {/* Breadcrumb Navigation */}
-      <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", backgroundColor: "#F8FAFC", padding: "8px 12px", borderRadius: "8px", marginBottom: "14px", fontSize: "0.9rem" }}>
-        <span onClick={() => { setCurrentFolderId("ROOT"); setSearch(""); }} style={{ cursor: "pointer", fontWeight: "bold", color: "#1D63DC" }}>
+      {/* [NAVIGATION] Breadcrumb Navigation (फ़ोल्डर पाथ नेविगेशन) */}
+      <div className="storage-breadcrumbs">
+        <span onClick={() => { setCurrentFolderId("ROOT"); setSearch(""); }} className="storage-crumb-link">
           🗄️ {activeProfile} Drive
         </span>
         {breadcrumbs.map((b) => (
           <React.Fragment key={b.id}>
-            <span style={{ color: "#94A3B8" }}>/</span>
-            <span onClick={() => { setCurrentFolderId(b.id); setSearch(""); }} style={{ cursor: "pointer", fontWeight: "bold", color: "#1D63DC" }}>
+            <span className="storage-crumb-sep">/</span>
+            <span onClick={() => { setCurrentFolderId(b.id); setSearch(""); }} className="storage-crumb-link">
               {b.name}
             </span>
           </React.Fragment>
@@ -464,49 +466,53 @@ export default function StorageVaultModule({
       </div>
 
       {visibleItems.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", color: "#64748B", border: "2px dashed #CBD5E1", borderRadius: "12px" }}>
-          <div style={{ fontSize: "2.5rem", marginBottom: "8px" }}>📂</div>
-          <div style={{ fontWeight: "bold" }}>यह फोल्डर खाली है</div>
+        <div className="storage-empty-state">
+          <div className="storage-empty-icon">📂</div>
+          <div className="storage-empty-title">यह फोल्डर खाली है</div>
           <small>ऊपर से नया फोल्डर बनाएं या Excel, Word, PDF फ़ाइलें अपलोड करें।</small>
         </div>
       ) : viewMode === "GRID" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "14px" }}>
+        <div className="storage-grid">
           {visibleItems.map((item) => {
             const isExcel = item.kind === "FILE" && (item.name.toLowerCase().endsWith(".xlsx") || item.name.toLowerCase().endsWith(".xls"));
+            const isFolder = item.kind === "FOLDER";
             return (
               <div
                 key={item.id}
-                onDoubleClick={() => item.kind === "FOLDER" && setCurrentFolderId(item.id)}
-                style={{ backgroundColor: item.kind === "FOLDER" ? "#EFF6FF" : "#FFFFFF", border: "1px solid #CBD5E1", borderRadius: "12px", padding: "14px", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 2px 5px rgba(15,23,42,0.04)" }}
+                onDoubleClick={() => isFolder && setCurrentFolderId(item.id)}
+                className={`storage-card${isFolder ? " is-folder" : ""}`}
               >
-                <div onClick={() => item.kind === "FOLDER" && setCurrentFolderId(item.id)} style={{ cursor: item.kind === "FOLDER" ? "pointer" : "default", textAlign: "center" }}>
-                  <div style={{ fontSize: "2.4rem", marginBottom: "6px" }}>{getFileIcon(item)}</div>
-                  <div style={{ fontWeight: "bold", fontSize: "0.9rem", color: "#0F172A", wordBreak: "break-word" }}>{item.name}</div>
-                  <div style={{ fontSize: "0.74rem", color: "#64748B", marginTop: "4px" }}>
-                    {item.kind === "FOLDER" ? "Folder • क्लिक करके खोलें" : `${item.sizeKB} KB • ${dateOnly(item.updatedAt)}`}
+                <div
+                  onClick={() => isFolder && setCurrentFolderId(item.id)}
+                  className={`storage-card-body${isFolder ? " is-folder" : ""}`}
+                >
+                  <div className="storage-card-icon">{getFileIcon(item)}</div>
+                  <div className="storage-card-name">{item.name}</div>
+                  <div className="storage-card-meta">
+                    {isFolder ? "Folder • क्लिक करके खोलें" : `${item.sizeKB} KB • ${dateOnly(item.updatedAt)}`}
                   </div>
                 </div>
 
-                <div style={{ display: "flex", justifyContent: "center", gap: "6px", marginTop: "12px", paddingTop: "8px", borderTop: "1px solid #E2E8F0", flexWrap: "wrap" }}>
-                  {item.kind === "FOLDER" && (
-                    <button onClick={() => setCurrentFolderId(item.id)} style={{ backgroundColor: "#1D63DC", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "5px", fontSize: "0.75rem", cursor: "pointer", fontWeight: "bold" }}>
+                <div className="storage-card-actions">
+                  {isFolder && (
+                    <button type="button" onClick={() => setCurrentFolderId(item.id)} className="storage-mini-btn storage-mini-btn-blue">
                       Open
                     </button>
                   )}
                   {isExcel && onLoadExcelBlob && (
-                    <button onClick={() => onLoadExcelBlob(item.data, item.name)} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "5px", fontSize: "0.75rem", cursor: "pointer", fontWeight: "bold" }}>
+                    <button type="button" onClick={() => onLoadExcelBlob(item.data, item.name)} className="storage-mini-btn storage-mini-btn-green">
                       ⚡ Use Data
                     </button>
                   )}
                   {item.kind === "FILE" && (
-                    <button onClick={() => handleDownload(item)} title="Download" style={{ backgroundColor: "#0284C7", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "5px", fontSize: "0.75rem", cursor: "pointer" }}>
+                    <button type="button" onClick={() => handleDownload(item)} title="Download" className="storage-mini-btn storage-mini-btn-sky">
                       📥 Download
                     </button>
                   )}
-                  <button onClick={() => handleRename(item)} title="Rename" style={{ backgroundColor: "#E2E8F0", color: "#1E293B", border: "none", padding: "4px 8px", borderRadius: "5px", fontSize: "0.75rem", cursor: "pointer" }}>
+                  <button type="button" onClick={() => handleRename(item)} title="Rename" className="storage-mini-btn storage-mini-btn-muted">
                     ✏️
                   </button>
-                  <button onClick={() => handleDelete(item)} title="Delete" style={{ backgroundColor: "#FEE2E2", color: "#DC2626", border: "none", padding: "4px 8px", borderRadius: "5px", fontSize: "0.75rem", cursor: "pointer" }}>
+                  <button type="button" onClick={() => handleDelete(item)} title="Delete" className="storage-mini-btn storage-mini-btn-danger">
                     🗑️
                   </button>
                 </div>
@@ -515,37 +521,41 @@ export default function StorageVaultModule({
           })}
         </div>
       ) : (
-        <div className="table-responsive-box" style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.88rem" }}>
+        <div className="module-table-wrap table-responsive-box">
+          <table className="module-table">
             <thead>
-              <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-                <th style={{ padding: "8px", textAlign: "left" }}>नाम (Name)</th>
-                <th style={{ padding: "8px" }}>प्रकार</th>
-                <th style={{ padding: "8px" }}>साइज़</th>
-                <th style={{ padding: "8px" }}>अपडेट दिनांक</th>
-                <th style={{ padding: "8px" }}>कार्यवाही</th>
+              <tr>
+                <th className="module-cell-left">नाम (Name)</th>
+                <th>प्रकार</th>
+                <th>साइज़</th>
+                <th>अपडेट दिनांक</th>
+                <th>कार्यवाही</th>
               </tr>
             </thead>
             <tbody>
               {visibleItems.map((item) => {
                 const isExcel = item.kind === "FILE" && (item.name.toLowerCase().endsWith(".xlsx") || item.name.toLowerCase().endsWith(".xls"));
+                const isFolder = item.kind === "FOLDER";
                 return (
-                  <tr key={item.id} style={{ borderBottom: "1px solid #E2E8F0" }}>
-                    <td onClick={() => item.kind === "FOLDER" && setCurrentFolderId(item.id)} style={{ padding: "8px", fontWeight: "bold", cursor: item.kind === "FOLDER" ? "pointer" : "default", color: item.kind === "FOLDER" ? "#1D63DC" : "#0F172A" }}>
+                  <tr key={item.id}>
+                    <td
+                      onClick={() => isFolder && setCurrentFolderId(item.id)}
+                      className={`storage-list-name${isFolder ? " is-folder" : ""}`}
+                    >
                       {getFileIcon(item)} &nbsp; {item.name}
                     </td>
-                    <td style={{ padding: "8px", textAlign: "center" }}>{item.kind}</td>
-                    <td style={{ padding: "8px", textAlign: "center" }}>{item.kind === "FOLDER" ? "-" : `${item.sizeKB} KB`}</td>
-                    <td style={{ padding: "8px", textAlign: "center" }}>{dateOnly(item.updatedAt)}</td>
-                    <td style={{ padding: "8px", textAlign: "center", whiteSpace: "nowrap" }}>
+                    <td className="module-cell-center">{item.kind}</td>
+                    <td className="module-cell-center module-cell-tnr">{isFolder ? "-" : `${item.sizeKB} KB`}</td>
+                    <td className="module-cell-center module-cell-tnr">{dateOnly(item.updatedAt)}</td>
+                    <td className="module-cell-center storage-list-actions">
                       {isExcel && onLoadExcelBlob && (
-                        <button onClick={() => onLoadExcelBlob(item.data, item.name)} style={{ backgroundColor: "#16A34A", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "5px", marginRight: "5px", cursor: "pointer", fontSize: "0.78rem" }}>⚡ Use Data</button>
+                        <button type="button" onClick={() => onLoadExcelBlob(item.data, item.name)} className="storage-mini-btn storage-mini-btn-green">⚡ Use Data</button>
                       )}
                       {item.kind === "FILE" && (
-                        <button onClick={() => handleDownload(item)} style={{ backgroundColor: "#0284C7", color: "#fff", border: "none", padding: "4px 8px", borderRadius: "5px", marginRight: "5px", cursor: "pointer", fontSize: "0.78rem" }}>📥 Download</button>
+                        <button type="button" onClick={() => handleDownload(item)} className="storage-mini-btn storage-mini-btn-sky">📥 Download</button>
                       )}
-                      <button onClick={() => handleRename(item)} style={{ backgroundColor: "#E2E8F0", border: "none", padding: "4px 8px", borderRadius: "5px", marginRight: "5px", cursor: "pointer", fontSize: "0.78rem" }}>✏️</button>
-                      <button onClick={() => handleDelete(item)} style={{ backgroundColor: "#FEE2E2", color: "#DC2626", border: "none", padding: "4px 8px", borderRadius: "5px", cursor: "pointer", fontSize: "0.78rem" }}>🗑️</button>
+                      <button type="button" onClick={() => handleRename(item)} className="storage-mini-btn storage-mini-btn-muted">✏️</button>
+                      <button type="button" onClick={() => handleDelete(item)} className="storage-mini-btn storage-mini-btn-danger">🗑️</button>
                     </td>
                   </tr>
                 );

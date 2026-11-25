@@ -157,6 +157,14 @@
   font-weight: bold;
 }
 
+.module-cell-tnr {
+  font-family: "Times New Roman", Times, serif;
+}
+
+.module-cell-nowrap {
+  white-space: nowrap;
+}
+
 .module-cell-accent-blue {
   font-weight: bold;
   color: #1D63DC;

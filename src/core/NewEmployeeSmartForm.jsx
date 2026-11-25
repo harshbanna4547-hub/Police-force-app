@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 import { OFFICE_CO_PS_LIST, PS_CHOWKI_MAP } from "../data/officeUnits";
-import { CHITTOR_BASE_GEO, RAJ_ALL_DISTRICTS_DEVLYS, RAJASTHAN_BLOCK_HOME_PS, RAJASTHAN_PINCODE_GEO, buildRajasthanGeoIndex, cleanDev, matchStandardDistrict } from "../data/rajasthanGeo";
+import { CHITTOR_BASE_GEO, RAJASTHAN_BLOCK_HOME_PS, RAJASTHAN_PINCODE_GEO, buildRajasthanGeoIndex, cleanDev, matchStandardDistrict } from "../data/rajasthanGeo";
 import { RAJASTHAN_MASTER_DISTRICTS, RAJASTHAN_MASTER_GEO, getRajasthanDistrictName, getRajasthanPincodeLocations } from "../data/rajasthanMasterGeo";
-import { devToHindi } from "../utils/devlysConverter";
+import { isDevlysText } from "./isDevlysText";
 import { uniqueGeoNames } from "../utils/indiaGeoService";
+import "./NewEmployeeSmartForm.css";
 
 const CADER_OPTIONS = ["SP", "ASP", "DySP", "CI", "SI", "ASI", "HC", "FC", "FC(DR)", "Sr. Asst", "Jr. Asst", "Class-IV"];
 const EDUCATION_OPTIONS = ["10th", "12th", "BA", "B.Sc", "B.Com", "B.A B.Ed", "B.Sc B.Ed", "MA", "M.Sc", "M.Com", "LLB", "B.Tech", "Other"];
@@ -92,21 +93,15 @@ function escapeHtml(value) {
   })[char]);
 }
 
-const fieldStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "9px 10px",
-  marginTop: "5px",
-  border: "1px solid #CBD5E1",
-  borderRadius: "7px",
-  background: "#fff",
-  fontSize: "0.92rem"
-};
-const labelStyle = { display: "block", color: "#334155", fontWeight: 700, fontSize: "0.84rem" };
-const gridStyle = { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "12px" };
-const sectionStyle = { marginBottom: "14px", padding: "14px", border: "1px solid #E2E8F0", borderRadius: "10px", background: "#fff" };
-const inputFont = { fontFamily: "'Times New Roman', Times, serif" };
-const hindiInputFont = { fontFamily: "'DevLys 010', 'Kruti Dev 010', sans-serif", fontSize: "1.1rem" };
+// [PRINT HELPER] प्रिंट पर्ची में DevLys 010 और Times New Roman फ़ॉन्ट सुरक्षित रखें
+function formatPrintCell(value) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "-";
+  if (isDevlysText(raw)) {
+    return `<span style="font-family:'DevLys 010',sans-serif;font-size:17px">${escapeHtml(raw)}</span>`;
+  }
+  return `<span style="font-family:'Times New Roman',Times,serif">${escapeHtml(raw)}</span>`;
+}
 
 function normalizeGeoName(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -235,16 +230,7 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     ...Array.from({ length: 1750 }, (_, index) => String(index + 1)).filter((belt) => !usedBelts.has(belt)),
     nextAvailableBelt
   ]);
-  const legacyGeoValues = new Set([
-    ...RAJ_ALL_DISTRICTS_DEVLYS,
-    ...districtGeo.VILLAGES,
-    ...districtGeo.TAHSIL,
-    ...districtGeo.BLOCK,
-    ...districtGeo.PS,
-    ...districtRows.flatMap((row) => [row.TAHSIL, row.CIRCLE, row.BLOCK, row.VILLAGE, row["VILLAGE "], row["HOME PS"], row["POLICE STATION"]])
-  ].filter(Boolean));
-  const geoLabel = (value) => districtMaster?.villages.find((location) => location.value === value)?.label ||
-    (legacyGeoValues.has(value) ? devToHindi(value) : value);
+  const geoLabel = (value) => districtMaster?.villages.find((location) => location.value === value)?.label || value;
 
   useEffect(() => {
     const pincode = String(form.PINCODE || "");
@@ -289,18 +275,27 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       "BELT NO": needsBelt ? (prev["BELT NO"] || nextAvailableBelt) : ""
     }));
   };
-  const field = (label, key, type = "text", options = null, extraStyle = {}) => (
-    <label key={key} style={labelStyle}>
+  const field = (label, key, type = "text", options = null, isDevlys = false) => (
+    <label key={key} className="smart-form-label">
       {label}
       {options ? (
-        <select value={form[key]} onChange={(event) => setField(key, event.target.value)} style={{ ...fieldStyle, ...inputFont, ...extraStyle }}>
+        <select
+          value={form[key]}
+          onChange={(event) => setField(key, event.target.value)}
+          className={`smart-form-control${isDevlys ? " smart-form-control-devlys" : ""}`}
+        >
           <option value="">चुनें</option>
           {options.map((option) => (
             <option key={option.value ?? option} value={option.value ?? option}>{option.label ?? option}</option>
           ))}
         </select>
       ) : (
-        <input type={type} value={form[key]} onChange={(event) => setField(key, event.target.value)} style={{ ...fieldStyle, ...inputFont, ...extraStyle }} />
+        <input
+          type={type}
+          value={form[key]}
+          onChange={(event) => setField(key, event.target.value)}
+          className={`smart-form-control${isDevlys ? " smart-form-control-devlys" : ""}`}
+        />
       )}
     </label>
   );
@@ -439,10 +434,11 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     XLSX.writeFile(workbook, "Master_Employee_Sample.xlsx");
   };
 
+  // [PRINT] नवीन कर्मचारी विवरण पर्ची प्रिंट (DevLys 010 + Times New Roman फ़ॉन्ट सहित)
   const printDetailSlip = () => {
     const rows = [
-      ["कर्मचारी का नाम", devToHindi(form.NAME)],
-      ["पिता का नाम", devToHindi(form["FATHER NAME"])],
+      ["कर्मचारी का नाम", form.NAME],
+      ["पिता का नाम", form["FATHER NAME"]],
       ["पद / संवर्ग", form.CADER],
       ["बेल्ट नं.", form["BELT NO"]],
       ["आगमन प्रकार", form.entryType === "NEW_JOINING" ? "नवीन भर्ती" : "अन्य जिले/इकाई से स्थानांतरण"],
@@ -452,8 +448,8 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       ["जन्म तिथि", form["DATE OF BIRTH"]],
       ["राज्य / जिला / तहसील / ब्लॉक", `${form.STATE} / ${geoLabel(form.DISTRICT)} / ${geoLabel(form.TAHSIL)} / ${geoLabel(form.BLOCK)}`],
       ["पिनकोड", form.PINCODE],
-      ["गाँव / गृह थाना", `${devToHindi(form.VILLAGE)} / ${devToHindi(form["HOME PS"])}`],
-      ["वर्तमान पदस्थापन", devToHindi(form.POSTING)],
+      ["गाँव / गृह थाना", `${form.VILLAGE || "-"} / ${form["HOME PS"] || "-"}`],
+      ["वर्तमान पदस्थापन", form.POSTING],
       ["पदस्थापन DOB नं.", form["POSTING DOB NO"]],
       ["प्रथम नियुक्ति तिथि", form["DATE OF JOINING"]],
       ["स्थायीकरण तिथि", form["CONFIRMATION DATE"]],
@@ -465,8 +461,8 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
       alert("प्रिंट विंडो नहीं खुली। कृपया इस साइट के pop-up की अनुमति दें।");
       return;
     }
-    const tableRows = rows.map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${escapeHtml(value || "-")}</td></tr>`).join("");
-    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>कर्मचारी विवरण पर्ची</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#172033}h1{text-align:center;font-size:20px;margin-bottom:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #64748b;padding:9px;text-align:left}th{width:34%;background:#eff6ff}@media print{body{padding:0}}</style></head><body><h1>कर्मचारी विवरण पर्ची — ${escapeHtml(activeProfile || "चित्तौड़गढ़")}</h1><table>${tableRows}</table><script>window.onload=()=>window.print()</script></body></html>`);
+    const tableRows = rows.map(([label, value]) => `<tr><th>${escapeHtml(label)}</th><td>${formatPrintCell(value)}</td></tr>`).join("");
+    printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>कर्मचारी विवरण पर्ची</title><style>@font-face{font-family:'DevLys 010';src:url('/fonts/DevLys010.ttf') format('truetype');font-display:swap;}body{font-family:'Times New Roman',Arial,sans-serif;padding:28px;color:#172033}h1{text-align:center;font-size:20px;margin-bottom:24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #64748b;padding:9px;text-align:left}th{width:34%;background:#eff6ff}@media print{body{padding:0}}</style></head><body><h1>कर्मचारी विवरण पर्ची — ${escapeHtml(activeProfile || "चित्तौड़गढ़")}</h1><table>${tableRows}</table><script>window.onload=()=>window.print()</script></body></html>`);
     printWindow.document.close();
   };
 
@@ -512,15 +508,16 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
     <div
       role="presentation"
       onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: 1350, background: "rgba(15,23,42,0.68)", display: "flex", alignItems: "center", justifyContent: "center", padding: "12px" }}
+      className="smart-form-backdrop"
     >
-      <section style={{ width: "100%", maxWidth: "1240px", maxHeight: "96vh", overflowY: "auto", background: "#F1F5F9", borderRadius: "14px", boxShadow: "0 25px 70px rgba(0,0,0,0.32)" }}>
-        <header style={{ position: "sticky", top: 0, zIndex: 2, padding: "15px 20px", background: "linear-gradient(100deg,#1456B8,#1D63DC)", color: "#fff", borderRadius: "14px 14px 0 0", fontSize: "1.08rem", fontWeight: 800 }}>
+      <section className="smart-form-modal">
+        <header className="smart-form-header">
           ➕ नवीन अधिकारी / कर्मचारी प्रविष्टि फॉर्म
         </header>
 
-        <div style={{ padding: "16px" }}>
-          <nav aria-label="कर्मचारी विवरण टैब" style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "14px" }}>
+        <div className="smart-form-body">
+          {/* [TABS] Main Form Sections (प्रविष्टि फॉर्म के मुख्य विभाग टैब) */}
+          <nav aria-label="कर्मचारी विवरण टैब" className="smart-form-tabs">
             {[
               ["PERSONAL", "1. Personal Details"],
               ["SERVICE", "2. Service Details"],
@@ -538,32 +535,34 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                   if (id === "PUNISHMENT") setActiveTab("SAJA");
                 }}
                 aria-pressed={formTab === id}
-                style={{ padding: "8px 11px", border: "1px solid #CBD5E1", borderRadius: "7px", background: formTab === id ? "#1D63DC" : "#F8FAFC", color: formTab === id ? "#fff" : "#334155", fontWeight: "bold", cursor: "pointer" }}
+                className={`smart-form-tab-btn${formTab === id ? " is-active" : ""}`}
               >
                 {label}
               </button>
             ))}
           </nav>
+
+          {/* [SECTION 1] Post & District Joining (पद एवं जिले में आगमन विवरण) */}
           {formTab === "SERVICE" && (
-          <section style={sectionStyle}>
-            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 1: पद एवं जिले में आगमन विवरण (Post &amp; District Joining Details)</h3>
-            <div style={gridStyle}>
-              <fieldset style={{ margin: 0, border: "1px solid #CBD5E1", borderRadius: "7px", padding: "8px 10px" }}>
-                <legend style={{ fontSize: "0.82rem", fontWeight: "bold", color: "#334155" }}>आगमन प्रकार (Entry Type)</legend>
-                <label style={{ display: "block", margin: "4px 0", cursor: "pointer" }}>
+          <section className="smart-form-section">
+            <h3 className="smart-form-section-title">खंड 1: पद एवं जिले में आगमन विवरण (Post &amp; District Joining Details)</h3>
+            <div className="smart-form-grid">
+              <fieldset className="smart-form-fieldset">
+                <legend className="smart-form-legend">आगमन प्रकार (Entry Type)</legend>
+                <label className="smart-form-radio-option">
                   <input type="radio" name="entryType" checked={form.entryType === "NEW_JOINING"} onChange={() => setField("entryType", "NEW_JOINING")} /> नवीन भर्ती (New Joining)
                 </label>
-                <label style={{ display: "block", margin: "4px 0", cursor: "pointer" }}>
+                <label className="smart-form-radio-option">
                   <input type="radio" name="entryType" checked={form.entryType === "TRANSFER"} onChange={() => setField("entryType", "TRANSFER")} /> अन्य जिले/इकाई से स्थानांतरण (Transferred Employee)
                 </label>
               </fieldset>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 पद (CADER)
-                <select value={form.CADER} onChange={(event) => setCader(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                <select value={form.CADER} onChange={(event) => setCader(event.target.value)} className="smart-form-control">
                   {CADER_OPTIONS.map((cader) => <option key={cader} value={cader}>{cader}</option>)}
                 </select>
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 खाली बेल्ट नं. (HC/FC साझा) {beltEnabled ? `(सुझाव: ${nextAvailableBelt})` : "(अधिकारी पद पर वैकल्पिक)"}
                 <input
                   type="text"
@@ -572,10 +571,10 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                   value={form["BELT NO"]}
                   onChange={(event) => setField("BELT NO", event.target.value.replace(/[^\d]/g, ""))}
                   placeholder={beltEnabled ? "बेल्ट नं. चुनें / लिखें" : "लागू नहीं"}
-                  style={{ ...fieldStyle, ...inputFont, background: beltEnabled ? "#fff" : "#E2E8F0" }}
+                  className="smart-form-control"
                 />
                 <datalist id="smart-employee-belts">{availableBelts.map((belt) => <option key={belt} value={belt} />)}</datalist>
-                <small style={{ display: "block", color: "#15803D", marginTop: "4px" }}>उपलब्ध खाली बेल्ट नं.: {nextAvailableBelt}</small>
+                <small className="smart-form-hint-success">उपलब्ध खाली बेल्ट नं.: {nextAvailableBelt}</small>
               </label>
               {field("जिले में आगमन आदेश नं.", "DISTRICT JOINING ORDER NO")}
               {field("आगमन आदेश दिनांक (DD-MM-YYYY)", "DISTRICT JOINING ORDER DATE")}
@@ -583,17 +582,18 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
           </section>
           )}
 
+          {/* [SECTION 2 & 3] Personal & Permanent Address Details (व्यक्तिगत एवं स्थायी पता) */}
           {formTab === "PERSONAL" && (
           <>
-          <section style={sectionStyle}>
-            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 2: व्यक्तिगत विवरण (Personal Details)</h3>
-            <div style={gridStyle}>
-              {field("कर्मचारी का नाम (DevLys 010)", "NAME", "text", null, hindiInputFont)}
-              {field("पिता का नाम (DevLys 010)", "FATHER NAME", "text", null, hindiInputFont)}
+          <section className="smart-form-section">
+            <h3 className="smart-form-section-title">खंड 2: व्यक्तिगत विवरण (Personal Details)</h3>
+            <div className="smart-form-grid">
+              {field("कर्मचारी का नाम (DevLys 010)", "NAME", "text", null, true)}
+              {field("पिता का नाम (DevLys 010)", "FATHER NAME", "text", null, true)}
               {field("शैक्षणिक योग्यता (EDUCATION)", "EDUCATION", "text", EDUCATION_OPTIONS)}
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 मोबाइल नंबर (MOBILE NO)
-                <input type="tel" inputMode="numeric" maxLength="10" value={form["MOBILE NO 1"]} onChange={(event) => setField("MOBILE NO 1", event.target.value.replace(/\D/g, "").slice(0, 10))} style={{ ...fieldStyle, ...inputFont }} />
+                <input type="tel" inputMode="numeric" maxLength="10" value={form["MOBILE NO 1"]} onChange={(event) => setField("MOBILE NO 1", event.target.value.replace(/\D/g, "").slice(0, 10))} className="smart-form-control" />
               </label>
               {field("जन्म तिथि (DOB - DD-MM-YYYY)", "DATE OF BIRTH")}
             </div>
@@ -602,10 +602,10 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
           )}
 
           {formTab === "PERSONAL" && (
-          <section style={sectionStyle}>
-            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 3: स्थायी पता विवरण (पिनकोड → राज्य → जिला → तहसील → ब्लॉक → गाँव → स्वतः थाना)</h3>
-            <div style={gridStyle}>
-              <label style={labelStyle}>
+          <section className="smart-form-section">
+            <h3 className="smart-form-section-title">खंड 3: स्थायी पता विवरण (पिनकोड → राज्य → जिला → तहसील → ब्लॉक → गाँव → स्वतः थाना)</h3>
+            <div className="smart-form-grid">
+              <label className="smart-form-label">
                 पिनकोड (PINCODE - 6 अंक)
                 <input
                   type="text"
@@ -619,24 +619,24 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                     if (pincode.length < 6) setGeoLookupStatus("");
                   }}
                   placeholder="जैसे 312001"
-                  style={{ ...fieldStyle, ...inputFont }}
+                  className="smart-form-control"
                 />
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 राज्य / केंद्र शासित प्रदेश (STATE)
-                <select value={form.STATE === "Rajasthan" ? "Rajasthan" : "OTHER"} onChange={(event) => selectState(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                <select value={form.STATE === "Rajasthan" ? "Rajasthan" : "OTHER"} onChange={(event) => selectState(event.target.value)} className="smart-form-control">
                   <option value="Rajasthan">राजस्थान</option>
                   <option value="OTHER">अन्य राज्य लिखें</option>
                 </select>
                 {form.STATE !== "Rajasthan" && (
-                  <input type="text" value={form.STATE} onChange={(event) => setField("STATE", event.target.value)} placeholder="राज्य का नाम लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.STATE} onChange={(event) => setField("STATE", event.target.value)} placeholder="राज्य का नाम लिखें" className="smart-form-control" />
                 )}
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 जिला (DISTRICT)
                 {form.STATE === "Rajasthan" ? (
                   <>
-                    <select value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                    <select value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} className="smart-form-control">
                       <option value="">जिला चुनें</option>
                       {form.DISTRICT && !districtNames.includes(form.DISTRICT) &&
                         <option value={form.DISTRICT}>{form.DISTRICT}</option>}
@@ -650,95 +650,100 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
                       value={districtNames.includes(form.DISTRICT) ? "" : form.DISTRICT}
                       onChange={(event) => selectDistrict(getRajasthanDistrictName(event.target.value) || event.target.value)}
                       placeholder="सूची में न हो तो जिला लिखें"
-                      style={{ ...fieldStyle, ...inputFont }}
+                      className="smart-form-control"
                     />
                     <datalist id="rajasthan-districts">
                       {RAJASTHAN_MASTER_DISTRICTS.map((district) => <option key={district.value} value={district.value} label={district.label} />)}
                     </datalist>
                   </>
                 ) : (
-                  <input type="text" value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} placeholder="जिला लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.DISTRICT} onChange={(event) => selectDistrict(event.target.value)} placeholder="जिला लिखें" className="smart-form-control" />
                 )}
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 तहसील (TAHSIL)
                 {tahsilOptions.length ? (
                   <>
-                    <select value={form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
+                    <select value={form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} className="smart-form-control">
                       <option value="">तहसील चुनें</option>
                       {form.TAHSIL && !tahsilOptions.includes(form.TAHSIL) && <option value={form.TAHSIL}>{geoLabel(form.TAHSIL)}</option>}
                       {tahsilOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
                     </select>
-                    <input type="text" list="rajasthan-tahsil-options" value={tahsilOptions.includes(form.TAHSIL) ? "" : form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} placeholder="सूची में न हो तो तहसील लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <input type="text" list="rajasthan-tahsil-options" value={tahsilOptions.includes(form.TAHSIL) ? "" : form.TAHSIL} onChange={(event) => setForm((prev) => ({ ...prev, TAHSIL: event.target.value, BLOCK: "", VILLAGE: "", "HOME PS": "" }))} placeholder="सूची में न हो तो तहसील लिखें" className="smart-form-control" />
                     <datalist id="rajasthan-tahsil-options">{tahsilOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
                   </>
                 ) : (
-                  <input type="text" value={form.TAHSIL} onChange={(event) => setField("TAHSIL", event.target.value)} placeholder="तहसील लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.TAHSIL} onChange={(event) => setField("TAHSIL", event.target.value)} placeholder="तहसील लिखें" className="smart-form-control" />
                 )}
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 ब्लॉक (BLOCK)
                 {blockOptions.length ? (
                   <>
-                    <select value={form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} style={{ ...fieldStyle, ...inputFont }}>
+                    <select value={form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} className="smart-form-control">
                       <option value="">ब्लॉक चुनें</option>
                       {form.BLOCK && !blockOptions.includes(form.BLOCK) && <option value={form.BLOCK}>{geoLabel(form.BLOCK)}</option>}
                       {blockOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
                     </select>
-                    <input type="text" list="rajasthan-block-options" value={blockOptions.includes(form.BLOCK) ? "" : form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} placeholder="सूची में न हो तो ब्लॉक लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <input type="text" list="rajasthan-block-options" value={blockOptions.includes(form.BLOCK) ? "" : form.BLOCK} onChange={(event) => setForm((prev) => ({ ...prev, BLOCK: event.target.value, VILLAGE: "", "HOME PS": "" }))} placeholder="सूची में न हो तो ब्लॉक लिखें" className="smart-form-control" />
                     <datalist id="rajasthan-block-options">{blockOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
                   </>
                 ) : (
-                  <input type="text" value={form.BLOCK} onChange={(event) => setField("BLOCK", event.target.value)} placeholder="ब्लॉक लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.BLOCK} onChange={(event) => setField("BLOCK", event.target.value)} placeholder="ब्लॉक लिखें" className="smart-form-control" />
                 )}
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 गाँव / क्षेत्र / डाकघर (VILLAGE / POST OFFICE)
                 {villageOptions.length ? (
                   <>
-                    <select value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                    <select value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} className="smart-form-control">
                       <option value="">गाँव / डाकघर चुनें</option>
                       {form.VILLAGE && !villageOptions.includes(form.VILLAGE) && <option value={form.VILLAGE}>{geoLabel(form.VILLAGE)}</option>}
                       {villageOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
                     </select>
-                    <input type="text" list="rajasthan-village-options" value={villageOptions.includes(form.VILLAGE) ? "" : form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} placeholder="सूची में न हो तो गाँव लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <input type="text" list="rajasthan-village-options" value={villageOptions.includes(form.VILLAGE) ? "" : form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} placeholder="सूची में न हो तो गाँव लिखें" className="smart-form-control" />
                     <datalist id="rajasthan-village-options">{villageOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
                   </>
                 ) : (
-                  <input type="text" value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} placeholder="गाँव लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form.VILLAGE} onChange={(event) => selectVillage(event.target.value)} placeholder="गाँव लिखें" className="smart-form-control" />
                 )}
               </label>
-              <label style={labelStyle}>
+              <label className="smart-form-label">
                 गृह थाना (HOME PS - स्वतः चयन)
                 {homePsOptions.length ? (
                   <>
-                    <select value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} style={{ ...fieldStyle, ...inputFont }}>
+                    <select value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} className="smart-form-control">
                       <option value="">थाना चुनें</option>
                       {form["HOME PS"] && !homePsOptions.includes(form["HOME PS"]) && <option value={form["HOME PS"]}>{geoLabel(form["HOME PS"])}</option>}
                       {homePsOptions.map((option) => <option key={option} value={option}>{geoLabel(option)}</option>)}
                     </select>
-                    <input type="text" list="rajasthan-ps-options" value={homePsOptions.includes(form["HOME PS"]) ? "" : form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} placeholder="सूची में न हो तो थाना लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                    <input type="text" list="rajasthan-ps-options" value={homePsOptions.includes(form["HOME PS"]) ? "" : form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} placeholder="सूची में न हो तो थाना लिखें" className="smart-form-control" />
                     <datalist id="rajasthan-ps-options">{homePsOptions.map((option) => <option key={option} value={option} label={geoLabel(option)} />)}</datalist>
                   </>
                 ) : (
-                  <input type="text" value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} placeholder="थाना लिखें" style={{ ...fieldStyle, ...inputFont }} />
+                  <input type="text" value={form["HOME PS"]} onChange={(event) => setField("HOME PS", event.target.value)} placeholder="थाना लिखें" className="smart-form-control" />
                 )}
               </label>
             </div>
-            {geoLookupStatus && <small role="status" style={{ display: "block", marginTop: "8px", color: geoLookupStatus.includes("नहीं") ? "#B45309" : "#166534" }}>{geoLookupStatus}</small>}
+            {geoLookupStatus && (
+              <small role="status" className={`smart-form-status${geoLookupStatus.includes("नहीं") ? " is-warn" : ""}`}>
+                {geoLookupStatus}
+              </small>
+            )}
             {form.STATE === "Rajasthan" && form.DISTRICT && (
-              <small style={{ display: "block", marginTop: "8px", color: "#92400E" }}>
-                ऑफ़लाइन सूची उपलब्ध डेटा तक सीमित है और पूरी/सत्यापित गाँव-थाना मैपिंग का दावा नहीं करती। सूची में न मिले स्थान हाथ से दर्ज करें।
+              <small className="smart-form-geo-note">
+                स्थानीय सूची उपलब्ध डेटा तक सीमित है; सूची में न मिले स्थान हाथ से दर्ज करें।
               </small>
             )}
           </section>
           )}
 
+          {/* [SECTION 4] Service & Posting Details (सेवा एवं वर्तमान पदस्थापन विवरण) */}
           {formTab === "POSTING" && (
-          <section style={sectionStyle}>
-            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 4: सेवा एवं वर्तमान पदस्थापन विवरण (Service &amp; Posting Details)</h3>
-            <div style={gridStyle}>
-              {field("वर्तमान पदस्थापन (POSTING)", "POSTING", "text", POSTING_OPTIONS.map((place) => ({ value: place, label: devToHindi(place) })))}
+          <section className="smart-form-section">
+            <h3 className="smart-form-section-title">खंड 4: सेवा एवं वर्तमान पदस्थापन विवरण (Service &amp; Posting Details)</h3>
+            <div className="smart-form-grid">
+              {field("वर्तमान पदस्थापन (POSTING)", "POSTING", "text", POSTING_OPTIONS.map((place) => ({ value: place, label: place })))}
               {field("पदस्थापन DOB नं. (खाली = Without DOB)", "POSTING DOB NO")}
               {field("प्रथम नियुक्ति तिथि (DD-MM-YYYY)", "DATE OF JOINING")}
               {field("स्थायीकरण तिथि (DD-MM-YYYY)", "CONFIRMATION DATE")}
@@ -749,28 +754,36 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
           </section>
           )}
 
+          {/* [SECTION 5] Previous PL, Training & Punishment History (पूर्व सेवा का इतिहास) */}
           {["SERVICE", "TRAINING", "PUNISHMENT"].includes(formTab) && (
-          <section style={sectionStyle}>
-            <h3 style={{ margin: "0 0 12px", color: "#0B1E3D", fontSize: "1rem" }}>खंड 5: पूर्व सेवा का हर DOB (आदेश) अनुसार अलग-अलग PL, प्रशिक्षण व सज़ा रिकॉर्ड</h3>
-            {formTab === "SERVICE" && <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "12px" }}>
-              {FORM_TABS.map((tab) => (
-                <button key={tab.id} type="button" onClick={() => setActiveTab(tab.id)} style={{ padding: "8px 11px", border: "1px solid #CBD5E1", borderRadius: "7px", background: activeTab === tab.id ? "#0B1E3D" : "#F8FAFC", color: activeTab === tab.id ? "#fff" : "#334155", fontWeight: "bold", cursor: "pointer" }}>
-                  {tab.label}
-                </button>
-              ))}
-            </div>}
+          <section className="smart-form-section">
+            <h3 className="smart-form-section-title">खंड 5: पूर्व सेवा का हर DOB (आदेश) अनुसार अलग-अलग PL, प्रशिक्षण व सज़ा रिकॉर्ड</h3>
+            {formTab === "SERVICE" && (
+              <div className="smart-form-subtabs">
+                {FORM_TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`smart-form-subtab-btn${activeTab === tab.id ? " is-active" : ""}`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
+            <div className="smart-form-history-layout">
               <div>
                 {activeTab === "PL" && (
                   <>
-                    <div style={gridStyle}>
-                      <label style={labelStyle}>कब से<input type="text" placeholder="DD-MM-YYYY" value={plDraft.fromDate} onChange={(event) => setPlDraft((prev) => ({ ...prev, fromDate: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>कब तक<input type="text" placeholder="DD-MM-YYYY" value={plDraft.toDate} onChange={(event) => setPlDraft((prev) => ({ ...prev, toDate: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>दिन (अपने आप गणना)<input type="number" readOnly value={nextPLDays} style={{ ...fieldStyle, ...inputFont, background: "#F1F5F9" }} /></label>
-                      <label style={labelStyle}>DOB / आदेश नं.<input type="text" value={plDraft.orderNo} onChange={(event) => setPlDraft((prev) => ({ ...prev, orderNo: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>रिमार्क<input type="text" value={plDraft.remark} onChange={(event) => setPlDraft((prev) => ({ ...prev, remark: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <button type="button" onClick={addPL} style={{ alignSelf: "end", padding: "9px", border: 0, borderRadius: "7px", background: "#0284C7", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>➕ Add PL</button>
+                    <div className="smart-form-grid">
+                      <label className="smart-form-label">कब से<input type="text" placeholder="DD-MM-YYYY" value={plDraft.fromDate} onChange={(event) => setPlDraft((prev) => ({ ...prev, fromDate: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">कब तक<input type="text" placeholder="DD-MM-YYYY" value={plDraft.toDate} onChange={(event) => setPlDraft((prev) => ({ ...prev, toDate: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">दिन (अपने आप गणना)<input type="number" readOnly value={nextPLDays} className="smart-form-control" /></label>
+                      <label className="smart-form-label">DOB / आदेश नं.<input type="text" value={plDraft.orderNo} onChange={(event) => setPlDraft((prev) => ({ ...prev, orderNo: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">रिमार्क<input type="text" value={plDraft.remark} onChange={(event) => setPlDraft((prev) => ({ ...prev, remark: event.target.value }))} className="smart-form-control" /></label>
+                      <button type="button" onClick={addPL} className="smart-form-add-btn">➕ Add PL</button>
                     </div>
                     <EntryList
                       title="जोड़ी गई PL प्रविष्टियाँ"
@@ -783,13 +796,13 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
                 {activeTab === "TRAINING" && (
                   <>
-                    <div style={gridStyle}>
-                      <label style={labelStyle}>कोर्स का नाम<input type="text" value={trainingDraft.courseName} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, courseName: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>संस्थान<input type="text" value={trainingDraft.institute} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, institute: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>कब से<input type="text" placeholder="DD-MM-YYYY" value={trainingDraft.fromDate} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, fromDate: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>कब तक<input type="text" placeholder="DD-MM-YYYY" value={trainingDraft.toDate} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, toDate: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>DOB / आदेश नं.<input type="text" value={trainingDraft.orderNo} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, orderNo: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <button type="button" onClick={addTraining} style={{ alignSelf: "end", padding: "9px", border: 0, borderRadius: "7px", background: "#0284C7", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>➕ Add Training</button>
+                    <div className="smart-form-grid">
+                      <label className="smart-form-label">कोर्स का नाम<input type="text" value={trainingDraft.courseName} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, courseName: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">संस्थान<input type="text" value={trainingDraft.institute} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, institute: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">कब से<input type="text" placeholder="DD-MM-YYYY" value={trainingDraft.fromDate} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, fromDate: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">कब तक<input type="text" placeholder="DD-MM-YYYY" value={trainingDraft.toDate} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, toDate: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">DOB / आदेश नं.<input type="text" value={trainingDraft.orderNo} onChange={(event) => setTrainingDraft((prev) => ({ ...prev, orderNo: event.target.value }))} className="smart-form-control" /></label>
+                      <button type="button" onClick={addTraining} className="smart-form-add-btn">➕ Add Training</button>
                     </div>
                     <EntryList title="जोड़ी गई प्रशिक्षण प्रविष्टियाँ" entries={trainingEntries} onRemove={(id) => setTrainingEntries((prev) => prev.filter((entry) => entry.id !== id))} render={(entry) => `${entry.courseName} • ${entry.institute || "-"} • आदेश ${entry.orderNo || "-"}`} />
                   </>
@@ -797,40 +810,41 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
                 {activeTab === "SAJA" && (
                   <>
-                    <div style={gridStyle}>
-                      <label style={labelStyle}>सज़ा का प्रकार<select value={sajaDraft.type} onChange={(event) => setSajaDraft((prev) => ({ ...prev, type: event.target.value }))} style={{ ...fieldStyle, ...inputFont }}>{PENALTY_TYPES.map((type) => <option key={type}>{type}</option>)}</select></label>
-                      <label style={labelStyle}>आदेश नं. व दिनांक<input type="text" value={sajaDraft.order} onChange={(event) => setSajaDraft((prev) => ({ ...prev, order: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <label style={labelStyle}>विवरण<input type="text" value={sajaDraft.detail} onChange={(event) => setSajaDraft((prev) => ({ ...prev, detail: event.target.value }))} style={{ ...fieldStyle, ...inputFont }} /></label>
-                      <button type="button" onClick={addSaja} style={{ alignSelf: "end", padding: "9px", border: 0, borderRadius: "7px", background: "#0284C7", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>➕ Add Saja</button>
+                    <div className="smart-form-grid">
+                      <label className="smart-form-label">सज़ा का प्रकार<select value={sajaDraft.type} onChange={(event) => setSajaDraft((prev) => ({ ...prev, type: event.target.value }))} className="smart-form-control">{PENALTY_TYPES.map((type) => <option key={type}>{type}</option>)}</select></label>
+                      <label className="smart-form-label">आदेश नं. व दिनांक<input type="text" value={sajaDraft.order} onChange={(event) => setSajaDraft((prev) => ({ ...prev, order: event.target.value }))} className="smart-form-control" /></label>
+                      <label className="smart-form-label">विवरण<input type="text" value={sajaDraft.detail} onChange={(event) => setSajaDraft((prev) => ({ ...prev, detail: event.target.value }))} className="smart-form-control" /></label>
+                      <button type="button" onClick={addSaja} className="smart-form-add-btn">➕ Add Saja</button>
                     </div>
                     <EntryList title="जोड़ी गई सज़ा प्रविष्टियाँ" entries={sajaEntries} onRemove={(id) => setSajaEntries((prev) => prev.filter((entry) => entry.id !== id))} render={(entry) => `${entry.type} • आदेश ${entry.order} • ${entry.detail || "-"}`} />
                   </>
                 )}
               </div>
 
-              <aside style={{ alignSelf: "start", padding: "12px", border: "1px solid #BFDBFE", borderRadius: "9px", background: "#EFF6FF" }}>
-                <strong style={{ display: "block", marginBottom: "9px", color: "#1E3A8A" }}>Excel विकल्प</strong>
-                <label style={{ display: "block", padding: "9px 10px", borderRadius: "7px", background: "#0284C7", color: "#fff", fontWeight: "bold", textAlign: "center", cursor: uploadingPL ? "wait" : "pointer", marginBottom: "8px" }}>
+              <aside className="smart-form-aside">
+                <strong className="smart-form-aside-title">Excel विकल्प</strong>
+                <label className={`smart-form-upload-label${uploadingPL ? " is-uploading" : ""}`}>
                   {uploadingPL ? "⏳ Uploading..." : "📤 Upload PL Sheet"}
-                  <input type="file" accept=".xlsx,.xls" disabled={uploadingPL} onChange={uploadPLSheet} style={{ display: "none" }} />
+                  <input type="file" accept=".xlsx,.xls" disabled={uploadingPL} onChange={uploadPLSheet} className="smart-form-hidden-input" />
                 </label>
-                <button type="button" onClick={downloadPLSample} style={{ width: "100%", padding: "9px 10px", border: "1px solid #93C5FD", borderRadius: "7px", background: "#fff", color: "#1D4ED8", fontWeight: "bold", cursor: "pointer" }}>📥 PL Sample</button>
-                <small style={{ display: "block", marginTop: "8px", color: "#475569", lineHeight: 1.4 }}>Excel की PL पंक्तियाँ सहेजने से पहले सूची में दिखाई देंगी।</small>
+                <button type="button" onClick={downloadPLSample} className="smart-form-sample-btn">📥 PL Sample</button>
+                <small className="smart-form-aside-note">Excel की PL पंक्तियाँ सहेजने से पहले सूची में दिखाई देंगी।</small>
               </aside>
             </div>
           </section>
           )}
         </div>
 
-        <footer style={{ position: "sticky", bottom: 0, zIndex: 2, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", padding: "12px 16px", background: "#fff", borderTop: "1px solid #CBD5E1", borderRadius: "0 0 14px 14px" }}>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            <button type="button" disabled={saving} onClick={saveAll} style={{ padding: "9px 13px", border: 0, borderRadius: "7px", background: "#16A34A", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>
+        {/* [FOOTER] Save, Print & Sample Controls (सेव, प्रिंट एवं क्लोज़ बटन) */}
+        <footer className="smart-form-footer">
+          <div className="smart-form-footer-actions">
+            <button type="button" disabled={saving} onClick={saveAll} className="smart-form-btn-save">
               {saving ? "⏳ Saving..." : "✅ Save All (Master + सभी PL / Training / Saja)"}
             </button>
-            <button type="button" onClick={printDetailSlip} style={{ padding: "9px 12px", border: 0, borderRadius: "7px", background: "#2563EB", color: "#fff", fontWeight: "bold", cursor: "pointer" }}>🖨️ Print Detail Slip</button>
-            <button type="button" onClick={downloadMasterSample} style={{ padding: "9px 12px", border: 0, borderRadius: "7px", background: "#EAB308", color: "#1F2937", fontWeight: "bold", cursor: "pointer" }}>📄 Master Sample Excel</button>
+            <button type="button" onClick={printDetailSlip} className="smart-form-btn-print">🖨️ Print Detail Slip</button>
+            <button type="button" onClick={downloadMasterSample} className="smart-form-btn-sample">📄 Master Sample Excel</button>
           </div>
-          <button type="button" disabled={saving} onClick={onClose} style={{ padding: "9px 14px", border: "1px solid #FCA5A5", borderRadius: "7px", background: "#FEF2F2", color: "#B91C1C", fontWeight: "bold", cursor: "pointer" }}>✕ बंद करें</button>
+          <button type="button" disabled={saving} onClick={onClose} className="smart-form-btn-close">✕ बंद करें</button>
         </footer>
       </section>
     </div>
@@ -839,16 +853,16 @@ export default function NewEmployeeSmartForm({ records, activeProfile, onSaveAll
 
 function EntryList({ title, entries, onRemove, render }) {
   return (
-    <div style={{ marginTop: "14px" }}>
-      <strong style={{ display: "block", marginBottom: "6px", color: "#334155" }}>{title} ({entries.length})</strong>
+    <div className="smart-form-entry-list">
+      <strong className="smart-form-entry-heading">{title} ({entries.length})</strong>
       {entries.length === 0 ? (
-        <small style={{ color: "#64748B" }}>अभी कोई प्रविष्टि नहीं जोड़ी गई।</small>
+        <small className="smart-form-entry-empty">अभी कोई प्रविष्टि नहीं जोड़ी गई।</small>
       ) : (
-        <div style={{ display: "grid", gap: "6px" }}>
+        <div className="smart-form-entry-stack">
           {entries.map((entry) => (
-            <div key={entry.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", padding: "8px 10px", border: "1px solid #E2E8F0", borderRadius: "7px", background: "#F8FAFC", fontSize: "0.85rem" }}>
+            <div key={entry.id} className="smart-form-entry-item">
               <span>{render(entry)}</span>
-              <button type="button" onClick={() => onRemove(entry.id)} aria-label="प्रविष्टि हटाएं" style={{ border: 0, borderRadius: "5px", padding: "4px 7px", background: "#FEE2E2", color: "#B91C1C", fontWeight: "bold", cursor: "pointer" }}>🗑️</button>
+              <button type="button" onClick={() => onRemove(entry.id)} aria-label="प्रविष्टि हटाएं" className="smart-form-entry-remove-btn">🗑️</button>
             </div>
           ))}
         </div>

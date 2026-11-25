@@ -49,8 +49,8 @@ export default function ReportsModule({ records = [], language = "hi" }) {
   });
 
   const extraActions = (
-    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-      <select value={tenureFilter} onChange={(e) => setTenureFilter(e.target.value)} style={{ minHeight: "38px", padding: "7px 10px", borderRadius: "7px", border: "1px solid #cbd5e1" }}>
+    <div className="reports-toolbar-actions">
+      <select value={tenureFilter} onChange={(e) => setTenureFilter(e.target.value)} className="module-select-control">
         <option value="ALL">{english ? "All Postings" : "सभी पदस्थापित (All)"}</option>
         <option value="5YR">{english ? "5+ Years Completed" : "5 वर्ष या अधिक पूर्ण"}</option>
         <option value="8YR">{english ? "8+ Years Completed" : "8 वर्ष या अधिक पूर्ण"}</option>
@@ -63,7 +63,7 @@ export default function ReportsModule({ records = [], language = "hi" }) {
   );
 
   return (
-    <div className="reports-module" style={{ backgroundColor: "var(--surface-raised, #fff)", borderRadius: "12px", padding: "18px", border: "1px solid var(--border, #E2E8F0)" }}>
+    <div className="reports-module module-panel">
       <ModuleHeaderToolbar
         title={english ? `📍 Posting & Tenure Report (${filtered.length})` : `📍 पदस्थापन एवं कार्यकाल सूची (${filtered.length})`}
         search={psFilter}
@@ -76,29 +76,30 @@ export default function ReportsModule({ records = [], language = "hi" }) {
         extraActions={extraActions}
       />
 
+      {/* [TABLE] Posting & Tenure Records (पदस्थापन एवं कार्यकाल तालिका) */}
       <div className="module-table-wrap table-responsive-box">
         <table className="module-table">
           <thead>
-            <tr style={{ backgroundColor: "#0B1E3D", color: "#fff" }}>
-              <th style={{ padding: "8px" }}>{english ? "S.N." : "क्र."}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Posting (PS / Branch)" : "POSTING (थाना/शाखा)"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Post" : "पद"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Belt No." : "बेल्ट नं."}</th>
-              <th style={{ padding: "8px", textAlign: "left" }}>{english ? "Name" : "नाम"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Posting DOB" : "POSTING DOB NO"}</th>
-              <th style={{ padding: "8px" }}>{english ? "Without DOB" : "WITHOUT DOB"}</th>
+            <tr>
+              <th>{english ? "S.N." : "क्र."}</th>
+              <th className="module-cell-left">{english ? "Posting (PS / Branch)" : "POSTING (थाना/शाखा)"}</th>
+              <th>{english ? "Post" : "पद"}</th>
+              <th>{english ? "Belt No." : "बेल्ट नं."}</th>
+              <th className="module-cell-left">{english ? "Name" : "नाम"}</th>
+              <th>{english ? "Posting DOB" : "POSTING DOB NO"}</th>
+              <th>{english ? "Without DOB" : "WITHOUT DOB"}</th>
             </tr>
           </thead>
           <tbody>
             {filtered.slice(0, 150).map((r, i) => (
               <tr key={r._uid || i}>
-                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{i + 1}</td>
-                <td style={{ padding: "7px", border: "1px solid #E2E8F0", fontWeight: "bold" }}><HindiText text={r["POSTING"]} /></td>
-                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["CADER"]}</td>
-                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{r["BELT NO"]}</td>
-                <td style={{ padding: "7px", border: "1px solid #E2E8F0" }}><HindiText text={r["NAME"]} /></td>
-                <td style={{ padding: "7px", textAlign: "center", border: "1px solid #E2E8F0", fontFamily: "'Times New Roman', Times, serif" }}>{formatDateOnly(r["POSTING DOB NO"])}</td>
-                <td style={{ padding: "7px", border: "1px solid #E2E8F0" }}><HindiText text={r["WITHOUR DOB"] || r["WITHOUT DOB"]} /></td>
+                <td className="module-cell-center module-cell-tnr">{i + 1}</td>
+                <td className="module-cell-bold"><HindiText text={r["POSTING"]} /></td>
+                <td className="module-cell-center module-cell-tnr">{r["CADER"]}</td>
+                <td className="module-cell-center module-cell-tnr">{r["BELT NO"]}</td>
+                <td><HindiText text={r["NAME"]} /></td>
+                <td className="module-cell-center module-cell-tnr">{formatDateOnly(r["POSTING DOB NO"])}</td>
+                <td><HindiText text={r["WITHOUR DOB"] || r["WITHOUT DOB"]} /></td>
               </tr>
             ))}
           </tbody>
