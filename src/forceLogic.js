@@ -139,8 +139,14 @@ export const DEFAULT_SANCTIONED = {
   KENNEL_BOY: 0, TAILOR: 1
 };
 
+// [NORMALIZE] Strip trailing/inline dates and convert officer titles (थानाधिकारी / वृत्ताधिकारी) to unit names
 export const normalizeUnitText = (value) => String(value || "")
   .toLocaleLowerCase()
+  .replace(/\b\d{1,2}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{2,4}\b/g, " ")
+  .replace(/\b\d{4}\s*[-/.]\s*\d{1,2}\s*[-/.]\s*\d{1,2}\b/g, " ")
+  .replace(/थाना\s*अधिकारी|थानाधिकारी/g, "थाना")
+  .replace(/वृत्ताधिकारी|वृताधिकारी|वृत्त\s*अधिकारी/g, "वृत्त कार्यालय")
+  .replace(/\bsho\b/g, "ps")
   .replace(/चितौडगढ़|चितौड़गढ़|चित्तौडगढ|चित्तौड़गढ|चित्तौडगढ़/g, "चित्तौड़गढ़")
   .replace(/निंबाहेड़ा|निम्बाहेडा|निंबाहेडा|निम्बाहेड़ा/g, "निम्बाहेड़ा")
   .replace(/बेगूँ|बेगू|बेंगु|बैगूं|बैंगू|बैगू|बेगूं/g, "बेगूं")
@@ -202,15 +208,15 @@ const UNIT_ALIASES = new Map([
   ["अति. पुलिस अधीक्षक त्वरित अनुसंधान सैल (IUCAW)", ["IUCAW", "Rofjr vuqla/kku lSy", "त्वरित अनुसंधान सेल"]],
 
   // CO Offices
-  ["वृत्त कार्यालय चित्तौड़गढ़ शहर", ["CO City", "CO Chittorgarh", "CO Chittorgarh City", "o`Rr dk;kZy; 'kgj", "o`Rrkf/kdkjh 'kgj", "वृत्त कार्यालय शहर", "वृत्ताधिकारी शहर", "सीओ शहर"]],
-  ["वृत्त कार्यालय चित्तौड़गढ़ ग्रामीण", ["CO Rural", "CO Chittorgarh Rural", "o`Rr xzkeh.k", "o`Rrkf/kdkjh xzkeh.k", "वृत्त ग्रामीण", "वृत्ताधिकारी ग्रामीण", "सीओ ग्रामीण"]],
-  ["वृत्त कार्यालय निम्बाहेड़ा", ["CO Nimbahera", "o`Rr fuEckgsM+k", "o`Rrkf/kdkjh fuEckgsM+k", "वृत्त निम्बाहेड़ा", "वृत्ताधिकारी निम्बाहेड़ा", "सीओ निम्बाहेड़ा"]],
-  ["वृत्त कार्यालय गंगरार", ["CO Gangrar", "o`Rr xaxjkj", "o`Rrkf/kdkjh xaxjkj", "वृत्त गंगरार", "वृत्ताधिकारी गंगरार", "सीओ गंगरार"]],
-  ["वृत्त कार्यालय बेगूं", ["CO Begun", "o`Rr csxw¡", "o`Rrkf/kdkjh csxw¡", "वृत्त बेगूं", "वृत्ताधिकारी बेगूं", "सीओ बेगूं"]],
-  ["वृत्त कार्यालय रावतभाटा", ["CO Rawatbhata", "o`Rr jkorHkkVk", "o`Rrkf/kdkjh jkorHkkVk", "वृत्त रावतभाटा", "वृत्ताधिकारी रावतभाटा", "सीओ रावतभाटा"]],
-  ["वृत्त कार्यालय कपासन", ["CO Kapasan", "o`Rr diklu", "o`Rrkf/kdkjh diklu", "वृत्त कपासन", "वृत्ताधिकारी कपासन", "सीओ कपासन"]],
-  ["वृत्त कार्यालय भदेसर", ["CO Bhadesar", "o`Rr Hknslj", "o`Rrkf/kdkjh Hknslj", "वृत्त भदेसर", "वृत्ताधिकारी भदेसर", "सीओ भदेसर"]],
-  ["वृत्त कार्यालय बड़ीसादड़ी", ["CO Barisadri", "CO Badisadri", "o`Rr cM+hlknM+h", "o`Rrkf/kdkjh cM+hlknM+h", "वृत्त बड़ीसादड़ी", "वृत्ताधिकारी बड़ीसादड़ी", "सीओ बड़ीसादड़ी"]],
+  ["वृत्त कार्यालय चित्तौड़गढ़ शहर", ["CO City", "CO Chittorgarh", "CO Chittorgarh City", "o`Rr dk;kZy; 'kgj", "o`Rrkf/kdkjh 'kgj", "वृत्त कार्यालय शहर", "वृत्ताधिकारी शहर", "सीओ शहर", "वृत्त शहर"]],
+  ["वृत्त कार्यालय चित्तौड़गढ़ ग्रामीण", ["CO Rural", "CO Chittorgarh Rural", "o`Rr xzkeh.k", "o`Rrkf/kdkjh xzkeh.k", "वृत्त कार्यालय ग्रामीण", "वृत्त ग्रामीण", "वृत्ताधिकारी ग्रामीण", "सीओ ग्रामीण"]],
+  ["वृत्त कार्यालय निम्बाहेड़ा", ["CO Nimbahera", "o`Rr fuEckgsM+k", "o`Rrkf/kdkjh fuEckgsM+k", "वृत्त कार्यालय निम्बाहेड़ा", "वृत्त निम्बाहेड़ा", "वृत्ताधिकारी निम्बाहेड़ा", "सीओ निम्बाहेड़ा"]],
+  ["वृत्त कार्यालय गंगरार", ["CO Gangrar", "o`Rr xaxjkj", "o`Rrkf/kdkjh xaxjkj", "वृत्त कार्यालय गंगरार", "वृत्त गंगरार", "वृत्ताधिकारी गंगरार", "सीओ गंगरार"]],
+  ["वृत्त कार्यालय बेगूं", ["CO Begun", "o`Rr csxw¡", "o`Rrkf/kdkjh csxw¡", "वृत्त कार्यालय बेगूं", "वृत्त बेगूं", "वृत्ताधिकारी बेगूं", "सीओ बेगूं"]],
+  ["वृत्त कार्यालय रावतभाटा", ["CO Rawatbhata", "o`Rr jkorHkkVk", "o`Rrkf/kdkjh jkorHkkVk", "वृत्त कार्यालय रावतभाटा", "वृत्त रावतभाटा", "वृत्ताधिकारी रावतभाटा", "सीओ रावतभाटा"]],
+  ["वृत्त कार्यालय कपासन", ["CO Kapasan", "o`Rr diklu", "o`Rrkf/kdkjh diklu", "वृत्त कार्यालय कपासन", "वृत्त कपासन", "वृत्ताधिकारी कपासन", "सीओ कपासन"]],
+  ["वृत्त कार्यालय भदेसर", ["CO Bhadesar", "o`Rr Hknslj", "o`Rrkf/kdkjh Hknslj", "वृत्त कार्यालय भदेसर", "वृत्त भदेसर", "वृत्ताधिकारी भदेसर", "सीओ भदेसर"]],
+  ["वृत्त कार्यालय बड़ीसादड़ी", ["CO Barisadri", "CO Badisadri", "o`Rr cM+hlknM+h", "o`Rrkf/kdkjh cM+hlknM+h", "वृत्त कार्यालय बड़ीसादड़ी", "वृत्त बड़ीसादड़ी", "वृत्ताधिकारी बड़ीसादड़ी", "सीओ बड़ीसादड़ी"]],
 
   // Police Stations
   ["थाना कोतवाली चित्तौड़गढ़", ["Fkkuk dksrokyh", "Fkkuk dksrokyh fprkSMx<+", "Fkkuk dksrokyh fpÙkkSMx<+", "PS Kotwali", "PS Kotwali Chittorgarh", "Thana Kotwali", "थाना कोतवाली"]],
@@ -250,17 +256,33 @@ const UNIT_ALIASES = new Map([
   ["जिला प्रशिक्षण केन्द्र (District Training Center - DTC)", ["DTC", "D T C", "District Training Center", "जिला प्रशिक्षण केन्द्र", "डीटीसी"]]
 ]);
 
+// [MATCHING] Match Master POSTING strings (including titles + dates) against canonical units
 export function matchEmployeeToUnit(posting, unit) {
   const postingVariants = unitVariants(posting);
   if (!postingVariants.length) return false;
   const unitText = String(unit || "").trim();
+  const unitNorm = normalizeUnitText(unitText);
   const aliases = UNIT_ALIASES.get(unitText) || [];
   const candidates = [...new Set([unitText, ...aliases].flatMap(unitVariants))];
 
-  return postingVariants.some((postingText) => candidates.some((variant) => (
-    postingText === variant ||
-    (variant.length >= 4 && postingText.includes(variant))
-  )));
+  const hasNimbaheraQualifier = (text) => text.includes("निम्बाहेड़ा") || text.includes("nimbahera");
+  const unitIsNimbahera = hasNimbaheraQualifier(unitNorm);
+  if (!unitIsNimbahera && postingVariants.some(hasNimbaheraQualifier) && (unitNorm.includes("कोतवाली") || unitNorm.includes("सदर"))) {
+    return false;
+  }
+
+  return postingVariants.some((postingText) => {
+    const compactPosting = postingText.replace(/वृत्त कार्यालय\s+/g, "वृत्त ");
+    return candidates.some((variant) => {
+      const compactVariant = variant.replace(/वृत्त कार्यालय\s+/g, "वृत्त ");
+      return (
+        postingText === variant ||
+        compactPosting === compactVariant ||
+        (variant.length >= 4 && postingText.includes(variant)) ||
+        (compactVariant.length >= 4 && compactPosting.includes(compactVariant))
+      );
+    });
+  });
 }
 
 export function matchesEmployeeSearch(employee, query, fields = ["NAME", "FATHER NAME", "CADER", "BELT NO", "POSTING"]) {

@@ -170,7 +170,7 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
                 <td className="module-cell-center english-cell">{row.belt}</td>
                 <td className="module-cell-center english-cell">{row.cader}</td>
                 <td className="module-cell-bold"><HindiText text={row.name} /></td>
-                <td className="module-cell-center">{row.education}</td>
+                <td className="module-cell-center"><HindiText text={row.education} field="EDUCATION" /></td>
                 <td className="module-cell-center english-cell">{row.joiningDate}</td>
                 <td className="module-cell-center english-cell">{row.serviceYears}</td>
                 <td className="module-cell-center">{row.punishmentCount ? `${row.punishmentCount} ${english ? "Review" : "रिकॉर्ड — समीक्षा"}` : (english ? "None" : "कोई दर्ज रिकॉर्ड नहीं")}</td>

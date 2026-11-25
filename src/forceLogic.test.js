@@ -7,7 +7,7 @@ import {
   matchEmployeeToUnit
 } from "./forceLogic.js";
 import { resolveUnitAndChowki } from "./core/postingResolver.js";
-import { isDevlysText } from "./core/isDevlysText.js";
+import { isDevlysText, isEnglishEducationToken } from "./core/isDevlysText.js";
 import { translateUnitName } from "./utils/i18n.js";
 
 test("rank mapping uses the supplied rank and belt independently", () => {
@@ -23,6 +23,11 @@ test("unit matching accepts legacy DevLys, Unicode Hindi, and English aliases ac
   assert.equal(matchEmployeeToUnit("LFkkiuk 'kk[kk", "स्थापना शाखा (Force Branch)"), true);
   assert.equal(matchEmployeeToUnit("CO Nimbahera", "वृत्त कार्यालय निम्बाहेड़ा"), true);
   assert.equal(matchEmployeeToUnit("Fkkuk pUnsfj;k", "थाना चन्देरिया"), true);
+  assert.equal(matchEmployeeToUnit("थानाधिकारी कोतवाली चित्तौड़गढ़ 10-07-2026", "थाना कोतवाली चित्तौड़गढ़"), true);
+  assert.equal(matchEmployeeToUnit("वृत्ताधिकारी निम्बाहेड़ा 20-06-2026", "वृत्त कार्यालय निम्बाहेड़ा"), true);
+  assert.equal(matchEmployeeToUnit("थाना सदर चित्तौड़गढ़ चौकी सैंती", "थाना सदर चित्तौड़गढ़"), true);
+  assert.equal(matchEmployeeToUnit("थानाधिकारी कोतवाली निम्बाहेड़ा 10.07.2026", "थाना कोतवाली निम्बाहेड़ा"), true);
+  assert.equal(matchEmployeeToUnit("थानाधिकारी कोतवाली निम्बाहेड़ा 10.07.2026", "थाना कोतवाली चित्तौड़गढ़"), false);
 });
 
 test("resolveUnitAndChowki resolves DevLys chowkis and branches accurately", () => {
@@ -38,6 +43,18 @@ test("resolveUnitAndChowki resolves DevLys chowkis and branches accurately", () 
     unit: "पुलिस लाईन चित्तौड़गढ़ (RPL)",
     chowki: ""
   });
+  assert.deepEqual(resolveUnitAndChowki("थानाधिकारी कोतवाली चित्तौड़गढ़ 10-07-2026"), {
+    unit: "थाना कोतवाली चित्तौड़गढ़",
+    chowki: "थाना मुख्यालय (कोतवाली)"
+  });
+  assert.deepEqual(resolveUnitAndChowki("वृत्ताधिकारी निम्बाहेड़ा 20-06-2026"), {
+    unit: "वृत्त कार्यालय निम्बाहेड़ा",
+    chowki: ""
+  });
+  assert.deepEqual(resolveUnitAndChowki("थाना सदर चित्तौड़गढ़ चौकी सैंती"), {
+    unit: "थाना सदर चित्तौड़गढ़",
+    chowki: "चौकी सैंती"
+  });
 });
 
 test("isDevlysText detects DevLys 010 words while keeping English codes in Times New Roman", () => {
@@ -52,6 +69,17 @@ test("isDevlysText detects DevLys 010 words while keeping English codes in Times
   assert.equal(isDevlysText("DySP"), false);
   assert.equal(isDevlysText("1234"), false);
   assert.equal(isDevlysText("user@example.com"), false);
+});
+
+test("education smart font detection separates English degrees from DevLys Hindi degrees", () => {
+  for (const deg of ["BA", "MA", "BSC", "MSC", "B.ED", "LLB", "BE", "10th", "12th", "Senior", "Higher", "Secondary"]) {
+    assert.equal(isDevlysText(deg), false, `${deg} should stay in Times New Roman`);
+    assert.equal(isEnglishEducationToken(deg), true, `${deg} should be recognized as education degree`);
+  }
+  assert.equal(isDevlysText("Lukrd"), true);
+  assert.equal(isEnglishEducationToken("Lukrd"), false);
+  assert.equal(isDevlysText("eSfVªd"), true);
+  assert.equal(isEnglishEducationToken("eSfVªd"), false);
 });
 
 test("matchesEmployeeSearch matches both DevLys raw text and Unicode Hindi queries", () => {

@@ -558,12 +558,12 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
                   [english ? "Current Posting" : "वर्तमान पदस्थापन", employee.POSTING, true],
                   [english ? "Mobile No." : "मोबाइल नं.", employee["MOBILE NO 1"] || employee["MOBILE NO"], false],
                   [english ? "Email" : "ई-मेल", employee.EMAIL, false],
-                  [english ? "Education" : "शैक्षणिक योग्यता", employee.EDUCATION, false],
+                  [english ? "Education" : "शैक्षणिक योग्यता", employee.EDUCATION, true, "EDUCATION"],
                   [english ? "DOB" : "जन्मतिथि", formatDateOnly(employee["DATE OF BIRTH"]), false]
-                ].map(([label, value, isHindi]) => (
+                ].map(([label, value, isHindi, fieldName = ""]) => (
                   <div key={label}>
                     <dt>{label}</dt>
-                    <dd>{isHindi ? <HindiText text={value} /> : (value || "-")}</dd>
+                    <dd>{isHindi ? <HindiText text={value} field={fieldName} /> : (value || "-")}</dd>
                   </div>
                 ))}
               </dl>

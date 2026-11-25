@@ -71,7 +71,7 @@ export default function SmartEmployeeTable({
               ) : <span className="english-cell">-</span>,
               <span className="english-cell">{formatEmployeeDateCell(employee["POSTING DOB NO"])}</span>,
               <HindiText text={withoutDob} />,
-              <span className="english-cell">{displayEmployeeCell(employee.EDUCATION)}</span>,
+              <HindiText text={employee.EDUCATION} field="EDUCATION" />,
               <span className="english-cell">{formatEmployeeDateCell(employee["DATE OF JOINING"])}</span>,
               <span className="english-cell smart-doc-cell">
                 {formatEmployeeDateCell(employee.DOC || employee["DATE OF CONFIRMATION"])}

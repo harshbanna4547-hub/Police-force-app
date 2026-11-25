@@ -99,8 +99,8 @@ export default function EmployeeActionMenu({
                   <div key={key}>
                     <strong>{label}</strong>
                     <div>
-                      {key === "POSTING" || key === "WITHOUT DOB"
-                        ? <HindiText text={rawVal} />
+                      {key === "POSTING" || key === "WITHOUT DOB" || key === "EDUCATION"
+                        ? <HindiText text={rawVal} field={key} />
                         : displayDetailValue(rawVal, key)}
                     </div>
                   </div>
