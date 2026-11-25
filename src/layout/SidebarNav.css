@@ -83,7 +83,7 @@
 
 .sidebar-nav-btn {
   width: 100%;
-  padding: 11px 14px;
+  padding: clamp(9px, 0.8vw, 12px) clamp(10px, 1vw, 14px);
   margin-bottom: 6px;
   border: 1px solid transparent;
   border-radius: 12px;
@@ -91,7 +91,7 @@
   background: transparent;
   color: #e2e8f0;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: clamp(12px, 0.9vw, 15px);
   cursor: pointer;
   white-space: nowrap;
   overflow: hidden;
