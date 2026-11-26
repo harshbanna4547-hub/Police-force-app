@@ -85,11 +85,20 @@ function openPrintableLeaveWindow(html) {
 /**
  * [COMPONENT] LeaveModule — 300 PL लेखा/नकदीकरण, RSR अवकाश रजिस्टर एवं Overstay/आमद ट्रैकर
  */
-export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows, setAllSheets, activeProfile = "Chittorgarh", language = "hi" }) {
+export default function LeaveModule({
+  records = [],
+  plLeaveRows,
+  setPlLeaveRows,
+  setAllSheets,
+  activeProfile = "Chittorgarh",
+  initialTab = "PL_300",
+  singleTabMode = false,
+  language = "hi"
+}) {
   const english = language === "en";
-  const [subTab, setSubTab] = useState("PL_300");
+  const [subTab, setSubTab] = useState(() => (["PL_300", "REGISTER", "TRACKER"].includes(initialTab) ? initialTab : "PL_300"));
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
 
   // [LEAVE ENTRY FORM STATE]
   const [selectedEmpKey, setSelectedEmpKey] = useState("");
@@ -355,19 +364,21 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
     ? calculateRetirementEncashment(passbookSummary.balance, basicPay, daRate)
     : null;
 
+  const leaveSectionLabel = subTab === "REGISTER"
+    ? (english ? "Leave Entry" : "अवकाश प्रविष्टि")
+    : subTab === "TRACKER"
+      ? (english ? "Overstay Tracker" : "अवधि-पार / आमद ट्रैकर")
+      : (english ? "300 PL Account" : "300 PL लेखा");
+
   return (
     <div className="leave-module module-panel">
       {/* === TOP UNIFIED MODULE HEADER TOOLBAR === */}
       <ModuleHeaderToolbar
         title={english ? "🏖️ Leave & 300 PL Encashment Portal" : "🏖️ अवकाश, 300 PL लेखा एवं नकदीकरण पोर्टल"}
+        sectionLabel={leaveSectionLabel}
         search={search}
         onSearchChange={(val) => {
           setSearch(val);
-          setPlPage(0);
-        }}
-        gender={gender}
-        onGenderChange={(val) => {
-          setGender(val);
           setPlPage(0);
         }}
         rows={toolbarRows}
@@ -375,21 +386,23 @@ export default function LeaveModule({ records = [], plLeaveRows, setPlLeaveRows,
         language={language}
       />
 
-      {/* === 3 LEAVE SUB-TABS === */}
-      <nav className="leave-subtabs" aria-label={english ? "Leave management tabs" : "अवकाश प्रबंधन टैब"}>
-        {LEAVE_SUBTABS.map((tabItem) => (
-          <button
-            type="button"
-            key={tabItem.id}
-            onClick={() => setSubTab(tabItem.id)}
-            className={`module-tab-btn ${subTab === tabItem.id ? "is-active" : ""}`}
-            aria-pressed={subTab === tabItem.id}
-          >
-            {english ? tabItem.en : tabItem.hi}
-            {tabItem.id === "TRACKER" && tracker.overstayAbsent.length > 0 ? ` (${tracker.overstayAbsent.length})` : ""}
-          </button>
-        ))}
-      </nav>
+      {/* === 3 LEAVE SUB-TABS (Hidden in singleTabMode) === */}
+      {!singleTabMode && (
+        <nav className="leave-subtabs" aria-label={english ? "Leave management tabs" : "अवकाश प्रबंधन टैब"}>
+          {LEAVE_SUBTABS.map((tabItem) => (
+            <button
+              type="button"
+              key={tabItem.id}
+              onClick={() => setSubTab(tabItem.id)}
+              className={`module-tab-btn ${subTab === tabItem.id ? "is-active" : ""}`}
+              aria-pressed={subTab === tabItem.id}
+            >
+              {english ? tabItem.en : tabItem.hi}
+              {tabItem.id === "TRACKER" && tracker.overstayAbsent.length > 0 ? ` (${tracker.overstayAbsent.length})` : ""}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* =====================================================================
           SUB-TAB 1: 300 PL ACCOUNT & ENCASHMENT ENGINE

@@ -11,6 +11,7 @@ export default function PortalModuleContent({
   activeView,
   setActiveView,
   initialTab = null,
+  singleTabMode = false,
   onBack,
   onHome,
   portalData,
@@ -184,7 +185,7 @@ export default function PortalModuleContent({
     DEV_SERVICES: { districtId, portalData, language }
   };
   const ActiveModule = selectedModule.component;
-  const activeKey = `${activeView}_${activeView === "STRENGTH" ? (initialTab || "POST_WISE") : "ROOT"}_${moduleResetCounter}`;
+  const activeKey = `${activeView}_${initialTab || "ROOT"}_${singleTabMode ? "SINGLE" : "FULL"}_${moduleResetCounter}`;
   const moduleTitle = english
     ? selectedModule.title
     : (selectedModule.hindiTitle || selectedModule.title);
@@ -193,7 +194,7 @@ export default function PortalModuleContent({
     moduleTitle,
     onHome: () => (onHome ? onHome() : setActiveView?.("HOME")),
     onModuleRoot: () => {
-      setActiveView?.(activeView, null);
+      setActiveView?.(activeView, null, false);
       setModuleResetCounter((count) => count + 1);
     }
   };
@@ -207,7 +208,12 @@ export default function PortalModuleContent({
   return (
     <ModuleNavigationContext.Provider value={navigationContextValue}>
       <div className="portal-module-stage" onContextMenu={handleGlobalContextMenu}>
-        <ActiveModule key={activeKey} {...propsByModule[activeView]} />
+        <ActiveModule
+          key={activeKey}
+          {...propsByModule[activeView]}
+          initialTab={initialTab}
+          singleTabMode={singleTabMode}
+        />
 
       {/* === IN-MODULE ESTABLISHMENT ARTICLE, VECTOR ART & GOVT PORTALS === */}
       {activeView !== "STORAGE" && (

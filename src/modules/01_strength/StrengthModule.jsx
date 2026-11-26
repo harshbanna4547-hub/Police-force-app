@@ -36,6 +36,7 @@ export default function StrengthModule({
   depCount = 0,
   setActiveView,
   initialTab = "POST_WISE",
+  singleTabMode = false,
   currentDistrict,
   language = "hi"
 }) {
@@ -277,7 +278,6 @@ export default function StrengthModule({
       <ModuleHeaderToolbar
         title={`🛡️ ${toolbarTitle}`}
         sectionLabel={toolbarSectionLabel}
-        onModuleRoot={() => setSubTab("POST_WISE")}
         search={employeeSearch}
         onSearchChange={setEmployeeSearch}
         rows={toolbarRows}
@@ -289,24 +289,26 @@ export default function StrengthModule({
           : (english ? "🔍 Search name, belt no., post, unit..." : "🔍 नाम, बेल्ट नं., पद या पदस्थापन खोजें...")}
       />
 
-      {/* === 4 EXACT STRENGTH TABS === */}
-      <div className="strength-subtabs">
-        {[
-          { id: "POST_WISE", hi: "पदवार नफरी (Post-Wise)", en: "Post-Wise Strength" },
-          { id: "OFFICE_PS_WISE", hi: "थाना / वृत्त / कार्यालयवार नफरी", en: "PS / CO / Office-Wise Strength" },
-          { id: "SUMMARY", hi: "समेकित सारांश एवं Male/Female", en: "Strength Summary" },
-          { id: "CASTE_WISE", hi: "जाति / वर्गवार नफरी", en: "Caste-Wise Strength" }
-        ].map((t) => (
-          <button
-            type="button"
-            key={t.id}
-            onClick={() => setSubTab(t.id)}
-            className={`strength-subtab-btn ${subTab === t.id ? "is-active" : ""}`}
-          >
-            {english ? t.en : t.hi}
-          </button>
-        ))}
-      </div>
+      {/* === 4 EXACT STRENGTH TABS (Hidden in singleTabMode) === */}
+      {!singleTabMode && (
+        <div className="strength-subtabs">
+          {[
+            { id: "POST_WISE", hi: "पदवार नफरी (Post-Wise)", en: "Post-Wise Strength" },
+            { id: "OFFICE_PS_WISE", hi: "थाना / वृत्त / कार्यालयवार नफरी", en: "PS / CO / Office-Wise Strength" },
+            { id: "SUMMARY", hi: "समेकित सारांश एवं Male/Female", en: "Strength Summary" },
+            { id: "CASTE_WISE", hi: "जाति / वर्गवार नफरी", en: "Caste-Wise Strength" }
+          ].map((t) => (
+            <button
+              type="button"
+              key={t.id}
+              onClick={() => setSubTab(t.id)}
+              className={`strength-subtab-btn ${subTab === t.id ? "is-active" : ""}`}
+            >
+              {english ? t.en : t.hi}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* === TAB 1: POST-WISE STRENGTH === */}
       {subTab === "POST_WISE" && (

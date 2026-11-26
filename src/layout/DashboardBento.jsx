@@ -2,7 +2,8 @@ import "./DashboardBento.css";
 
 /**
  * [COMPONENT] DashboardBento — आधुनिक Minimal Editorial राज-आईएफएमएस 3.0 पिलर कार्ड्स
- * Non-clickable header, Zero chevrons/badges
+ * Clickable Pillar Top Headers -> Full Module (all sub-tabs visible)
+ * Clickable Sub-Item Rows -> Direct Single-View Deep-Link (singleTabMode = true)
  */
 export default function DashboardBento({
   modules = [],
@@ -37,9 +38,9 @@ export default function DashboardBento({
       enSubtitle: "Unit Deployment",
       hiSubtitle: "इकाई व थाना पदस्थापन",
       rows: [
-        { target: "POSTING", en: "SP Office, ASP, CO & PS Posting", hi: "SP कार्यालय, ASP, CO व थाना पदस्थापन" },
-        { target: "TRANSFER", en: "Attachment & Deputation", hi: "संलग्नीकरण एवं प्रतिनियुक्ति" },
-        { target: "ARCHIVE", en: "Relieve / Retire / Death Archive", hi: "रिलीव / सेवानिवृत्ति / मृत्यु अभिलेख" }
+        { target: "POSTING", initialTab: "ALL", en: "SP Office, ASP, CO & PS Posting", hi: "SP कार्यालय, ASP, CO व थाना पदस्थापन" },
+        { target: "TRANSFER", initialTab: "DUTY", en: "Attachment & Deputation", hi: "संलग्नीकरण एवं प्रतिनियुक्ति" },
+        { target: "ARCHIVE", initialTab: "ARCHIVE", en: "Relieve / Retire / Death Archive", hi: "रिलीव / सेवानिवृत्ति / मृत्यु अभिलेख" }
       ]
     },
     {
@@ -50,8 +51,8 @@ export default function DashboardBento({
       enSubtitle: "Orders & Tenure",
       hiSubtitle: "स्थानांतरण एवं अवधि",
       rows: [
-        { target: "TRANSFER", en: "Transfer Orders & Generator", hi: "स्थानांतरण आदेश एवं जनरेटर" },
-        { target: "TRANSFER", en: "Station Tenure Check", hi: "थाना पदस्थापन अवधि जांच" }
+        { target: "TRANSFER", initialTab: "CREATE", en: "Transfer Orders & Generator", hi: "स्थानांतरण आदेश एवं जनरेटर" },
+        { target: "TRANSFER", initialTab: "TENURE", en: "Station Tenure Check", hi: "थाना पदस्थापन अवधि जांच" }
       ]
     },
     {
@@ -62,8 +63,8 @@ export default function DashboardBento({
       enSubtitle: "Daily Deployment",
       hiSubtitle: "दैनिक व विशेष ड्यूटी",
       rows: [
-        { target: "ROSTER", en: "PS Daily & Beat Duty Roster", hi: "थाना दैनिक एवं बीट ड्यूटी रोस्टर" },
-        { target: "ROSTER", en: "Guard & Special Duty Chart", hi: "गार्ड एवं विशेष ड्यूटी चार्ट" }
+        { target: "ROSTER", initialTab: "PS_ROSTER", en: "PS Daily & Beat Duty Roster", hi: "थाना दैनिक एवं बीट ड्यूटी रोस्टर" },
+        { target: "ROSTER", initialTab: "GUARD_CHART", en: "Guard & Special Duty Chart", hi: "गार्ड एवं विशेष ड्यूटी चार्ट" }
       ]
     },
     {
@@ -74,8 +75,8 @@ export default function DashboardBento({
       enSubtitle: "PCC & DPC Track",
       hiSubtitle: "पदोन्नति एवं परीक्षा",
       rows: [
-        { target: "PROMOTION", en: "PCC Exam Eligibility", hi: "PCC परीक्षा पात्रता" },
-        { target: "PROMOTION", en: "DPC Promotion Review", hi: "DPC पदोन्नति समीक्षा" }
+        { target: "PROMOTION", initialTab: "PCC", en: "PCC Exam Eligibility", hi: "PCC परीक्षा पात्रता" },
+        { target: "PROMOTION", initialTab: "DPC", en: "DPC Promotion Review", hi: "DPC पदोन्नति समीक्षा" }
       ]
     },
     {
@@ -86,8 +87,8 @@ export default function DashboardBento({
       enSubtitle: "9 / 18 / 27 Progression",
       hiSubtitle: "समयबद्ध वेतनमान",
       rows: [
-        { target: "ACP", en: "9 / 18 / 27 Years ACP Review", hi: "9 / 18 / 27 वर्ष ACP समीक्षा" },
-        { target: "ACP", en: "ACP Eligibility & Order Sheet", hi: "ACP पात्रता एवं आदेश पत्रक" }
+        { target: "ACP", initialTab: "REVIEW", en: "9 / 18 / 27 Years ACP Review", hi: "9 / 18 / 27 वर्ष ACP समीक्षा" },
+        { target: "ACP", initialTab: "ORDERS", en: "ACP Eligibility & Order Sheet", hi: "ACP पात्रता एवं आदेश पत्रक" }
       ]
     },
     {
@@ -98,8 +99,8 @@ export default function DashboardBento({
       enSubtitle: "Annual Pay Matrix",
       hiSubtitle: "जुलाई वार्षिक वेतनवृद्धि",
       rows: [
-        { target: "INCREMENT", en: "1st July Annual Increment List", hi: "1 जुलाई वार्षिक वेतनवृद्धि सूची" },
-        { target: "INCREMENT", en: "Withheld / Deferred Increment Check", hi: "रोकी / स्थगित वेतनवृद्धि जांच" }
+        { target: "INCREMENT", initialTab: "ANNUAL", en: "1st July Annual Increment List", hi: "1 जुलाई वार्षिक वेतनवृद्धि सूची" },
+        { target: "INCREMENT", initialTab: "WITHHELD", en: "Withheld / Deferred Increment Check", hi: "रोकी / स्थगित वेतनवृद्धि जांच" }
       ]
     },
     {
@@ -110,8 +111,8 @@ export default function DashboardBento({
       enSubtitle: "Gradation & Bharti",
       hiSubtitle: "वरिष्ठता एवं स्थायीकरण",
       rows: [
-        { target: "SENIORITY", en: "Cadre-Wise Seniority List", hi: "संवर्ग-वार वरिष्ठता सूची" },
-        { target: "BHARTI", en: "Bharti Year & Confirmation Roll", hi: "भर्ती वर्ष एवं स्थायीकरण सूची" }
+        { target: "SENIORITY", initialTab: "CADRE_WISE", en: "Cadre-Wise Seniority List", hi: "संवर्ग-वार वरिष्ठता सूची" },
+        { target: "BHARTI", initialTab: "CONFIRMATION", en: "Bharti Year & Confirmation Roll", hi: "भर्ती वर्ष एवं स्थायीकरण सूची" }
       ]
     },
     {
@@ -122,9 +123,9 @@ export default function DashboardBento({
       enSubtitle: "RSR Leave Ledger",
       hiSubtitle: "अवकाश एवं 300-पीएल खाता",
       rows: [
-        { target: "LEAVE", en: "Leave Entry (CL / HPL / CCL / ML)", hi: "अवकाश प्रविष्टि (CL / HPL / CCL / ML)" },
-        { target: "LEAVE", en: "300 PL Account & Encashment", hi: "300 PL लेखा एवं नकदीकरण" },
-        { target: "LEAVE", en: "RSR Leave Rules Portal", hi: "RSR अवकाश नियम पोर्टल" }
+        { target: "LEAVE", initialTab: "REGISTER", en: "Leave Entry (CL / HPL / CCL / ML)", hi: "अवकाश प्रविष्टि (CL / HPL / CCL / ML)" },
+        { target: "LEAVE", initialTab: "PL_300", en: "300 PL Account & Encashment", hi: "300 PL लेखा एवं नकदीकरण" },
+        { target: "LEAVE", initialTab: "TRACKER", en: "Overstay / Absentee & Return Tracker", hi: "अवधि-पार / अनुपस्थिति एवं आमद ट्रैकर" }
       ]
     },
     {
@@ -135,10 +136,10 @@ export default function DashboardBento({
       enSubtitle: "Courses & Orders",
       hiSubtitle: "प्रशिक्षण एवं नामांकन",
       rows: [
-        { target: "TRAINING", en: "Training Records (All / Post / Year)", hi: "प्रशिक्षण रिकॉर्ड (All / Post / Year)" },
-        { target: "TRAINING", en: "Other State & In-State Nomination", hi: "अन्य राज्य व राज्य-स्तरीय नामांकन" },
-        { target: "TRAINING", en: "iGOT Karmayogi & Mahila Raksha", hi: "iGOT कर्मयोगी एवं महिला आत्मरक्षा" },
-        { target: "TRAINING", en: "DTC & Training Institutes", hi: "DTC एवं प्रशिक्षण संस्थान" }
+        { target: "TRAINING", initialTab: "ALL_RECORDS", en: "Training Records (All / Post / Year)", hi: "प्रशिक्षण रिकॉर्ड (All / Post / Year)" },
+        { target: "TRAINING", initialTab: "OTHER_STATE", en: "Other State & In-State Nomination", hi: "अन्य राज्य व राज्य-स्तरीय नामांकन" },
+        { target: "TRAINING", initialTab: "IGOT", en: "iGOT Karmayogi & Mahila Raksha", hi: "iGOT कर्मयोगी एवं महिला आत्मरक्षा" },
+        { target: "TRAINING", initialTab: "DTC", en: "DTC & Training Institutes", hi: "DTC एवं प्रशिक्षण संस्थान" }
       ]
     },
     {
@@ -149,8 +150,8 @@ export default function DashboardBento({
       enSubtitle: "Discipline & CCA",
       hiSubtitle: "विभागीय अनुशासन एवं दंड",
       rows: [
-        { target: "PUNISHMENT", en: "Departmental Punishment (CCA 16/17)", hi: "विभागीय जांच एवं दंड (CCA 16/17)" },
-        { target: "PUNISHMENT", en: "Clean Record & Reward Eligibility", hi: "स्वच्छ अभिलेख एवं पुरस्कार पात्रता" }
+        { target: "PUNISHMENT", initialTab: "PUNISHMENT", en: "Departmental Punishment (CCA 16/17)", hi: "विभागीय जांच एवं दंड (CCA 16/17)" },
+        { target: "PUNISHMENT", initialTab: "CLEAN", en: "Clean Record & Reward Eligibility", hi: "स्वच्छ अभिलेख एवं पुरस्कार पात्रता" }
       ]
     }
   ];
@@ -172,8 +173,15 @@ export default function DashboardBento({
           const toneClass = toneClasses[index % toneClasses.length];
           return (
             <article key={pillar.id} className={`rajifms-pillar-card ${toneClass}`}>
-              {/* Non-Clickable Top Header */}
-              <div className="rajifms-pillar-header">
+              {/* Clickable Top Header -> Opens Full Module with Sub-Tabs */}
+              <button
+                type="button"
+                onClick={() => onOpenModule(resolveTarget(pillar.id, pillar.id), null, false)}
+                className="rajifms-pillar-header"
+                title={english
+                  ? `Open full ${pillar.enTitle} module`
+                  : `पूरा ${pillar.hiTitle} मॉड्यूल खोलें`}
+              >
                 <span className="rajifms-header-icon" aria-hidden="true">
                   {pillar.icon}
                 </span>
@@ -183,15 +191,15 @@ export default function DashboardBento({
                 <span className="rajifms-header-subtitle">
                   {english ? pillar.enSubtitle : pillar.hiSubtitle}
                 </span>
-              </div>
+              </button>
 
-              {/* Only Sub-Items Inside Card Are Clickable (Zero chevrons / Zero badges) */}
+              {/* Clickable Sub-Item Rows -> Direct Single-View Deep-Link (singleTabMode = true) */}
               <div className="rajifms-subrow-list">
                 {pillar.rows.map((row) => (
                   <button
                     key={`${pillar.id}-${row.en}`}
                     type="button"
-                    onClick={() => onOpenModule(resolveTarget(row.target, pillar.id), row.initialTab)}
+                    onClick={() => onOpenModule(resolveTarget(row.target, pillar.id), row.initialTab, true)}
                     className="rajifms-subrow-btn"
                   >
                     <span className="rajifms-subrow-text">

@@ -104,22 +104,33 @@ function openOrDownloadHtml(html, fileName, shouldPrint = false) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+const NOMINATION_TABS_SET = new Set(["OTHER_STATE", "IN_STATE", "IGOT", "WOMEN_SELF_DEFENCE", "DTC"]);
+const TRAINING_TABS_SET = new Set(["ALL_RECORDS", "POST_WISE", "COURSE_WISE", "INSTITUTE_WISE", "YEAR_WISE", "MANDATORY_DUE"]);
+
 /**
  * [COMPONENT] TrainingModule — 2 मुख्य टैब (1. Training रिकॉर्ड + 2. Nomination आदेश) एवं 10 सब-टैब्स
  */
-export default function TrainingModule({ records = [], allSheets = {}, setAllSheets, activeProfile = "District", language = "hi" }) {
+export default function TrainingModule({
+  records = [],
+  allSheets = {},
+  setAllSheets,
+  activeProfile = "District",
+  initialTab = "ALL_RECORDS",
+  singleTabMode = false,
+  language = "hi"
+}) {
   const english = language === "en";
   const [lookbackCutoff] = useState(() => Date.now() - TWO_YEARS_MS);
 
   // [NAVIGATION] Primary, Sub-Tab & 4-Stage Nomination Lifecycle State
-  const [primaryTab, setPrimaryTab] = useState("TRAINING");
-  const [trainingSubTab, setTrainingSubTab] = useState("ALL_RECORDS");
-  const [nominationSubTab, setNominationSubTab] = useState("OTHER_STATE");
+  const [primaryTab, setPrimaryTab] = useState(() => (NOMINATION_TABS_SET.has(initialTab) ? "NOMINATION" : "TRAINING"));
+  const [trainingSubTab, setTrainingSubTab] = useState(() => (TRAINING_TABS_SET.has(initialTab) ? initialTab : "ALL_RECORDS"));
+  const [nominationSubTab, setNominationSubTab] = useState(() => (NOMINATION_TABS_SET.has(initialTab) ? initialTab : "OTHER_STATE"));
   const [nominationStage, setNominationStage] = useState("GENERATOR");
 
   // [FILTERS] Global Search & Gender
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
 
   // [TRAINING TAB 1-6 STATE]
   const [rankFilter, setRankFilter] = useState("ALL");
@@ -635,19 +646,19 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
     }));
   })();
 
+  const trainingSectionLabel = primaryTab === "TRAINING"
+    ? (TRAINING_SUBTABS.find((t) => t.id === trainingSubTab)?.[english ? "en" : "hi"] || (english ? "Training Records" : "प्रशिक्षण रिकॉर्ड"))
+    : (NOMINATION_SUBTABS.find((t) => t.id === nominationSubTab)?.[english ? "en" : "hi"] || (english ? "Nomination" : "नामांकन"));
+
   return (
     <div className="training-module">
       {/* === TOP UNIFIED MODULE HEADER TOOLBAR === */}
       <ModuleHeaderToolbar
         title={english ? "🎓 Training & Nomination Management" : "🎓 प्रशिक्षण एवं नामांकन प्रबंधन"}
+        sectionLabel={trainingSectionLabel}
         search={search}
         onSearchChange={(val) => {
           setSearch(val);
-          setPage(0);
-        }}
-        gender={gender}
-        onGenderChange={(val) => {
-          setGender(val);
           setPage(0);
         }}
         rows={toolbarExportRows}
@@ -655,39 +666,43 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
         language={language}
       />
 
-      {/* === PRIMARY 2 TABS: 1. TRAINING | 2. NOMINATION === */}
-      <nav className="training-primary-tabs" aria-label={english ? "Training primary tabs" : "प्रशिक्षण मुख्य टैब"}>
-        {PRIMARY_TABS.map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            onClick={() => setPrimaryTab(item.id)}
-            className={`training-primary-tab ${primaryTab === item.id ? "is-active" : ""}`}
-            aria-pressed={primaryTab === item.id}
-          >
-            {english ? item.en : item.hi}
-          </button>
-        ))}
-      </nav>
+      {/* === PRIMARY 2 TABS: 1. TRAINING | 2. NOMINATION (Hidden in singleTabMode) === */}
+      {!singleTabMode && (
+        <nav className="training-primary-tabs" aria-label={english ? "Training primary tabs" : "प्रशिक्षण मुख्य टैब"}>
+          {PRIMARY_TABS.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              onClick={() => setPrimaryTab(item.id)}
+              className={`training-primary-tab ${primaryTab === item.id ? "is-active" : ""}`}
+              aria-pressed={primaryTab === item.id}
+            >
+              {english ? item.en : item.hi}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {/* =====================================================================
           PRIMARY TAB 1: TRAINING RECORDS (5 SUB-TABS)
          ===================================================================== */}
       {primaryTab === "TRAINING" && (
         <>
-          <nav className="training-subtabs" aria-label={english ? "Training record sub-tabs" : "प्रशिक्षण रिकॉर्ड उप-टैब"}>
-            {TRAINING_SUBTABS.map((sub) => (
-              <button
-                type="button"
-                key={sub.id}
-                onClick={() => setTrainingSubTab(sub.id)}
-                className={`training-subtab-btn ${trainingSubTab === sub.id ? "is-active" : ""}`}
-                aria-pressed={trainingSubTab === sub.id}
-              >
-                {english ? sub.en : sub.hi}
-              </button>
-            ))}
-          </nav>
+          {!singleTabMode && (
+            <nav className="training-subtabs" aria-label={english ? "Training record sub-tabs" : "प्रशिक्षण रिकॉर्ड उप-टैब"}>
+              {TRAINING_SUBTABS.map((sub) => (
+                <button
+                  type="button"
+                  key={sub.id}
+                  onClick={() => setTrainingSubTab(sub.id)}
+                  className={`training-subtab-btn ${trainingSubTab === sub.id ? "is-active" : ""}`}
+                  aria-pressed={trainingSubTab === sub.id}
+                >
+                  {english ? sub.en : sub.hi}
+                </button>
+              ))}
+            </nav>
+          )}
 
           {/* --- 1.1 ALL TRAINING RECORD (1 Employee = 1 Row + Popup Detail) --- */}
           {trainingSubTab === "ALL_RECORDS" && (
@@ -1130,19 +1145,21 @@ export default function TrainingModule({ records = [], allSheets = {}, setAllShe
          ===================================================================== */}
       {primaryTab === "NOMINATION" && (
         <>
-          <nav className="training-subtabs" aria-label={english ? "Nomination sub-tabs" : "नामांकन उप-टैब"}>
-            {NOMINATION_SUBTABS.map((sub) => (
-              <button
-                type="button"
-                key={sub.id}
-                onClick={() => setNominationSubTab(sub.id)}
-                className={`training-subtab-btn ${nominationSubTab === sub.id ? "is-active" : ""}`}
-                aria-pressed={nominationSubTab === sub.id}
-              >
-                {english ? sub.en : sub.hi}
-              </button>
-            ))}
-          </nav>
+          {!singleTabMode && (
+            <nav className="training-subtabs" aria-label={english ? "Nomination sub-tabs" : "नामांकन उप-टैब"}>
+              {NOMINATION_SUBTABS.map((sub) => (
+                <button
+                  type="button"
+                  key={sub.id}
+                  onClick={() => setNominationSubTab(sub.id)}
+                  className={`training-subtab-btn ${nominationSubTab === sub.id ? "is-active" : ""}`}
+                  aria-pressed={nominationSubTab === sub.id}
+                >
+                  {english ? sub.en : sub.hi}
+                </button>
+              ))}
+            </nav>
+          )}
 
           {/* --- 2.1 & 2.2 OTHER STATE & IN-STATE 4-STAGE NOMINATION LIFECYCLE --- */}
           {isNominationFormTab && (

@@ -86,11 +86,13 @@ export default function PostingModule({
   unitRankSanc = {},
   onEditEmployee,
   onArchiveEmployee,
+  initialTab = "ALL",
+  singleTabMode = false,
   language = "hi"
 }) {
-  const [tab, setTab] = useState("ALL");
+  const [tab, setTab] = useState(() => (["ALL", "POST", "UNIT"].includes(initialTab) ? initialTab : "ALL"));
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const [selectedSection, setSelectedSection] = useState(OFFICE_SECTIONS[0]?.id || "SEC_SPO");
   const [selectedCircle, setSelectedCircle] = useState(Object.keys(CO_PS_MAP)[0] || "");
   const english = language === "en";
@@ -147,36 +149,43 @@ export default function PostingModule({
   const totalWorking = filtered.length;
   const totalSanctioned = Object.values(sanctioned).reduce((sum, value) => sum + Number(value || 0), 0);
 
+  const sectionLabel = tab === "POST"
+    ? (english ? "Post-Wise" : "पद-वार")
+    : tab === "UNIT"
+      ? (english ? "Office / CO / PS Wise" : "कार्यालय / वृत्त / थाना-वार")
+      : (english ? "SP Office, ASP, CO & PS" : "सभी कार्यरत");
+
   return (
     <div className="posting-module">
       <ModuleHeaderToolbar
         title={english ? "📍 Posting & Unit Strength List" : "📍 पदस्थापन एवं इकाई-वार सूची"}
+        sectionLabel={sectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName={`Posting_List_${tab}`}
         language={language}
       />
 
-      <div className="posting-tab-bar">
-        {[
-          ["ALL", english ? "All Working" : "सभी कार्यरत"],
-          ["POST", english ? "Post-Wise" : "पद-वार"],
-          ["UNIT", english ? "Office / CO / PS Wise" : "कार्यालय / वृत्त / थाना-वार"]
-        ].map(([id, label]) => (
-          <button
-            type="button"
-            key={id}
-            onClick={() => setTab(id)}
-            aria-pressed={tab === id}
-            className={`posting-tab-btn ${tab === id ? "is-active" : ""}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {!singleTabMode && (
+        <div className="posting-tab-bar">
+          {[
+            ["ALL", english ? "All Working" : "सभी कार्यरत"],
+            ["POST", english ? "Post-Wise" : "पद-वार"],
+            ["UNIT", english ? "Office / CO / PS Wise" : "कार्यालय / वृत्त / थाना-वार"]
+          ].map(([id, label]) => (
+            <button
+              type="button"
+              key={id}
+              onClick={() => setTab(id)}
+              aria-pressed={tab === id}
+              className={`posting-tab-btn ${tab === id ? "is-active" : ""}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {tab === "ALL" && sections.map((group) => {
         const groupTitle = translateSectionTitle(group.id, group.title, language);

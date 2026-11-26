@@ -58,7 +58,7 @@
   box-shadow: var(--shadow-card-hover, 0 20px 42px rgba(28, 30, 24, 0.09));
 }
 
-/* === NON-CLICKABLE EDITORIAL PILLAR TOP HEADERS === */
+/* === CLICKABLE EDITORIAL PILLAR TOP HEADERS === */
 .rajifms-pillar-header {
   width: 100%;
   min-height: 122px;
@@ -71,9 +71,17 @@
   justify-content: center;
   text-align: center;
   gap: 7px;
-  cursor: default;
-  pointer-events: none;
-  user-select: none;
+  cursor: pointer;
+  transition: filter 0.18s ease, transform 0.18s ease;
+}
+
+.rajifms-pillar-header:hover {
+  filter: brightness(1.08);
+}
+
+.rajifms-pillar-header:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: -3px;
 }
 
 .tone-olive .rajifms-pillar-header {

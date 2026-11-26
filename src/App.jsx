@@ -36,6 +36,7 @@ export default function App() {
   const [activeView, setActiveView] = useState("HOME");
   const viewHistoryRef = useRef(["HOME"]);
   const [moduleInitialTab, setModuleInitialTab] = useState(null);
+  const [singleTabMode, setSingleTabMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const [portalTemplate, setPortalTemplate] = useState(() => {
     try {
@@ -119,9 +120,10 @@ export default function App() {
     setCurrentDistrict(nextDistrict);
   };
 
-  const navigateToView = (targetView, initialTab = null) => {
+  const navigateToView = (targetView, initialTab = null, isSingleTab = false) => {
     const nextView = targetView || "HOME";
     setModuleInitialTab(initialTab || null);
+    setSingleTabMode(Boolean(isSingleTab));
     setActiveView(nextView);
     if (nextView === "HOME") {
       viewHistoryRef.current = ["HOME"];
@@ -132,6 +134,7 @@ export default function App() {
 
   const handleGoBack = () => {
     setModuleInitialTab(null);
+    setSingleTabMode(false);
     const prev = viewHistoryRef.current;
     if (prev.length <= 1) {
       viewHistoryRef.current = ["HOME"];
@@ -143,7 +146,7 @@ export default function App() {
     setActiveView(next[next.length - 1] || "HOME");
   };
 
-  const handleGoHome = () => navigateToView("HOME", null);
+  const handleGoHome = () => navigateToView("HOME", null, false);
 
   if (!portalData.isDistrictDataReady) {
     return <main className="app-loading-screen">जिला डेटा सुरक्षित स्टोरेज से लोड हो रहा है…</main>;
@@ -207,6 +210,7 @@ export default function App() {
               activeView={activeView}
               setActiveView={navigateToView}
               initialTab={moduleInitialTab}
+              singleTabMode={singleTabMode}
               onBack={handleGoBack}
               onHome={handleGoHome}
               portalData={portalData}
