@@ -57,6 +57,33 @@ export const GOVT_PORTALS = Object.freeze({
     url: "https://igotkarmayogi.gov.in",
     summary: "Online capacity building & mandatory MDO training courses"
   },
+  PAYMANAGER: {
+    id: "PAYMANAGER",
+    icon: "payments",
+    badge: "Pay & Bills",
+    title: "PayManager Rajasthan",
+    hiTitle: "पे-मैनेजर (PayManager)",
+    url: "https://paymanager.rajasthan.gov.in/",
+    summary: "Salary slips, GA-55, DDO bills & deduction schedules"
+  },
+  CCTNS: {
+    id: "CCTNS",
+    icon: "security",
+    badge: "NCRB / MHA",
+    title: "CCTNS Digital Police",
+    hiTitle: "सी.सी.टी.एन.एस. (CCTNS)",
+    url: "https://digitalpolice.gov.in",
+    summary: "Crime & Criminal Tracking Network and Police Station portal"
+  },
+  RPA: {
+    id: "RPA",
+    icon: "military_tech",
+    badge: "RPA / Training",
+    title: "RPA & Training Portals",
+    hiTitle: "आर.पी.ए. एवं प्रशिक्षण पोर्टल",
+    url: "http://rpa.rajasthan.gov.in",
+    summary: "Rajasthan Police Academy Jaipur courses, syllabus & training orders"
+  },
   POLICE: {
     id: "POLICE",
     icon: "local_police",

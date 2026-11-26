@@ -4,6 +4,7 @@ import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
 import DashboardBento from "./layout/DashboardBento";
+import RightUtilityPanel from "./layout/RightUtilityPanel";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
 import { createDistrictSelection } from "./core/districtAuth.js";
@@ -170,6 +171,8 @@ export default function App() {
         onDistrictChange={handleDistrictChange}
         theme={theme}
         onThemeChange={handleThemeToggle}
+        portalTemplate={portalTemplate}
+        onTemplateChange={handleTemplateSelect}
         language={language}
         onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
       />
@@ -179,15 +182,17 @@ export default function App() {
           setSidebarOpen={setSidebarOpen}
           currentDistrict={currentDistrict}
           language={language}
-          portalTemplate={portalTemplate}
-          onTemplateChange={handleTemplateSelect}
+        />
+        <RightUtilityPanel
+          currentDistrict={currentDistrict}
+          theme={theme}
+          onThemeChange={handleThemeToggle}
+          language={language}
         />
         <main className="app-main-area">
           {activeView === "HOME" ? (
             <DashboardBento
               modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"].includes(module.id))}
-              currentDistrict={currentDistrict}
-              theme={theme}
               onOpenModule={navigateToView}
               language={language}
             />

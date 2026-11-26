@@ -1,15 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { PoliceCrestSvg } from "./PortalVectorArt";
 import "./AmbientPortalWidgets.css";
-
-const MAP_NODES = [
-  { id: "SP_HQ", x: 150, y: 86, label: "SP Office HQ", hiLabel: "एसपी कार्यालय मुख्यालय", role: "Force & Establishment Control" },
-  { id: "ASP", x: 96, y: 54, label: "ASP Division", hiLabel: "एएसपी खंड कार्यालय", role: "Supervisory Circle HQ" },
-  { id: "CO_1", x: 215, y: 58, label: "CO Circles", hiLabel: "वृत्ताधिकारी कार्यालय", role: "Circle Field Operations" },
-  { id: "PS_GRID", x: 76, y: 122, label: "Police Stations", hiLabel: "थाना एवं चौकी नेटवर्क", role: "Beat, Roster & Daily Duty" },
-  { id: "RPL", x: 222, y: 124, label: "Reserve Line & DTC", hiLabel: "रिजर्व पुलिस लाइन एवं डीटीसी", role: "Training, Guards & Reserve" }
-];
 
 function getIstParts(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-GB", {
@@ -47,7 +38,7 @@ function buildCalendarCells(year, monthIndex) {
 
 /**
  * [COMPONENT] AmbientPortalWidgets — Live Atmospheric Sunrise/Moonrise, Water Waves,
- * Analog/Digital IST Clock, Interactive Calendar, Animated Tricolor Flag & District Vector Map Popups
+ * Analog/Digital IST Clock & Interactive Calendar Popup
  */
 export default function AmbientPortalWidgets({ currentDistrict, theme = "light", language = "hi" }) {
   const english = language === "en";
@@ -55,12 +46,11 @@ export default function AmbientPortalWidgets({ currentDistrict, theme = "light",
 
   const [nowParts, setNowParts] = useState(() => getIstParts());
   const [skyOverride, setSkyOverride] = useState(null); // null | "sun" | "moon"
-  const [activePopup, setActivePopup] = useState(null); // null | "CALENDAR" | "MAP" | "FLAG"
+  const [activePopup, setActivePopup] = useState(null); // null | "CALENDAR"
   const [calDate, setCalDate] = useState(() => {
     const d = new Date();
     return { year: d.getFullYear(), month: d.getMonth() };
   });
-  const [selectedMapNode, setSelectedMapNode] = useState(MAP_NODES[0]);
 
   const hourHandRef = useRef(null);
   const minHandRef = useRef(null);
@@ -99,7 +89,7 @@ export default function AmbientPortalWidgets({ currentDistrict, theme = "light",
 
   return (
     <section
-      aria-label={english ? "Live Atmospheric & Utility Widgets" : "लाइव समय, कैलेंडर, ध्वज एवं नक्शा विजेट"}
+      aria-label={english ? "Live Atmospheric & Time Widgets" : "लाइव समय एवं कैलेंडर विजेट"}
       className="widgets-live-strip"
     >
       {/* === 1. SUNRISE / MOONRISE SKY + ANIMATED WATER WAVES WIDGET === */}
@@ -167,47 +157,7 @@ export default function AmbientPortalWidgets({ currentDistrict, theme = "light",
         </div>
       </div>
 
-      {/* === 3. ANIMATED TRICOLOR FLAG & DISTRICT VECTOR MAP POPUPS WIDGET === */}
-      <div className="widget-glass-card widget-geo-card">
-        <div className="widget-geo-visuals">
-          {/* Waving Indian Flag SVG */}
-          <svg viewBox="0 0 90 60" className="widget-flag-svg" aria-hidden="true">
-            <rect x="6" y="4" width="4" height="54" rx="2" fill="#8b6f47" />
-            <g className="flag-cloth">
-              <rect x="10" y="6" width="72" height="14" rx="2" fill="#FF9933" />
-              <rect x="10" y="20" width="72" height="14" fill="#FFFFFF" />
-              <rect x="10" y="34" width="72" height="14" rx="2" fill="#138808" />
-              <circle cx="46" cy="27" r="5.5" fill="none" stroke="#000080" strokeWidth="1.2" />
-              <circle cx="46" cy="27" r="1.2" fill="#000080" />
-            </g>
-          </svg>
-
-          {/* Animated District Sonar Map Mini SVG */}
-          <svg viewBox="0 0 120 72" className="widget-mini-map-svg" aria-hidden="true">
-            <path d="M16,24 L48,10 L96,16 L108,42 L78,62 L32,58 L12,40 Z" fill="rgba(67, 83, 57, 0.14)" stroke="#435339" strokeWidth="1.5" />
-            <circle cx="58" cy="36" r="10" className="map-ping-ring" />
-            <circle cx="58" cy="36" r="3.5" fill="#e06d44" />
-            <circle cx="34" cy="28" r="2.5" fill="#435339" />
-            <circle cx="84" cy="30" r="2.5" fill="#435339" />
-          </svg>
-        </div>
-
-        <div className="widget-geo-actions">
-          <span className="widget-geo-title">{districtName} · Jurisdiction &amp; Honors</span>
-          <div className="widget-btn-row">
-            <button type="button" onClick={() => setActivePopup("MAP")} className="widget-minimal-btn">
-              <span className="material-symbols-outlined g-icon-sm" aria-hidden="true">map</span>
-              {english ? "Vector Map" : "वेक्टर नक्शा"}
-            </button>
-            <button type="button" onClick={() => setActivePopup("FLAG")} className="widget-minimal-btn">
-              <span className="material-symbols-outlined g-icon-sm" aria-hidden="true">flag</span>
-              {english ? "Flag & Seal" : "ध्वज व प्रतीक"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* === VECTOR POPUP CREATIONS MODAL === */}
+      {/* === CALENDAR POPUP MODAL === */}
       {activePopup && createPortal(
         <div
           className="widget-popup-backdrop"
@@ -220,8 +170,6 @@ export default function AmbientPortalWidgets({ currentDistrict, theme = "light",
             <header className="widget-popup-header">
               <strong>
                 {activePopup === "CALENDAR" && (english ? "📅 Interactive Duty & Establishment Calendar" : "📅 कार्यालय कैलेंडर (IST)")}
-                {activePopup === "MAP" && (english ? `🗺️ ${districtName} Jurisdiction Vector Map` : `🗺️ ${districtName} जिला क्षेत्राधिकार वेक्टर मानचित्र`)}
-                {activePopup === "FLAG" && (english ? "🇮🇳 National Tricolor & Establishment Seal" : "🇮🇳 राष्ट्रीय ध्वज एवं राजस्थान पुलिस स्थापना प्रतीक")}
               </strong>
               <button type="button" onClick={() => setActivePopup(null)} className="widget-minimal-btn">
                 ✕
@@ -253,57 +201,6 @@ export default function AmbientPortalWidgets({ currentDistrict, theme = "light",
                     );
                   })}
                 </div>
-              </div>
-            )}
-
-            {activePopup === "MAP" && (
-              <div className="widget-map-popup">
-                <svg viewBox="0 0 300 175" className="widget-large-map-svg">
-                  <path
-                    d="M32,48 L112,18 L244,28 L272,96 L216,154 L94,148 L22,100 Z"
-                    className="map-district-polygon"
-                  />
-                  <path d="M150,86 L96,54 M150,86 L215,58 M150,86 L76,122 M150,86 L222,124" className="map-network-lines" />
-                  {MAP_NODES.map((node) => (
-                    <g
-                      key={node.id}
-                      onClick={() => setSelectedMapNode(node)}
-                      className={`map-node-group${selectedMapNode.id === node.id ? " is-active" : ""}`}
-                    >
-                      <circle cx={node.x} cy={node.y} r="13" className="map-ping-ring" />
-                      <circle cx={node.x} cy={node.y} r="6.5" className="map-node-dot" />
-                      <text x={node.x} y={node.y + 20} textAnchor="middle" className="map-node-label">
-                        {english ? node.label : node.hiLabel}
-                      </text>
-                    </g>
-                  ))}
-                </svg>
-
-                <div className="widget-map-detail">
-                  <strong>📍 {english ? selectedMapNode.label : selectedMapNode.hiLabel}</strong>
-                  <span>{selectedMapNode.role} · {districtName}</span>
-                </div>
-              </div>
-            )}
-
-            {activePopup === "FLAG" && (
-              <div className="widget-flag-popup">
-                <div className="widget-flag-showcase">
-                  <svg viewBox="0 0 180 110" className="widget-flag-lg-svg" aria-hidden="true">
-                    <rect x="12" y="8" width="6" height="96" rx="3" fill="#8b6f47" />
-                    <g className="flag-cloth">
-                      <rect x="18" y="10" width="144" height="26" rx="3" fill="#FF9933" />
-                      <rect x="18" y="36" width="144" height="26" fill="#FFFFFF" />
-                      <rect x="18" y="62" width="144" height="26" rx="3" fill="#138808" />
-                      <circle cx="90" cy="49" r="10.5" fill="none" stroke="#000080" strokeWidth="2" />
-                      <circle cx="90" cy="49" r="2.2" fill="#000080" />
-                    </g>
-                  </svg>
-                  <PoliceCrestSvg className="portal-crest-svg" />
-                </div>
-                <p className="widget-motto-text">
-                  सेवार्थ कटिबद्धता · {districtName} District Police Force &amp; Establishment Portal
-                </p>
               </div>
             )}
           </section>

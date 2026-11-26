@@ -1,6 +1,6 @@
 /* ==========================================================================
-   LIVE ATMOSPHERIC WIDGETS, SUNRISE/MOONRISE WAVES, CLOCK, CALENDAR, FLAG & MAP
-   Rich Frosted Blur, Moving Water Waves, Celestial Orbit & Vector Popups
+   LIVE ATMOSPHERIC WIDGETS, SUNRISE/MOONRISE WAVES, CLOCK & CALENDAR
+   Rich Frosted Blur, Moving Water Waves, Celestial Orbit & Calendar Popup
    ========================================================================== */
 
 @keyframes waveScrollA {
@@ -25,16 +25,6 @@
   50% { transform: translateX(18px); }
 }
 
-@keyframes flagRipple {
-  0%, 100% { transform: skewY(0deg); }
-  50% { transform: skewY(-1.8deg); }
-}
-
-@keyframes radarPing {
-  0% { r: 6; opacity: 0.75; }
-  100% { r: 19; opacity: 0; }
-}
-
 @keyframes springPopupReveal {
   0% { opacity: 0; transform: scale(0.94) translateY(10px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
@@ -42,7 +32,7 @@
 
 .widgets-live-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
   margin-bottom: 24px;
 }
@@ -302,68 +292,7 @@
   font-weight: 600;
 }
 
-/* === 3. ANIMATED FLAG & DISTRICT VECTOR MAP CARD === */
-.widget-geo-card {
-  padding: 14px 16px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.widget-geo-visuals {
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: 10px;
-  padding: 6px 8px;
-  border-radius: 16px;
-  background: var(--surface, #faf8f4);
-  box-shadow: var(--shadow-inset);
-}
-
-.widget-flag-svg {
-  width: 82px;
-  height: auto;
-}
-
-.flag-cloth {
-  transform-origin: 10px 26px;
-  animation: flagRipple 2.8s ease-in-out infinite;
-}
-
-.widget-mini-map-svg {
-  width: 110px;
-  height: auto;
-}
-
-.map-ping-ring {
-  fill: none;
-  stroke: #e06d44;
-  stroke-width: 1.5;
-  animation: radarPing 2.2s ease-out infinite;
-}
-
-.widget-geo-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.widget-geo-title {
-  font-family: var(--font-editorial, "Playfair Display", Georgia, serif);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-strong, #151814);
-}
-
-.widget-btn-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-/* === VECTOR POPUPS (BLURRED BACKDROP + SPRING REVEAL) === */
+/* === POPUP MODAL (BLURRED BACKDROP + SPRING REVEAL) === */
 .widget-popup-backdrop {
   position: fixed;
   inset: 0;
@@ -443,94 +372,6 @@
   color: #ffffff;
 }
 
-.widget-map-popup {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.widget-large-map-svg {
-  width: 100%;
-  height: auto;
-  border-radius: 16px;
-  background: var(--surface, #faf8f4);
-  border: 1px solid var(--border);
-}
-
-.map-district-polygon {
-  fill: rgba(67, 83, 57, 0.14);
-  stroke: #435339;
-  stroke-width: 2;
-}
-
-.map-network-lines {
-  stroke: rgba(67, 83, 57, 0.35);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 3;
-}
-
-.map-node-group {
-  cursor: pointer;
-}
-
-.map-node-dot {
-  fill: #435339;
-  stroke: #ffffff;
-  stroke-width: 2;
-}
-
-.map-node-group.is-active .map-node-dot {
-  fill: #e06d44;
-}
-
-.map-node-label {
-  font-size: 9px;
-  font-weight: 700;
-  fill: var(--text-strong, #151814);
-}
-
-.widget-map-detail {
-  padding: 10px 14px;
-  border-radius: 14px;
-  background: var(--surface-tint, #eef1e9);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 0.84rem;
-}
-
-.widget-flag-popup {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  text-align: center;
-}
-
-.widget-flag-showcase {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 14px 20px;
-  border-radius: 18px;
-  background: var(--surface, #faf8f4);
-  box-shadow: var(--shadow-inset);
-}
-
-.widget-flag-lg-svg {
-  width: 160px;
-  height: auto;
-}
-
-.widget-motto-text {
-  margin: 0;
-  font-weight: 700;
-  color: var(--text-strong);
-}
-
 /* === DARK MODE WIDGET ADAPTATION === */
 .app-shell[data-theme="dark"] .widget-glass-card {
   background: rgba(30, 37, 51, 0.82);
@@ -543,16 +384,10 @@
   border-color: rgba(216, 180, 137, 0.25);
 }
 
-.app-shell[data-theme="dark"] .map-node-label {
-  fill: #f9f6f0;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .celestial-orb,
   .celestial-cloud,
   .water-wave,
-  .flag-cloth,
-  .map-ping-ring,
   .widget-popup-modal {
     animation: none !important;
   }

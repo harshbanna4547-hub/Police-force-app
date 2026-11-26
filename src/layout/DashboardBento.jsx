@@ -1,15 +1,11 @@
-import AmbientPortalWidgets from "../components/shared/AmbientPortalWidgets";
-import ModuleResourceCompanion from "../components/shared/ModuleResourceCompanion";
 import "./DashboardBento.css";
 
 /**
  * [COMPONENT] DashboardBento — आधुनिक Minimal Editorial राज-आईएफएमएस 3.0 पिलर कार्ड्स
- * Non-clickable header, Zero chevrons/badges, Live Sunrise/Moonrise, Clock, Calendar, Flag & Map widgets
+ * Non-clickable header, Zero chevrons/badges
  */
 export default function DashboardBento({
   modules = [],
-  currentDistrict,
-  theme = "light",
   onOpenModule,
   language = "hi"
 }) {
@@ -169,30 +165,6 @@ export default function DashboardBento({
       aria-label={english ? "All Operational Modules" : "सभी विभागीय कार्य मॉड्यूल"}
       className="bento-dashboard-section"
     >
-      {/* === EDITORIAL SECTION HEADER === */}
-      <div className="bento-section-header">
-        <div>
-          <span className="bento-section-eyebrow">
-            {english ? "ESTABLISHMENT DIRECTORY" : "विभागीय स्थापना निर्देशिका"}
-          </span>
-          <h2 className="bento-section-title">
-            {english ? "Operational Modules" : "विभागीय कार्य मॉड्यूल"}
-          </h2>
-          <p className="bento-section-subtitle">
-            {english
-              ? "Click any sub-item inside the pillars below to open registers, orders, or reports."
-              : "संबंधित बल विवरण, आदेश या पंजिका खोलने के लिए पिलर कार्ड के अंदर किसी भी उप-विकल्प पर क्लिक करें।"}
-          </p>
-        </div>
-      </div>
-
-      {/* === LIVE CELESTIAL WAVES, CLOCK, CALENDAR, FLAG & VECTOR MAP WIDGETS === */}
-      <AmbientPortalWidgets
-        currentDistrict={currentDistrict}
-        theme={theme}
-        language={language}
-      />
-
       {/* === EDITORIAL PILLAR GRID === */}
       <div className="rajifms-pillar-grid">
         {pillars.map((pillar, index) => {
@@ -232,9 +204,6 @@ export default function DashboardBento({
           );
         })}
       </div>
-
-      {/* === OFFICIAL GOVT PORTALS & SERVICE RULES GATEWAY === */}
-      <ModuleResourceCompanion variant="dashboard" language={language} />
     </section>
   );
 }

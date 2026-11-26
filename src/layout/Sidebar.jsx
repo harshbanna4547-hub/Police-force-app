@@ -1,10 +1,14 @@
 import { useState } from "react";
 import "./SidebarNav.css";
 
-const DIRECT_SIDEBAR_IDS = new Set(["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"]);
-
 /**
- * [COMPONENT] Sidebar — फिक्स्ड बायां साइडबार (Home, Employee Management, Storage Vault, Reports एवं मॉड्यूल सूची)
+ * [COMPONENT] Sidebar — साफ़ व केंद्रित बायां साइडबार
+ * 1. Home (Dashboard)
+ * 2. Employee Management
+ * 3. Storage Vault (Windows Desktop)
+ * 4. Services (सरकारी पोर्टल एवं लिंक)
+ * 5. About Portal (परिचय + tucked Development Services)
+ * 6. Bottom Utility Controls (Sunrise/Moonrise, हिंदी/English, Theme Style)
  */
 export default function Sidebar({
   className = "",
@@ -12,24 +16,26 @@ export default function Sidebar({
   setSidebarOpen,
   activeView,
   setActiveView,
-  modules,
+  modules = [],
   activeProfile,
   currentDistrict,
   theme = "light",
   onThemeChange,
-  language,
+  portalTemplate = "aurora",
+  onTemplateChange,
+  templateOptions = [],
+  servicePortals = [],
+  language = "hi",
   onLanguageChange,
   onOpenDistrictSwitcher
 }) {
-  const [modulesOpen, setModulesOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const english = language === "en";
+
   const employeesModule = modules.find((module) => module.id === "EMPLOYEES" && module.enabled !== false);
   const storageModule = modules.find((module) => module.id === "STORAGE" && module.enabled !== false);
-  const reportsModule = modules.find((module) => module.id === "REPORTS" && module.enabled !== false);
-  const visibleModules = modules.filter(
-    (module) => module.enabled !== false && !DIRECT_SIDEBAR_IDS.has(module.id)
-  );
+  const devServicesModule = modules.find((module) => module.id === "DEV_SERVICES" && module.enabled !== false);
 
   // [ACTION] Select view and auto-close drawer on small screens
   const selectView = (view) => {
@@ -49,7 +55,7 @@ export default function Sidebar({
         className={`portal-sidebar ${className} ${sidebarOpen ? "is-open" : "is-closed"}`}
         aria-hidden={!sidebarOpen}
       >
-        {/* === PROFILE & DISTRICT HEADER === */}
+        {/* === 1. DISTRICT PROFILE HEADER === */}
         <section className="sidebar-profile-section">
           <div className="sidebar-profile-card">
             <strong className="sidebar-profile-title">👮‍♂️ {activeProfile}</strong>
@@ -66,7 +72,7 @@ export default function Sidebar({
           </div>
         </section>
 
-        {/* === PRIMARY NAVIGATION LINKS === */}
+        {/* === 2. PRIMARY NAVIGATION ITEMS (ULTRA-CLEAN) === */}
         <nav aria-label={english ? "Main navigation" : "मुख्य नेविगेशन"} className="sidebar-nav-list">
           <button
             type="button"
@@ -82,7 +88,7 @@ export default function Sidebar({
               onClick={() => selectView("EMPLOYEES")}
               className={`sidebar-nav-btn ${activeView === "EMPLOYEES" ? "is-active" : ""}`}
             >
-              {employeesModule.icon} {english ? employeesModule.title : (employeesModule.hindiTitle || employeesModule.title)}
+              👥 {english ? employeesModule.title : (employeesModule.hindiTitle || employeesModule.title)}
             </button>
           )}
 
@@ -92,58 +98,126 @@ export default function Sidebar({
               onClick={() => selectView("STORAGE")}
               className={`sidebar-nav-btn ${activeView === "STORAGE" ? "is-active" : ""}`}
             >
-              {storageModule.icon} {english ? storageModule.title : (storageModule.hindiTitle || storageModule.title)}
+              🖥️ {english ? "Storage Vault (Windows Desktop)" : "स्टोरेज वॉल्ट (Windows Desktop)"}
             </button>
           )}
 
-          {reportsModule && (
+          {/* === 3. SERVICES: GOVT PORTALS & OFFICIAL LINKS === */}
+          <div className="sidebar-accordion-group">
             <button
               type="button"
-              onClick={() => selectView("REPORTS")}
-              className={`sidebar-nav-btn ${activeView === "REPORTS" ? "is-active" : ""}`}
+              aria-expanded={servicesOpen}
+              aria-controls="sidebar-services-panel"
+              onClick={() => setServicesOpen((open) => !open)}
+              className={`sidebar-nav-btn sidebar-accordion-trigger ${servicesOpen ? "is-expanded" : ""}`}
             >
-              {reportsModule.icon} {english ? reportsModule.title : (reportsModule.hindiTitle || reportsModule.title)}
+              <span>🌐 {english ? "Services" : "सरकारी पोर्टल एवं लिंक"}</span>
+              <span className="sidebar-accordion-caret" aria-hidden="true">{servicesOpen ? "▴" : "▾"}</span>
             </button>
-          )}
 
-          <button
-            type="button"
-            aria-expanded={modulesOpen}
-            aria-controls="sidebar-modules-list"
-            onClick={() => setModulesOpen((open) => !open)}
-            className="sidebar-nav-btn sidebar-modules-toggle"
-          >
-            📂 {english ? "Modules" : "मॉड्यूल"} {modulesOpen ? "▴" : "▾"}
-          </button>
+            {servicesOpen && (
+              <div
+                id="sidebar-services-panel"
+                className="sidebar-services-panel"
+                role="region"
+                aria-label={english ? "Government Websites & Official Links" : "आधिकारिक सरकारी पोर्टल एवं वेबसाइट"}
+              >
+                {servicePortals.map((portal) => (
+                  <a
+                    key={portal.id}
+                    href={portal.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={portal.summary}
+                    className="sidebar-service-link"
+                  >
+                    <span className="sidebar-service-link-text">
+                      <span className="sidebar-service-title">
+                        {english ? portal.title : portal.hiTitle}
+                      </span>
+                      <span className="sidebar-service-badge">{portal.badge}</span>
+                    </span>
+                    <span className="sidebar-service-ext" aria-hidden="true">↗</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
 
-          {modulesOpen && (
-            <div id="sidebar-modules-list">
-              {visibleModules.map((module) => (
-                <button
-                  key={module.id}
-                  type="button"
-                  title={english ? module.title : (module.hindiTitle || module.title)}
-                  onClick={() => selectView(module.id)}
-                  className={`sidebar-sub-btn ${activeView === module.id ? "is-active" : ""}`}
-                >
-                  {module.icon} {english ? module.title : (module.hindiTitle || module.title)}
-                </button>
-              ))}
-            </div>
-          )}
+          {/* === 4. ABOUT PORTAL + DEVELOPMENT SERVICES === */}
+          <div className="sidebar-accordion-group">
+            <button
+              type="button"
+              aria-expanded={aboutOpen}
+              aria-controls="sidebar-about-panel"
+              onClick={() => setAboutOpen((open) => !open)}
+              className={`sidebar-nav-btn sidebar-accordion-trigger ${aboutOpen || activeView === "DEV_SERVICES" ? "is-expanded" : ""}`}
+            >
+              <span>ℹ️ {english ? "About Portal" : "पोर्टल परिचय (About)"}</span>
+              <span className="sidebar-accordion-caret" aria-hidden="true">{aboutOpen ? "▴" : "▾"}</span>
+            </button>
+
+            {aboutOpen && (
+              <section
+                id="sidebar-about-panel"
+                className="sidebar-about-card"
+                aria-label={english ? "Portal & Developer Details" : "पोर्टल एवं विकासकर्ता विवरण"}
+              >
+                <div className="sidebar-about-name">Harshvardhan Singh Rathore</div>
+                <div className="sidebar-about-row">
+                  <strong>{english ? "Role:" : "पद:"}</strong>{" "}
+                  {english ? "Govt. Employee — Junior Assistant" : "सरकारी कर्मचारी — कनिष्ठ सहायक"}
+                </div>
+                <div className="sidebar-about-row">
+                  <strong>{english ? "Posting:" : "पदस्थापन:"}</strong>{" "}
+                  {english ? "SP Office (Force Branch), Chittorgarh" : "पुलिस अधीक्षक कार्यालय (फोर्स शाखा), चित्तौड़गढ़"}
+                </div>
+                <div className="sidebar-about-row">
+                  <strong>{english ? "Work Deal:" : "कार्य दायित्व:"}</strong>{" "}
+                  {english
+                    ? "Training, Exam Permission, Seniority, Roster & Promotion Exams"
+                    : "प्रशिक्षण, परीक्षा अनुमति, वरिष्ठता, रोस्टर एवं पदोन्नति परीक्षा कार्य"}
+                </div>
+                <div className="sidebar-about-row">
+                  <strong>{english ? "Email:" : "ई-मेल:"}</strong>{" "}
+                  <a href="mailto:harshbanna4547@gmail.com" className="sidebar-about-mail">
+                    harshbanna4547@gmail.com
+                  </a>
+                </div>
+
+                {devServicesModule && (
+                  <button
+                    type="button"
+                    onClick={() => selectView("DEV_SERVICES")}
+                    className={`sidebar-dev-btn ${activeView === "DEV_SERVICES" ? "is-active" : ""}`}
+                  >
+                    🛠️ {english ? "Development Services" : "डेवलपमेंट सेवाएँ"}
+                  </button>
+                )}
+              </section>
+            )}
+          </div>
         </nav>
 
-        {/* === FOOTER: COMPACT THEME & LANGUAGE PILLS + DEV SERVICES === */}
+        {/* === 5. BOTTOM UTILITY CONTROLS (SUNRISE/MOONRISE, LANGUAGE & THEME STYLE) === */}
         <div className="sidebar-footer-wrap">
           <div className="sidebar-utility-pills" role="group" aria-label={english ? "Theme and language controls" : "थीम एवं भाषा नियंत्रण"}>
             <button
               type="button"
               onClick={onThemeChange}
-              className="sidebar-utility-pill"
-              aria-label={english ? "Toggle light and dark mode" : "लाइट और डार्क मोड बदलें"}
+              aria-pressed={theme === "dark"}
+              title={theme === "light"
+                ? (english ? "Switch to Moonrise (Dark Mode)" : "मूनराइज (डार्क मोड) चालू करें")
+                : (english ? "Switch to Sunrise (Light Mode)" : "सनराइज (लाइट मोड) चालू करें")}
+              aria-label={theme === "light"
+                ? (english ? "Moonrise — Switch to Dark Mode" : "मूनराइज — डार्क मोड पर जाएं")
+                : (english ? "Sunrise — Switch to Light Mode" : "सनराइज — लाइट मोड पर जाएं")}
+              className={`sidebar-utility-pill sidebar-sky-toggle ${theme === "dark" ? "is-sunrise-target" : "is-moonrise-target"}`}
             >
-              <span aria-hidden="true">{theme === "light" ? "🌙" : "☀️"}</span>
-              <span>{theme === "light" ? "Dark" : "Light"}</span>
+              <span className="sidebar-sky-pill-content">
+                <span aria-hidden="true">{theme === "light" ? "🌙" : "🌅"}</span>
+                <span>{theme === "light" ? "Moonrise" : "Sunrise"}</span>
+              </span>
             </button>
             <button
               type="button"
@@ -156,50 +230,26 @@ export default function Sidebar({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => selectView("DEV_SERVICES")}
-            className={`sidebar-dev-btn ${activeView === "DEV_SERVICES" ? "is-active" : ""}`}
-          >
-            🛠️ {english ? "Development Services" : "डेवलपमेंट सेवाएँ"}
-          </button>
-
-          {/* === ABOUT AUTHOR SECTION (लेखक / विकासकर्ता परिचय) === */}
-          <button
-            type="button"
-            aria-expanded={aboutOpen}
-            aria-controls="sidebar-about-panel"
-            onClick={() => setAboutOpen((open) => !open)}
-            className="sidebar-about-toggle"
-          >
-            <span>ℹ️ {english ? "About Developer" : "परिचय (About)"}</span>
-            <span>{aboutOpen ? "▴" : "▾"}</span>
-          </button>
-
-          {aboutOpen && (
-            <section id="sidebar-about-panel" className="sidebar-about-card" aria-label={english ? "Author details" : "विकासकर्ता विवरण"}>
-              <div className="sidebar-about-name">Harshvardhan Singh Rathore</div>
-              <div className="sidebar-about-row">
-                <strong>{english ? "Role:" : "पद:"}</strong>{" "}
-                {english ? "Govt. Employee — Junior Assistant" : "सरकारी कर्मचारी — कनिष्ठ सहायक"}
+          {templateOptions.length > 0 && (
+            <div className="sidebar-theme-switcher" role="group" aria-label={english ? "Theme Style" : "थीम स्टाइल"}>
+              <span className="sidebar-theme-label">
+                🎨 {english ? "Theme Style:" : "थीम स्टाइल:"}
+              </span>
+              <div className="sidebar-theme-grid">
+                {templateOptions.map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    title={tpl.label}
+                    aria-pressed={portalTemplate === tpl.id}
+                    onClick={() => onTemplateChange?.(tpl.id)}
+                    className={`sidebar-theme-pill${portalTemplate === tpl.id ? " is-active" : ""}`}
+                  >
+                    {tpl.label}
+                  </button>
+                ))}
               </div>
-              <div className="sidebar-about-row">
-                <strong>{english ? "Posting:" : "पदस्थापन:"}</strong>{" "}
-                {english ? "SP Office (Force Branch), Chittorgarh" : "पुलिस अधीक्षक कार्यालय (फोर्स शाखा), चित्तौड़गढ़"}
-              </div>
-              <div className="sidebar-about-row">
-                <strong>{english ? "Work Deal:" : "कार्य दायित्व:"}</strong>{" "}
-                {english
-                  ? "Training, Exam Permission, Seniority, Roster & Promotion Exams"
-                  : "प्रशिक्षण, परीक्षा अनुमति, वरिष्ठता, रोस्टर एवं पदोन्नति परीक्षा कार्य"}
-              </div>
-              <div className="sidebar-about-row">
-                <strong>{english ? "Email:" : "ई-मेल:"}</strong>{" "}
-                <a href="mailto:harshbanna4547@gmail.com" className="sidebar-about-mail">
-                  harshbanna4547@gmail.com
-                </a>
-              </div>
-            </section>
+            </div>
           )}
 
           <footer className="sidebar-footer-caption">

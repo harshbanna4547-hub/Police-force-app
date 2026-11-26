@@ -1,7 +1,20 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import { DistrictSwitcherModal } from "../core/AuthAndCloudSync";
+import { ALL_GOVT_PORTALS } from "../data/moduleResources";
 
+const TEMPLATE_OPTIONS = [
+  { id: "novara", label: "1. Novara (Teal)" },
+  { id: "finora", label: "2. Finora (Green)" },
+  { id: "aurora", label: "3. Aurora (Editorial)" },
+  { id: "wizardz", label: "4. WizardZ (Lime)" },
+  { id: "twinkle", label: "5. Twinkle (Dark Gold)" },
+  { id: "xenon", label: "6. Xenon (Liquid Glass)" }
+];
+
+/**
+ * [COMPONENT] SidebarNav — बायां नेविगेशन रैपर एवं जिला स्विचर मोडल नियंत्रण
+ */
 export default function SidebarNav({
   portalData,
   sidebarOpen,
@@ -13,6 +26,8 @@ export default function SidebarNav({
   onDistrictChange,
   theme,
   onThemeChange,
+  portalTemplate = "aurora",
+  onTemplateChange,
   language,
   onLanguageChange
 }) {
@@ -37,6 +52,10 @@ export default function SidebarNav({
         currentDistrict={currentDistrict}
         theme={theme}
         onThemeChange={onThemeChange}
+        portalTemplate={portalTemplate}
+        onTemplateChange={onTemplateChange}
+        templateOptions={TEMPLATE_OPTIONS}
+        servicePortals={ALL_GOVT_PORTALS}
         language={language}
         onLanguageChange={onLanguageChange}
         onOpenDistrictSwitcher={() => setSwitcherOpen(true)}
