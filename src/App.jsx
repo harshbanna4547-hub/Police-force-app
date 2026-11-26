@@ -4,7 +4,6 @@ import PortalModuleContent from "./components/PortalModuleContent";
 import SidebarNav from "./layout/SidebarNav";
 import TopHeaderAndStats from "./layout/TopHeaderAndStats";
 import DashboardBento from "./layout/DashboardBento";
-import RightUtilityPanel from "./layout/RightUtilityPanel";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
 import { createDistrictSelection } from "./core/districtAuth.js";
@@ -152,7 +151,7 @@ export default function App() {
 
   return (
     <div
-      className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"}`}
+      className={`app-shell ${sidebarOpen ? "is-sidebar-open" : "is-sidebar-closed"} ${activeView === "HOME" ? "is-home" : "is-submodule"}`}
       data-theme={theme}
       data-template={portalTemplate}
     >
@@ -177,18 +176,25 @@ export default function App() {
         onLanguageChange={() => setLanguage((value) => value === "hi" ? "en" : "hi")}
       />
       <div className={`app-main-content ${sidebarOpen ? "has-sidebar" : "is-expanded"}`}>
-        <TopHeaderAndStats
-          sidebarOpen={sidebarOpen}
-          setSidebarOpen={setSidebarOpen}
-          currentDistrict={currentDistrict}
-          language={language}
-        />
-        <RightUtilityPanel
-          currentDistrict={currentDistrict}
-          theme={theme}
-          onThemeChange={handleThemeToggle}
-          language={language}
-        />
+        {activeView === "HOME" ? (
+          <TopHeaderAndStats
+            sidebarOpen={sidebarOpen}
+            setSidebarOpen={setSidebarOpen}
+            currentDistrict={currentDistrict}
+            language={language}
+          />
+        ) : (
+          <button
+            type="button"
+            aria-label={sidebarOpen
+              ? (language === "en" ? "Close sidebar" : "साइडबार बंद करें")
+              : (language === "en" ? "Open sidebar" : "साइडबार खोलें")}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="header-menu-button mobile-floating-menu-btn"
+          >
+            ☰
+          </button>
+        )}
         <main className="app-main-area">
           {activeView === "HOME" ? (
             <DashboardBento

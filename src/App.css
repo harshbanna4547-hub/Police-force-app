@@ -76,11 +76,11 @@
 /* === MAIN WORKSPACE COLUMN (मुख्य कार्यक्षेत्र - 100% पूर्ण-चौड़ाई फ्लुइड लेआउट) === */
 .app-main-content {
   min-width: 0;
-  width: calc(100% - clamp(220px, 16vw, 250px));
+  width: calc(100% - clamp(220px, 16vw, 280px));
   max-width: 100%;
   flex: 1;
   margin: 0;
-  margin-left: clamp(220px, 16vw, 250px);
+  margin-left: clamp(220px, 16vw, 280px);
   margin-right: 0;
   padding: clamp(8px, 1.2vw, 24px);
   box-sizing: border-box;
@@ -88,7 +88,7 @@
   flex-direction: column;
   gap: clamp(10px, 1.2vw, 20px);
   overflow-x: hidden;
-  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-right 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-main-content.is-expanded,
@@ -134,7 +134,20 @@
   pointer-events: auto;
 }
 
+.app-shell.is-submodule .app-main-content {
+  padding-top: clamp(10px, 1vw, 16px);
+}
+
+/* === MOBILE-ONLY FLOATING MENU TRIGGER INSIDE SUB-MODULES === */
+.mobile-floating-menu-btn {
+  display: none;
+}
+
 @media (min-width: 769px) {
+  .mobile-floating-menu-btn {
+    display: none !important;
+  }
+
   .portal-sidebar-nav,
   .portal-sidebar-nav.is-closed {
     transform: translateX(0) !important;
@@ -143,27 +156,26 @@
 
   .app-main-content,
   .app-shell.is-sidebar-closed .app-main-content {
-    margin-left: clamp(220px, 16vw, 250px);
+    margin-left: clamp(220px, 16vw, 280px);
     margin-right: 0;
-    width: calc(100% - clamp(220px, 16vw, 250px));
-  }
-}
-
-@media (min-width: 1280px) {
-  .portal-sidebar-nav {
-    width: 250px !important;
-    min-width: 250px !important;
-  }
-
-  .app-main-content,
-  .app-shell.is-sidebar-closed .app-main-content {
-    margin-left: 250px;
-    margin-right: 210px;
-    width: calc(100% - 460px);
+    width: calc(100% - clamp(220px, 16vw, 280px));
   }
 }
 
 @media (max-width: 768px) {
+  .mobile-floating-menu-btn {
+    position: fixed;
+    top: 10px;
+    left: 12px;
+    z-index: 950;
+    display: inline-flex;
+    box-shadow: var(--shadow-header);
+  }
+
+  .app-shell.is-submodule .module-header-toolbar {
+    padding-left: 58px;
+  }
+
   .app-main-content,
   .app-main-content.has-sidebar {
     margin-left: 0 !important;

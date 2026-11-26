@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import XLSX from "xlsx-js-style";
 import { isDevlysText } from "./isDevlysText";
 import "./ExportBar.css";
@@ -44,27 +43,6 @@ export default function ExportBar({
   actions = ["excel", "word", "pdf", "print"],
   language = "hi"
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    if (!menuOpen) return undefined;
-    const onPointerDown = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    };
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
-
   const handleExcel = () => {
     if (!rows.length) return alert(language === "en" ? "No data available to export." : "डाउनलोड के लिए डेटा उपलब्ध नहीं है!");
     const columns = Object.keys(rows[0] || {});
@@ -219,48 +197,51 @@ export default function ExportBar({
     }, 400);
   };
 
-  const exportOptions = [
-    { key: "excel", label: "📊 Excel (.xlsx - DevLys 010)", onClick: handleExcel },
-    { key: "word", label: "📝 Word (.doc)", onClick: handleWord },
-    { key: "pdf", label: "📄 PDF (.pdf)", onClick: handlePdf }
-  ].filter((option) => actions.includes(option.key));
+  const actionButtons = [
+    {
+      key: "excel",
+      icon: "📊",
+      title: "Export Excel (.xlsx)",
+      className: "export-icon-btn is-excel",
+      onClick: handleExcel
+    },
+    {
+      key: "word",
+      icon: "📝",
+      title: "Export Word (.doc)",
+      className: "export-icon-btn is-word",
+      onClick: handleWord
+    },
+    {
+      key: "pdf",
+      icon: "📄",
+      title: "Export PDF (.pdf)",
+      className: "export-icon-btn is-pdf",
+      onClick: handlePdf
+    },
+    {
+      key: "print",
+      icon: "🖨️",
+      title: "Print Report",
+      className: "export-icon-btn is-print",
+      onClick: handlePrint
+    }
+  ].filter((item) => actions.includes(item.key));
 
   return (
-    <div className="export-bar-group">
-      {exportOptions.length > 0 && (
-        <div ref={menuRef} className="export-bar-menu-wrap">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-            className="export-bar-btn"
-          >
-            📥 {language === "en" ? "Export" : "Export"} ▾
-          </button>
-          {menuOpen && (
-            <div role="menu" className="export-bar-dropdown">
-              {exportOptions.map((option) => (
-                <button
-                  key={option.key}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    void option.onClick();
-                  }}
-                  className="export-bar-dropdown-item"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-      {actions.includes("print") && (
-        <button type="button" onClick={handlePrint} className="export-bar-btn">🖨️ Print</button>
-      )}
+    <div className="export-bar-group" role="group" aria-label="Export and Print actions">
+      {actionButtons.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          title={item.title}
+          aria-label={item.title}
+          onClick={() => void item.onClick()}
+          className={item.className}
+        >
+          <span aria-hidden="true">{item.icon}</span>
+        </button>
+      ))}
     </div>
   );
 }

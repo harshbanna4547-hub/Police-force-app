@@ -1,75 +1,104 @@
 /* ==========================================================================
-   MODULE HEADER TOOLBAR (प्रत्येक मॉड्यूल के शीर्ष पर नियंत्रण पट्टी)
+   COMPACT SINGLE-ROW MODULE HEADER TOOLBAR (एक-पंक्ति मॉड्यूल नियंत्रण पट्टी)
+   Zero Inline Styles · Clickable Breadcrumbs + Compact Search + Icon Actions
    ========================================================================== */
 
 .module-header-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(10px, 1.5vw, 16px);
-  flex-wrap: wrap;
-  margin-bottom: 18px;
-  padding: 14px 18px;
+  gap: 12px;
+  flex-wrap: nowrap;
+  margin-bottom: 16px;
+  padding: 10px 14px;
   border: 1px solid var(--border, #e2e8f0);
-  border-radius: 16px;
+  border-radius: 14px;
   background: var(--surface, #f8fafc);
 }
 
-.module-toolbar-title {
-  flex: 1 1 240px;
+/* === 1. CLICKABLE BREADCRUMB PATH (Home >> Module >> Section) === */
+.module-toolbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
   min-width: 0;
-  margin: 0;
+  gap: 6px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.module-crumb-link {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--royal-blue, #435339);
   font-family: var(--font-ui);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.module-crumb-link:hover {
+  background: var(--surface-tint, #eef1e9);
+  text-decoration: underline;
+}
+
+.module-crumb-sep {
+  color: var(--muted, #64748b);
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.module-crumb-current {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--text-strong, #0b1e3d);
-  font-size: clamp(14px, 1.35vw, 24px);
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
   font-weight: 800;
   letter-spacing: -0.01em;
 }
 
+/* === 2. RIGHT CONTROLS: COMPACT SEARCH + EXTRA ACTIONS + ICON EXPORT BAR === */
 .module-toolbar-controls {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  flex: 2 1 420px;
   justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .module-toolbar-search {
-  flex: 1 1 210px;
-  min-width: 160px;
+  width: clamp(160px, 18vw, 230px);
+  flex: 0 1 clamp(160px, 18vw, 230px);
+  min-width: 0;
 }
 
-.module-toolbar-search input,
-.module-toolbar-gender select {
+.module-toolbar-search input {
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
   min-width: 0;
-  min-height: 38px;
-  padding: 7px 14px;
+  padding: 4px 12px;
   border: 1px solid var(--border-strong, #cbd5e1);
   border-radius: var(--radius-pill, 999px);
   background: var(--surface-raised, #ffffff);
   color: var(--text, #0f172a);
   font-family: var(--font-ui);
-  font-size: 0.86rem;
+  font-size: 13px;
+  line-height: 1.2;
 }
 
-.module-toolbar-search input {
-  width: 100%;
-}
-
-.module-toolbar-search input:focus,
-.module-toolbar-gender select:focus {
+.module-toolbar-search input:focus {
   outline: 2px solid rgba(29, 99, 220, 0.22);
   border-color: var(--royal-blue, #1d63dc);
-}
-
-.module-toolbar-gender {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  font-weight: 700;
-  font-size: 0.84rem;
 }
 
 .visually-hidden {
@@ -84,23 +113,28 @@
   border: 0;
 }
 
-@media (max-width: 768px) {
+/* === RESPONSIVE ADAPTATION BELOW 960px / MOBILE === */
+@media (max-width: 960px) {
   .module-header-toolbar {
-    padding: 12px;
-    gap: 10px;
-    border-radius: 14px;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
   }
 
-  .module-toolbar-title {
-    flex-basis: 100%;
+  .module-toolbar-breadcrumb {
+    flex: 1 1 100%;
   }
 
   .module-toolbar-controls {
-    flex-basis: 100%;
-    justify-content: flex-start;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
+}
 
+@media (max-width: 560px) {
   .module-toolbar-search {
-    flex-basis: 100%;
+    width: 100%;
+    flex: 1 1 100%;
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import EmployeeEditModal from "../core/EmployeeEditModal";
 import ModuleResourceCompanion from "./shared/ModuleResourceCompanion";
+import { ModuleNavigationContext } from "./shared/ModuleNavigationContext";
 
 /**
  * [COMPONENT] PortalModuleContent — सक्रिय मॉड्यूल, बॉटम बैक बटन, ग्लोबल राइट-क्लिक मेन्यू एवं संपादन मोडल
@@ -20,6 +21,7 @@ export default function PortalModuleContent({
 }) {
   const english = language === "en";
   const [editInitialTab, setEditInitialTab] = useState("personal");
+  const [moduleResetCounter, setModuleResetCounter] = useState(0);
   const [contextMenu, setContextMenu] = useState(null);
   const contextRef = useRef(null);
 
@@ -182,7 +184,19 @@ export default function PortalModuleContent({
     DEV_SERVICES: { districtId, portalData, language }
   };
   const ActiveModule = selectedModule.component;
-  const activeKey = activeView === "STRENGTH" ? `STRENGTH_${initialTab || "POST_WISE"}` : activeView;
+  const activeKey = `${activeView}_${activeView === "STRENGTH" ? (initialTab || "POST_WISE") : "ROOT"}_${moduleResetCounter}`;
+  const moduleTitle = english
+    ? selectedModule.title
+    : (selectedModule.hindiTitle || selectedModule.title);
+
+  const navigationContextValue = {
+    moduleTitle,
+    onHome: () => (onHome ? onHome() : setActiveView?.("HOME")),
+    onModuleRoot: () => {
+      setActiveView?.(activeView, null);
+      setModuleResetCounter((count) => count + 1);
+    }
+  };
 
   const handleGlobalContextMenu = (e) => {
     if (activeView === "STORAGE" || e.target.closest(".win11-desktop-shell")) return;
@@ -191,8 +205,9 @@ export default function PortalModuleContent({
   };
 
   return (
-    <div className="portal-module-stage" onContextMenu={handleGlobalContextMenu}>
-      <ActiveModule key={activeKey} {...propsByModule[activeView]} />
+    <ModuleNavigationContext.Provider value={navigationContextValue}>
+      <div className="portal-module-stage" onContextMenu={handleGlobalContextMenu}>
+        <ActiveModule key={activeKey} {...propsByModule[activeView]} />
 
       {/* === IN-MODULE ESTABLISHMENT ARTICLE, VECTOR ART & GOVT PORTALS === */}
       {activeView !== "STORAGE" && (
@@ -286,6 +301,7 @@ export default function PortalModuleContent({
           onClose={() => setEditingEmployee(null)}
         />
       )}
-    </div>
+      </div>
+    </ModuleNavigationContext.Provider>
   );
 }

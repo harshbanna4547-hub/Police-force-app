@@ -45,7 +45,7 @@ export default function StrengthModule({
   const [selectedPostTab, setSelectedPostTab] = useState("ALL");
   const [selectedCasteRow, setSelectedCasteRow] = useState(null);
   const [employeeSearch, setEmployeeSearch] = useState("");
-  const [genderFilter, setGenderFilter] = useState("ALL");
+  const [genderFilter] = useState("ALL");
   const [expanded, setExpanded] = useState({});
   const [editing, setEditing] = useState(false);
   const [officeExportRows, setOfficeExportRows] = useState([]);
@@ -263,15 +263,23 @@ export default function StrengthModule({
     ? totalSanc
     : Object.values(sanctioned || {}).reduce((sum, val) => sum + Number(val || 0), 0);
 
+  const toolbarSectionLabel = subTab === "OFFICE_PS_WISE"
+    ? (english ? "Office / PS-Wise" : "थाना / वृत्त / कार्यालयवार")
+    : subTab === "SUMMARY"
+      ? (english ? "Summary" : "समेकित सारांश")
+      : subTab === "CASTE_WISE"
+        ? (english ? "Caste-Wise" : "जाति / वर्गवार")
+        : (english ? "Post-Wise" : "पदवार");
+
   return (
     <div className="strength-module">
       {/* === TOP UNIFIED TOOLBAR === */}
       <ModuleHeaderToolbar
         title={`🛡️ ${toolbarTitle}`}
+        sectionLabel={toolbarSectionLabel}
+        onModuleRoot={() => setSubTab("POST_WISE")}
         search={employeeSearch}
         onSearchChange={setEmployeeSearch}
-        gender={genderFilter}
-        onGenderChange={setGenderFilter}
         rows={toolbarRows}
         fileName={toolbarFileName}
         language={language}

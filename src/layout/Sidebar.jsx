@@ -231,24 +231,23 @@ export default function Sidebar({
           </div>
 
           {templateOptions.length > 0 && (
-            <div className="sidebar-theme-switcher" role="group" aria-label={english ? "Theme Style" : "थीम स्टाइल"}>
-              <span className="sidebar-theme-label">
+            <div className="sidebar-theme-switcher">
+              <label htmlFor="sidebar-theme-select" className="sidebar-theme-label">
                 🎨 {english ? "Theme Style:" : "थीम स्टाइल:"}
-              </span>
-              <div className="sidebar-theme-grid">
+              </label>
+              <select
+                id="sidebar-theme-select"
+                value={portalTemplate}
+                onChange={(event) => onTemplateChange?.(event.target.value)}
+                aria-label={english ? "Theme Style" : "थीम स्टाइल"}
+                className="sidebar-theme-select"
+              >
                 {templateOptions.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    title={tpl.label}
-                    aria-pressed={portalTemplate === tpl.id}
-                    onClick={() => onTemplateChange?.(tpl.id)}
-                    className={`sidebar-theme-pill${portalTemplate === tpl.id ? " is-active" : ""}`}
-                  >
+                  <option key={tpl.id} value={tpl.id} className="sidebar-theme-option">
                     {tpl.label}
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </select>
             </div>
           )}
 
