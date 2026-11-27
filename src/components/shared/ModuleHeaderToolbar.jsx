@@ -8,9 +8,12 @@ import "./ModuleHeaderToolbar.css";
  */
 export default function ModuleHeaderToolbar({
   title,
-  sectionLabel = "",
-  onHome,
-  onModuleRoot,
+  // eslint-disable-next-line no-unused-vars
+  sectionLabel: _sectionLabel,
+  // eslint-disable-next-line no-unused-vars
+  onHome: _onHome,
+  // eslint-disable-next-line no-unused-vars
+  onModuleRoot: _onModuleRoot,
   search = "",
   onSearchChange,
   rows = [],
