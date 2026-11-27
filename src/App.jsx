@@ -201,7 +201,7 @@ export default function App() {
         <main className="app-main-area">
           {activeView === "HOME" ? (
             <DashboardBento
-              modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "REPORTS", "DEV_SERVICES"].includes(module.id))}
+              modules={modules.filter((module) => !["EMPLOYEES", "STORAGE", "REPORTS", "SERVICES", "DEV_SERVICES"].includes(module.id))}
               onOpenModule={navigateToView}
               language={language}
             />

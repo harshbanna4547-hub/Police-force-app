@@ -16,6 +16,7 @@ import RosterModule from "./14_roster/RosterModule";
 import ReportsModule from "./15_reports/ReportsModule";
 import StorageVaultModule from "./16_storage/StorageVaultModule";
 import DevServicesModule from "./17_dev_services/DevServicesModule";
+import ServicesModule from "./services/ServicesModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {
@@ -193,6 +194,17 @@ export const MODULES_CONFIG = Object.freeze([
     englishDescription: "Excel, Documents & File Vault",
     enabled: true,
     component: StorageVaultModule
+  },
+  {
+    id: "SERVICES",
+    title: "Services",
+    hindiTitle: "सरकारी पोर्टल एवं लिंक",
+    icon: "🌐",
+    color: "#0F766E",
+    description: "आधिकारिक पुलिस एवं सरकारी पोर्टल निर्देशिका",
+    englishDescription: "Official Police & Government Portals Directory",
+    enabled: true,
+    component: ServicesModule
   },
   {
     id: "DEV_SERVICES",

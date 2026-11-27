@@ -24,17 +24,16 @@ export default function Sidebar({
   portalTemplate = "aurora",
   onTemplateChange,
   templateOptions = [],
-  servicePortals = [],
   language = "hi",
   onLanguageChange,
   onOpenDistrictSwitcher
 }) {
-  const [servicesOpen, setServicesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const english = language === "en";
 
   const employeesModule = modules.find((module) => module.id === "EMPLOYEES" && module.enabled !== false);
   const storageModule = modules.find((module) => module.id === "STORAGE" && module.enabled !== false);
+  const servicesModule = modules.find((module) => module.id === "SERVICES" && module.enabled !== false);
   const devServicesModule = modules.find((module) => module.id === "DEV_SERVICES" && module.enabled !== false);
 
   // [ACTION] Select view and auto-close drawer on small screens
@@ -102,47 +101,16 @@ export default function Sidebar({
             </button>
           )}
 
-          {/* === 3. SERVICES: GOVT PORTALS & OFFICIAL LINKS === */}
-          <div className="sidebar-accordion-group">
+          {/* === 3. SERVICES: DEDICATED GOVT PORTALS PAGE === */}
+          {servicesModule && (
             <button
               type="button"
-              aria-expanded={servicesOpen}
-              aria-controls="sidebar-services-panel"
-              onClick={() => setServicesOpen((open) => !open)}
-              className={`sidebar-nav-btn sidebar-accordion-trigger ${servicesOpen ? "is-expanded" : ""}`}
+              onClick={() => selectView("SERVICES")}
+              className={`sidebar-nav-btn ${activeView === "SERVICES" ? "is-active" : ""}`}
             >
-              <span>🌐 {english ? "Services" : "सरकारी पोर्टल एवं लिंक"}</span>
-              <span className="sidebar-accordion-caret" aria-hidden="true">{servicesOpen ? "▴" : "▾"}</span>
+              🌐 {english ? "Services" : "सरकारी पोर्टल एवं लिंक"}
             </button>
-
-            {servicesOpen && (
-              <div
-                id="sidebar-services-panel"
-                className="sidebar-services-panel"
-                role="region"
-                aria-label={english ? "Government Websites & Official Links" : "आधिकारिक सरकारी पोर्टल एवं वेबसाइट"}
-              >
-                {servicePortals.map((portal) => (
-                  <a
-                    key={portal.id}
-                    href={portal.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={portal.summary}
-                    className="sidebar-service-link"
-                  >
-                    <span className="sidebar-service-link-text">
-                      <span className="sidebar-service-title">
-                        {english ? portal.title : portal.hiTitle}
-                      </span>
-                      <span className="sidebar-service-badge">{portal.badge}</span>
-                    </span>
-                    <span className="sidebar-service-ext" aria-hidden="true">↗</span>
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
           {/* === 4. ABOUT PORTAL + DEVELOPMENT SERVICES === */}
           <div className="sidebar-accordion-group">

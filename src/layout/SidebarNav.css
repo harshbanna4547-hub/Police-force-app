@@ -151,69 +151,7 @@
   flex-shrink: 0;
 }
 
-/* === 3. SERVICES: GOVERNMENT PORTALS & OFFICIAL LINKS === */
-.sidebar-services-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 7px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  max-height: 255px;
-  overflow-y: auto;
-}
-
-.sidebar-service-link {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 9px;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #f1f5f9;
-  text-decoration: none;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.sidebar-service-link:hover {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(216, 180, 137, 0.35);
-  color: #ffffff;
-}
-
-.sidebar-service-link-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  gap: 1px;
-}
-
-.sidebar-service-title {
-  font-size: 0.74rem;
-  font-weight: 700;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebar-service-badge {
-  font-size: 0.63rem;
-  font-weight: 600;
-  color: #d8b489;
-  line-height: 1.15;
-}
-
-.sidebar-service-ext {
-  font-size: 0.75rem;
-  color: #cbd5e1;
-  flex-shrink: 0;
-}
-
-/* === 4. ABOUT PORTAL & DEVELOPMENT SERVICES PANEL === */
+/* === 3. ABOUT PORTAL & DEVELOPMENT SERVICES PANEL === */
 .sidebar-about-card {
   padding: 10px 11px;
   border-radius: 12px;

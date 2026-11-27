@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import { DistrictSwitcherModal } from "../core/AuthAndCloudSync";
-import { ALL_GOVT_PORTALS } from "../data/moduleResources";
 
 const TEMPLATE_OPTIONS = [
   { id: "novara", label: "1. Novara (Teal)" },
@@ -55,7 +54,6 @@ export default function SidebarNav({
         portalTemplate={portalTemplate}
         onTemplateChange={onTemplateChange}
         templateOptions={TEMPLATE_OPTIONS}
-        servicePortals={ALL_GOVT_PORTALS}
         language={language}
         onLanguageChange={onLanguageChange}
         onOpenDistrictSwitcher={() => setSwitcherOpen(true)}

@@ -3,106 +3,185 @@
    ========================================================================== */
 
 export const GOVT_PORTALS = Object.freeze({
-  SSO: {
-    id: "SSO",
-    icon: "login",
-    badge: "Rajasthan SSO",
-    title: "SSO Rajasthan",
-    hiTitle: "राजस्थान एसएसओ (SSO)",
-    url: "https://sso.rajasthan.gov.in",
-    summary: "Single Sign-On for RajKaj, IFMS, SIPF & e-Governance services"
-  },
-  RAJKAJ: {
-    id: "RAJKAJ",
-    icon: "description",
-    badge: "e-Office / Leave",
-    title: "RajKaj Portal",
-    hiTitle: "राज-काज (RajKaj)",
-    url: "https://rajkaj.rajasthan.gov.in",
-    summary: "e-File movement, Leave, APAR/ACR, IPR & Transfer orders"
-  },
-  IFMS: {
-    id: "IFMS",
-    icon: "account_balance",
-    badge: "IFMS 3.0",
-    title: "IFMS 3.0 Rajasthan",
-    hiTitle: "आईएफएमएस 3.0 (IFMS 3.0)",
-    url: "https://ifms.rajasthan.gov.in",
-    summary: "Salary bills, Annual Increment, ACP Pay Fixation & PL Encashment"
-  },
-  FINANCE: {
-    id: "FINANCE",
-    icon: "gavel",
-    badge: "Finance Dept",
-    title: "Finance Department Rajasthan",
-    hiTitle: "वित्त विभाग (राजस्थान सरकार)",
-    url: "https://finance.rajasthan.gov.in",
-    summary: "RSR Rules, RPS 2017 Orders, DA Circulars & Financial Rules"
-  },
-  SIPF: {
-    id: "SIPF",
-    icon: "savings",
-    badge: "GPF / NPS / SI",
-    title: "SIPF Portal",
-    hiTitle: "एसआईपीएफ पोर्टल (SIPF)",
-    url: "https://sipf.rajasthan.gov.in",
-    summary: "State Insurance, GPF Ledger & NPS Deduction Verification"
-  },
-  IGOT: {
-    id: "IGOT",
-    icon: "school",
-    badge: "Mission Karmayogi",
-    title: "iGOT Karmayogi",
-    hiTitle: "आईगॉट कर्मयोगी पोर्टल",
-    url: "https://igotkarmayogi.gov.in",
-    summary: "Online capacity building & mandatory MDO training courses"
-  },
-  PAYMANAGER: {
-    id: "PAYMANAGER",
-    icon: "payments",
-    badge: "Pay & Bills",
-    title: "PayManager Rajasthan",
-    hiTitle: "पे-मैनेजर (PayManager)",
-    url: "https://paymanager.rajasthan.gov.in/",
-    summary: "Salary slips, GA-55, DDO bills & deduction schedules"
-  },
-  CCTNS: {
-    id: "CCTNS",
-    icon: "security",
-    badge: "NCRB / MHA",
-    title: "CCTNS Digital Police",
-    hiTitle: "सी.सी.टी.एन.एस. (CCTNS)",
-    url: "https://digitalpolice.gov.in",
-    summary: "Crime & Criminal Tracking Network and Police Station portal"
-  },
-  RPA: {
-    id: "RPA",
-    icon: "military_tech",
-    badge: "RPA / Training",
-    title: "RPA & Training Portals",
-    hiTitle: "आर.पी.ए. एवं प्रशिक्षण पोर्टल",
-    url: "http://rpa.rajasthan.gov.in",
-    summary: "Rajasthan Police Academy Jaipur courses, syllabus & training orders"
-  },
   POLICE: {
     id: "POLICE",
+    category: "POLICE",
     icon: "local_police",
     badge: "PHQ Circulars",
     title: "Rajasthan Police Official",
     hiTitle: "राजस्थान पुलिस मुख्यालय",
     url: "https://police.rajasthan.gov.in",
-    summary: "PHQ Standing Orders, Promotions, Transfers & Force Circulars"
+    summary: "PHQ Standing Orders, Promotions, Transfers & Force Circulars",
+    hiSummary: "पुलिस मुख्यालय स्थायी आदेश, पदोन्नति, स्थानांतरण एवं परिपत्र"
+  },
+  CCTNS: {
+    id: "CCTNS",
+    category: "POLICE",
+    icon: "security",
+    badge: "NCRB / MHA",
+    title: "CCTNS Portal",
+    hiTitle: "सी.सी.टी.एन.एस. पोर्टल (CCTNS)",
+    url: "https://digitalpolice.gov.in",
+    summary: "Crime & Criminal Tracking Network and Police Station portal",
+    hiSummary: "अपराध एवं अपराधी ट्रैकिंग नेटवर्क (NCRB / पुलिस थाना पोर्टल)"
+  },
+  SCRB: {
+    id: "SCRB",
+    category: "POLICE",
+    icon: "analytics",
+    badge: "SCRB Rajasthan",
+    title: "SCRB Rajasthan",
+    hiTitle: "राज्य अपराध अभिलेख ब्यूरो (SCRB)",
+    url: "https://police.rajasthan.gov.in",
+    summary: "State Crime Records Bureau statistics, crime digests & circulars",
+    hiSummary: "राज्य अपराध अभिलेख ब्यूरो सांख्यिकी, अपराध विवरण एवं परिपत्र"
+  },
+  RPA: {
+    id: "RPA",
+    category: "POLICE",
+    icon: "military_tech",
+    badge: "RPA Jaipur",
+    title: "RPA Jaipur",
+    hiTitle: "राजस्थान पुलिस अकादमी (RPA जयपुर)",
+    url: "http://rpa.rajasthan.gov.in",
+    summary: "Rajasthan Police Academy Jaipur courses, syllabus & training orders",
+    hiSummary: "राजस्थान पुलिस अकादमी जयपुर कोर्स, पाठ्यक्रम एवं प्रशिक्षण आदेश"
+  },
+  CDTI_BPRD: {
+    id: "CDTI_BPRD",
+    category: "POLICE",
+    icon: "policy",
+    badge: "CDTI / BPR&D",
+    title: "CDTI / BPR&D",
+    hiTitle: "सी.डी.टी.आई. / बी.पी.आर. एंड डी.",
+    url: "https://bprd.mha.gov.in",
+    summary: "Bureau of Police Research & Development and Central Detective Training Institutes",
+    hiSummary: "पुलिस अनुसंधान एवं विकास ब्यूरो तथा केंद्रीय गुप्तचर प्रशिक्षण संस्थान"
+  },
+  SSO: {
+    id: "SSO",
+    category: "HR_FINANCE",
+    icon: "login",
+    badge: "Rajasthan SSO",
+    title: "SSO Rajasthan",
+    hiTitle: "राजस्थान एसएसओ (SSO)",
+    url: "https://sso.rajasthan.gov.in",
+    summary: "Single Sign-On for RajKaj, IFMS, SIPF & e-Governance services",
+    hiSummary: "राज-काज, IFMS, SIPF एवं ई-गवर्नेंस सेवाओं के लिए सिंगल साइन-ऑन"
+  },
+  RAJKAJ: {
+    id: "RAJKAJ",
+    category: "HR_FINANCE",
+    icon: "description",
+    badge: "e-Office / Leave",
+    title: "RajKaj Portal",
+    hiTitle: "राज-काज (RajKaj)",
+    url: "https://rajkaj.rajasthan.gov.in",
+    summary: "e-File movement, Leave, APAR/ACR, IPR & Transfer orders",
+    hiSummary: "ई-फ़ाइल संचलन, अवकाश, APAR/ACR, IPR एवं स्थानांतरण आदेश"
+  },
+  IFMS: {
+    id: "IFMS",
+    category: "HR_FINANCE",
+    icon: "account_balance",
+    badge: "RajIFMS 3.0",
+    title: "RajIFMS 3.0",
+    hiTitle: "राज-आईएफएमएस 3.0 (RajIFMS 3.0)",
+    url: "https://ifms.rajasthan.gov.in",
+    summary: "Salary bills, Annual Increment, ACP Pay Fixation & PL Encashment",
+    hiSummary: "वेतन बिल, वार्षिक वेतनवृद्धि, ACP वेतन निर्धारण एवं PL नकदीकरण"
+  },
+  PAYMANAGER: {
+    id: "PAYMANAGER",
+    category: "HR_FINANCE",
+    icon: "payments",
+    badge: "Pay & Bills",
+    title: "PayManager",
+    hiTitle: "पे-मैनेजर (PayManager)",
+    url: "https://paymanager.rajasthan.gov.in/",
+    summary: "Salary slips, GA-55, DDO bills & deduction schedules",
+    hiSummary: "वेतन पर्ची, GA-55, DDO बिल एवं कटौती अनुसूची"
+  },
+  FINANCE: {
+    id: "FINANCE",
+    category: "HR_FINANCE",
+    icon: "gavel",
+    badge: "Finance Dept",
+    title: "Finance Department Rajasthan",
+    hiTitle: "वित्त विभाग (राजस्थान सरकार)",
+    url: "https://finance.rajasthan.gov.in",
+    summary: "RSR Rules, RPS 2017 Orders, DA Circulars & Financial Rules",
+    hiSummary: "RSR नियम, RPS 2017 आदेश, महंगाई भत्ता परिपत्र एवं वित्तीय नियम"
+  },
+  SIPF: {
+    id: "SIPF",
+    category: "HR_FINANCE",
+    icon: "savings",
+    badge: "GPF / NPS / SI",
+    title: "SIPF Portal",
+    hiTitle: "एसआईपीएफ पोर्टल (SIPF)",
+    url: "https://sipf.rajasthan.gov.in",
+    summary: "State Insurance, GPF Ledger & NPS Deduction Verification",
+    hiSummary: "राज्य बीमा (SI), GPF खाता एवं NPS कटौती सत्यापन"
+  },
+  IGOT: {
+    id: "IGOT",
+    category: "TRAINING",
+    icon: "school",
+    badge: "Mission Karmayogi",
+    title: "iGOT Karmayogi",
+    hiTitle: "आईगॉट कर्मयोगी (iGOT Karmayogi)",
+    url: "https://igotkarmayogi.gov.in",
+    summary: "Online capacity building & mandatory MDO training courses",
+    hiSummary: "ऑनलाइन क्षमता निर्माण एवं अनिवार्य MDO प्रशिक्षण पाठ्यक्रम"
+  },
+  HCM_RIPA: {
+    id: "HCM_RIPA",
+    category: "TRAINING",
+    icon: "apartment",
+    badge: "HCM RIPA",
+    title: "HCM RIPA",
+    hiTitle: "एच.सी.एम. रीपा (HCM RIPA जयपुर)",
+    url: "https://hcmripa.rajasthan.gov.in/",
+    summary: "Harish Chandra Mathur Rajasthan State Institute of Public Administration",
+    hiSummary: "हरिश्चंद्र माथुर राजस्थान राज्य लोक प्रशासन संस्थान, जयपुर"
   },
   DOPT: {
     id: "DOPT",
+    category: "SERVICE_RULES",
     icon: "menu_book",
     badge: "Service Rules",
     title: "DoPT / Service Rules",
     hiTitle: "सेवा नियम एवं डीओपीटी",
     url: "https://dopt.gov.in",
-    summary: "CCA Conduct Rules, Roster Reservation & Service Jurisprudence"
+    summary: "CCA Conduct Rules, Roster Reservation & Service Jurisprudence",
+    hiSummary: "CCA आचरण नियम, रोस्टर आरक्षण एवं सेवा विधि"
   }
 });
+
+export const SERVICE_PORTAL_CATEGORIES = Object.freeze([
+  {
+    id: "POLICE",
+    icon: "🚔",
+    title: "Police & Crime Portals",
+    hiTitle: "पुलिस एवं अपराध नियंत्रण पोर्टल",
+    portalIds: ["POLICE", "CCTNS", "SCRB", "RPA", "CDTI_BPRD"]
+  },
+  {
+    id: "HR_FINANCE",
+    icon: "🏛️",
+    title: "HR, Finance & Service Portals",
+    hiTitle: "एचआर, वित्त एवं सेवा नियम पोर्टल",
+    portalIds: ["SSO", "RAJKAJ", "IFMS", "PAYMANAGER", "FINANCE", "SIPF"]
+  },
+  {
+    id: "TRAINING",
+    icon: "🎓",
+    title: "Training & Learning",
+    hiTitle: "प्रशिक्षण एवं क्षमता निर्माण",
+    portalIds: ["IGOT", "HCM_RIPA"]
+  }
+]);
 
 export const ALL_GOVT_PORTALS = Object.values(GOVT_PORTALS);
 
