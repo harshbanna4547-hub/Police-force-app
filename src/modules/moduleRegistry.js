@@ -17,6 +17,7 @@ import ReportsModule from "./15_reports/ReportsModule";
 import StorageVaultModule from "./16_storage/StorageVaultModule";
 import DevServicesModule from "./17_dev_services/DevServicesModule";
 import ServicesModule from "./services/ServicesModule";
+import AboutModule from "./about/AboutModule";
 
 export const MODULES_CONFIG = Object.freeze([
   {
@@ -205,6 +206,17 @@ export const MODULES_CONFIG = Object.freeze([
     englishDescription: "Official Police & Government Portals Directory",
     enabled: true,
     component: ServicesModule
+  },
+  {
+    id: "ABOUT",
+    title: "About Portal",
+    hindiTitle: "पोर्टल परिचय",
+    icon: "ℹ️",
+    color: "#0F766E",
+    description: "पोर्टल परिचय, मुख्य क्षमताएं एवं तकनीकी सेवाएँ",
+    englishDescription: "Portal Overview, Capabilities & Development Services",
+    enabled: true,
+    component: AboutModule
   },
   {
     id: "DEV_SERVICES",

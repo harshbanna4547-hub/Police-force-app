@@ -1,4 +1,3 @@
-import { useState } from "react";
 import "./SidebarNav.css";
 
 /**
@@ -7,7 +6,7 @@ import "./SidebarNav.css";
  * 2. Employee Management
  * 3. Storage Vault (Windows Desktop)
  * 4. Services (सरकारी पोर्टल एवं लिंक)
- * 5. About Portal (परिचय + tucked Development Services)
+ * 5. About Portal (पोर्टल परिचय + डेवलपमेंट सेवाएं)
  * 6. Bottom Utility Controls (Sunrise/Moonrise, हिंदी/English, Theme Style)
  */
 export default function Sidebar({
@@ -28,13 +27,12 @@ export default function Sidebar({
   onLanguageChange,
   onOpenDistrictSwitcher
 }) {
-  const [aboutOpen, setAboutOpen] = useState(false);
   const english = language === "en";
 
   const employeesModule = modules.find((module) => module.id === "EMPLOYEES" && module.enabled !== false);
   const storageModule = modules.find((module) => module.id === "STORAGE" && module.enabled !== false);
   const servicesModule = modules.find((module) => module.id === "SERVICES" && module.enabled !== false);
-  const devServicesModule = modules.find((module) => module.id === "DEV_SERVICES" && module.enabled !== false);
+  const aboutModule = modules.find((module) => module.id === "ABOUT" && module.enabled !== false);
 
   // [ACTION] Select view and auto-close drawer on small screens
   const selectView = (view) => {
@@ -112,59 +110,16 @@ export default function Sidebar({
             </button>
           )}
 
-          {/* === 4. ABOUT PORTAL + DEVELOPMENT SERVICES === */}
-          <div className="sidebar-accordion-group">
+          {/* === 4. ABOUT PORTAL PAGE (OVERVIEW + DEVELOPMENT SERVICES) === */}
+          {aboutModule && (
             <button
               type="button"
-              aria-expanded={aboutOpen}
-              aria-controls="sidebar-about-panel"
-              onClick={() => setAboutOpen((open) => !open)}
-              className={`sidebar-nav-btn sidebar-accordion-trigger ${aboutOpen || activeView === "DEV_SERVICES" ? "is-expanded" : ""}`}
+              onClick={() => selectView("ABOUT")}
+              className={`sidebar-nav-btn ${activeView === "ABOUT" || activeView === "DEV_SERVICES" ? "is-active" : ""}`}
             >
-              <span>ℹ️ {english ? "About Portal" : "पोर्टल परिचय (About)"}</span>
-              <span className="sidebar-accordion-caret" aria-hidden="true">{aboutOpen ? "▴" : "▾"}</span>
+              ℹ️ {english ? "About Portal" : "पोर्टल परिचय (About)"}
             </button>
-
-            {aboutOpen && (
-              <section
-                id="sidebar-about-panel"
-                className="sidebar-about-card"
-                aria-label={english ? "Portal & Developer Details" : "पोर्टल एवं विकासकर्ता विवरण"}
-              >
-                <div className="sidebar-about-name">Harshvardhan Singh Rathore</div>
-                <div className="sidebar-about-row">
-                  <strong>{english ? "Role:" : "पद:"}</strong>{" "}
-                  {english ? "Govt. Employee — Junior Assistant" : "सरकारी कर्मचारी — कनिष्ठ सहायक"}
-                </div>
-                <div className="sidebar-about-row">
-                  <strong>{english ? "Posting:" : "पदस्थापन:"}</strong>{" "}
-                  {english ? "SP Office (Force Branch), Chittorgarh" : "पुलिस अधीक्षक कार्यालय (फोर्स शाखा), चित्तौड़गढ़"}
-                </div>
-                <div className="sidebar-about-row">
-                  <strong>{english ? "Work Deal:" : "कार्य दायित्व:"}</strong>{" "}
-                  {english
-                    ? "Training, Exam Permission, Seniority, Roster & Promotion Exams"
-                    : "प्रशिक्षण, परीक्षा अनुमति, वरिष्ठता, रोस्टर एवं पदोन्नति परीक्षा कार्य"}
-                </div>
-                <div className="sidebar-about-row">
-                  <strong>{english ? "Email:" : "ई-मेल:"}</strong>{" "}
-                  <a href="mailto:harshbanna4547@gmail.com" className="sidebar-about-mail">
-                    harshbanna4547@gmail.com
-                  </a>
-                </div>
-
-                {devServicesModule && (
-                  <button
-                    type="button"
-                    onClick={() => selectView("DEV_SERVICES")}
-                    className={`sidebar-dev-btn ${activeView === "DEV_SERVICES" ? "is-active" : ""}`}
-                  >
-                    🛠️ {english ? "Development Services" : "डेवलपमेंट सेवाएँ"}
-                  </button>
-                )}
-              </section>
-            )}
-          </div>
+          )}
         </nav>
 
         {/* === 5. BOTTOM UTILITY CONTROLS (SUNRISE/MOONRISE, LANGUAGE & THEME STYLE) === */}

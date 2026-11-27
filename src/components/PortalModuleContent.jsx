@@ -182,6 +182,7 @@ export default function PortalModuleContent({
     },
     ARCHIVE: { records, allSheets, onArchiveEmployee: removeEmployee, language },
     SERVICES: { language },
+    ABOUT: { districtId, currentDistrict, portalData, language },
     DEV_SERVICES: { districtId, portalData, language }
   };
   const ActiveModule = selectedModule.component;
