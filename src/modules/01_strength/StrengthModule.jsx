@@ -180,7 +180,7 @@ export default function StrengthModule({
       Female: r.female,
       Total: r.total,
       "Share %": `${r.sharePct}%`,
-      "Officers (SP-CI)": r.ranks.OFFICERS,
+      "Officers (SP-Inspector)": r.ranks.OFFICERS,
       "SI / ASI": r.ranks.SUPERVISORY,
       HC: r.ranks.HC,
       FC: r.ranks.FC,
@@ -512,7 +512,7 @@ export default function StrengthModule({
                   <th>{english ? "Female" : "महिला"}</th>
                   <th>{english ? "Total" : "कुल"}</th>
                   <th>{english ? "Share %" : "प्रतिशत"}</th>
-                  <th>{english ? "Officers (SP-CI)" : "अधिकारी"}</th>
+                  <th>{english ? "Officers (SP-Inspector)" : "अधिकारी"}</th>
                   <th>SI / ASI</th>
                   <th>HC</th>
                   <th>FC</th>

@@ -17,7 +17,7 @@ export const CADRE_GROUPS = [
   },
   {
     id: "CI_GROUP",
-    title: "पुलिस निरीक्षक (Inspector/CI)",
+    title: "पुलिस निरीक्षक (Inspector)",
     ranks: [
       { code: "CI", label: "पुलिस निरीक्षक (सामान्य)" },
       { code: "MTO", label: "पु.नि. (एम.टी. / MTO)" }
