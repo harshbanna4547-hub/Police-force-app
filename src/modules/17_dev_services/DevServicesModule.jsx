@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import "./DevServicesModule.css";
 import { getDistrictStorageItems } from "../../utils/vaultStorage.js";
+import { getOfficeServerConfig } from "../../core/lanSyncClient.js";
+import {
+  AZURE_CLIENT_ID,
+  PKCE_PENDING_STORAGE_KEY,
+  PKCE_VERIFIER_STORAGE_KEY,
+  buildMicrosoftAuthorizeUrl,
+  exchangeAuthorizationCode,
+  generateCodeChallenge,
+  generateCodeVerifier
+} from "./pkceAuth.js";
 
 const REPOSITORY_URL = "https://github.com/harshbanna4547-hub/Police-force-app";
-const AZURE_CLIENT_ID = "ca7693ab-ea97-48d0-b764-99d29312b13d";
 const ACCOUNT_EMAIL_KEY = "police_portal_onedrive_account_reference";
 const ACTIVE_NOW_MS = 5 * 60 * 1000;
 
@@ -40,6 +49,10 @@ export default function DevServicesModule({ districtId, portalData }) {
   const [feedback, setFeedback] = useState("");
   const [backupFiles, setBackupFiles] = useState([]);
   const [deviceName, setDeviceName] = useState(portalData.currentDevice?.name || "");
+  const [pkceStatus, setPkceStatus] = useState("idle");
+  const [pkceError, setPkceError] = useState("");
+  const [generatedRefreshToken, setGeneratedRefreshToken] = useState("");
+  const [copiedToken, setCopiedToken] = useState(false);
   const [accountEmail, setAccountEmail] = useState(() => {
     try {
       return localStorage.getItem(ACCOUNT_EMAIL_KEY) || "";
@@ -110,6 +123,111 @@ export default function DevServicesModule({ districtId, portalData }) {
       .catch((error) => console.error("Offline backup list could not be loaded:", error));
     return () => { active = false; };
   }, [activeProfile]);
+
+  useEffect(() => {
+    let active = true;
+    const params = new URLSearchParams(window.location.search);
+    const authCode = params.get("code");
+    const authError = params.get("error");
+    const authErrorDescription = params.get("error_description");
+    if (!authCode && !authError) return undefined;
+
+    window.history.replaceState({}, document.title, `${window.location.pathname}${window.location.hash}`);
+    const codeVerifier = (() => {
+      try {
+        return window.sessionStorage.getItem(PKCE_VERIFIER_STORAGE_KEY) || "";
+      } catch {
+        return "";
+      }
+    })();
+
+    const clearPkceStorage = () => {
+      try {
+        window.sessionStorage.removeItem(PKCE_VERIFIER_STORAGE_KEY);
+        window.sessionStorage.removeItem(PKCE_PENDING_STORAGE_KEY);
+      } catch {
+        // Ignore storage errors.
+      }
+    };
+
+    const runCallback = async () => {
+      if (authError) {
+        clearPkceStorage();
+        if (!active) return;
+        setPkceStatus("error");
+        setPkceError(authErrorDescription || authError);
+        return;
+      }
+      if (!codeVerifier) {
+        clearPkceStorage();
+        if (!active) return;
+        setPkceStatus("error");
+        setPkceError("PKCE code_verifier sessionStorage में नहीं मिला। कृपया 'Connect Microsoft OneDrive' पर पुनः क्लिक करें।");
+        return;
+      }
+      setPkceStatus("exchanging");
+      setPkceError("");
+      try {
+        const { token: officeServerToken } = getOfficeServerConfig();
+        const result = await exchangeAuthorizationCode({
+          code: authCode,
+          codeVerifier,
+          redirectUri: window.location.origin,
+          clientId: AZURE_CLIENT_ID,
+          officeServerToken
+        });
+        clearPkceStorage();
+        if (!active) return;
+        setGeneratedRefreshToken(result.refresh_token);
+        setPkceStatus("success");
+        setFeedback("🔑 OneDrive Refresh Token सफलतापूर्वक प्राप्त हो गया है। नीचे 1-Click Copy करें।");
+      } catch (error) {
+        clearPkceStorage();
+        if (!active) return;
+        setPkceStatus("error");
+        setPkceError(error.message || "Microsoft authorization code exchange असफल रहा।");
+      }
+    };
+
+    const timer = window.setTimeout(() => void runCallback(), 0);
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, []);
+
+  const handleConnectMicrosoftOneDrive = async () => {
+    setPkceError("");
+    setGeneratedRefreshToken("");
+    setCopiedToken(false);
+    setPkceStatus("redirecting");
+    try {
+      const codeVerifier = generateCodeVerifier();
+      window.sessionStorage.setItem(PKCE_VERIFIER_STORAGE_KEY, codeVerifier);
+      window.sessionStorage.setItem(PKCE_PENDING_STORAGE_KEY, "1");
+      const codeChallenge = await generateCodeChallenge(codeVerifier);
+      const authorizeUrl = buildMicrosoftAuthorizeUrl({
+        clientId: AZURE_CLIENT_ID,
+        redirectUri: window.location.origin,
+        codeChallenge
+      });
+      window.location.assign(authorizeUrl);
+    } catch (error) {
+      setPkceStatus("error");
+      setPkceError(`PKCE authorization शुरू नहीं हो सकी: ${error.message}`);
+    }
+  };
+
+  const handleCopyRefreshToken = async () => {
+    if (!generatedRefreshToken) return;
+    try {
+      await navigator.clipboard.writeText(generatedRefreshToken);
+      setCopiedToken(true);
+      window.setTimeout(() => setCopiedToken(false), 2500);
+    } catch (error) {
+      setFeedback(`कॉपी नहीं हो सका: ${error.message}`);
+    }
+  };
 
   const runSyncAction = async (action, successMessage) => {
     setIsRefreshing(true);
@@ -247,6 +365,61 @@ export default function DevServicesModule({ districtId, portalData }) {
             Client Secret और Refresh Token केवल सुरक्षित backend environment variables में रहते हैं।
             इन्हें ब्राउज़र में दिखाया या सेव नहीं किया जाता।
           </p>
+
+          <section className="dev-services-pkce-card" aria-label="Generate OneDrive Refresh Token">
+            <div className="dev-services-pkce-header">
+              <div>
+                <h3>🔑 Generate OneDrive Refresh Token (PKCE S256)</h3>
+                <p>
+                  Microsoft SPA PKCE (<code>S256</code>) के माध्यम से सुरक्षित Refresh Token जनरेट करें।
+                  Redirect URI: <code>{window.location.origin}</code>
+                </p>
+              </div>
+              <button
+                type="button"
+                className="dev-services-pkce-btn"
+                disabled={pkceStatus === "redirecting" || pkceStatus === "exchanging"}
+                onClick={() => void handleConnectMicrosoftOneDrive()}
+              >
+                {pkceStatus === "redirecting"
+                  ? "⏳ Redirecting to Microsoft…"
+                  : pkceStatus === "exchanging"
+                    ? "⏳ Exchanging Auth Code…"
+                    : "🔗 Connect Microsoft OneDrive"}
+              </button>
+            </div>
+
+            {pkceError && (
+              <p className="dev-services-pkce-error" role="alert">
+                ⚠️ {pkceError}
+              </p>
+            )}
+
+            {generatedRefreshToken && (
+              <div className="dev-services-pkce-result">
+                <label htmlFor="onedrive-refresh-token-output">
+                  <strong>ONEDRIVE_REFRESH_TOKEN</strong> (इसे Vercel Environment Variables में सेव करें)
+                </label>
+                <div className="dev-services-pkce-copy-row">
+                  <input
+                    id="onedrive-refresh-token-output"
+                    type="text"
+                    value={generatedRefreshToken}
+                    readOnly
+                    aria-readonly="true"
+                  />
+                  <button
+                    type="button"
+                    className="dev-services-pkce-copy-btn"
+                    onClick={() => void handleCopyRefreshToken()}
+                  >
+                    {copiedToken ? "✅ Copied!" : "📋 Copy Refresh Token"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+
           <div className="dev-services-settings-grid">
             <label>
               OneDrive Sync Email / Account ID (संदर्भ)

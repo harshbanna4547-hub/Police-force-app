@@ -356,3 +356,96 @@
     font-size: 1.25rem;
   }
 }
+
+/* === PKCE REFRESH TOKEN GENERATOR === */
+.dev-services-pkce-card {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f8fbff 0%, #eff6ff 100%);
+}
+
+.dev-services-pkce-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.dev-services-pkce-header h3 {
+  margin: 0 0 4px;
+  color: #0b1e3d;
+  font-size: 1rem;
+}
+
+.dev-services-pkce-header p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.83rem;
+}
+
+.dev-services-pkce-btn,
+.dev-services-pkce-copy-btn {
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #1d4ed8;
+  color: #fff;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dev-services-pkce-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.dev-services-pkce-copy-btn {
+  background: #0f766e;
+}
+
+.dev-services-pkce-error {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border-radius: 7px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.dev-services-pkce-result {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #dbeafe;
+}
+
+.dev-services-pkce-result label {
+  display: block;
+  margin-bottom: 6px;
+  color: #0f172a;
+  font-size: 0.84rem;
+}
+
+.dev-services-pkce-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dev-services-pkce-copy-row input {
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #93c5fd;
+  border-radius: 7px;
+  background: #fff;
+  color: #0f172a;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.82rem;
+}

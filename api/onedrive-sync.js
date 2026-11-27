@@ -97,6 +97,17 @@ export function createOneDriveSyncHandler({
 
     try {
       const url = getRequestUrl(request);
+      const action = url.searchParams.get("action");
+      if (request.method === "POST" && action === "exchange_token") {
+        const body = await readJsonBody(request);
+        const result = await bridge.exchangePkceCode({
+          code: body?.code,
+          codeVerifier: body?.code_verifier,
+          redirectUri: body?.redirect_uri,
+          clientId: body?.client_id
+        });
+        return response.status(200).json(result);
+      }
       const district = normalizeOneDriveDistrict(url.searchParams.get("district"));
       const resource = url.searchParams.get("resource") || "database";
 

@@ -493,6 +493,38 @@ export function createOneDriveBackendBridge({
     return { connected: true };
   }
 
+  async function exchangePkceCode({ code, codeVerifier, redirectUri, clientId }) {
+    const resolvedClientId = String(clientId || env.ONEDRIVE_CLIENT_ID || "").trim();
+    if (!resolvedClientId || !code || !codeVerifier || !redirectUri) {
+      throw makeError("Missing required PKCE token exchange parameters (code, code_verifier, redirect_uri, client_id).", 400);
+    }
+    const body = new URLSearchParams({
+      client_id: resolvedClientId,
+      grant_type: "authorization_code",
+      code: String(code),
+      redirect_uri: String(redirectUri),
+      code_verifier: String(codeVerifier),
+      scope: "offline_access Files.ReadWrite User.Read"
+    });
+    const response = await fetchImpl(`${TOKEN_ENDPOINT_BASE}/${encodeURIComponent(getTenant())}/oauth2/v2.0/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.refresh_token) {
+      throw makeError(
+        result.error_description || result.error || `Microsoft PKCE token exchange failed (${response.status}).`,
+        response.status === 400 ? 400 : 502
+      );
+    }
+    return {
+      refresh_token: result.refresh_token,
+      expires_in: result.expires_in,
+      scope: result.scope
+    };
+  }
+
   return {
     readDistrictDatabase,
     writeDistrictDatabase,
@@ -503,7 +535,8 @@ export function createOneDriveBackendBridge({
     downloadStorageFile,
     uploadStorageFile,
     createAuthUrl,
-    completeAuth
+    completeAuth,
+    exchangePkceCode
   };
 }
 

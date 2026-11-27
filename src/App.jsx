@@ -7,6 +7,7 @@ import DashboardBento from "./layout/DashboardBento";
 import usePortalData from "./core/usePortalData";
 import { MODULES_CONFIG } from "./modules/moduleRegistry.js";
 import { createDistrictSelection } from "./core/districtAuth.js";
+import { hasPendingPkceCallback } from "./modules/17_dev_services/pkceAuth.js";
 
 const DEFAULT_DISTRICT = { id: "CHITTORGARH", name: "Chittorgarh" };
 const ACTIVE_DISTRICT_STORAGE_KEY = "police_active_district";
@@ -33,9 +34,14 @@ function readActiveDistrict() {
 
 export default function App() {
   const [currentDistrict, setCurrentDistrict] = useState(readActiveDistrict);
-  const [activeView, setActiveView] = useState("HOME");
-  const viewHistoryRef = useRef(["HOME"]);
-  const [moduleInitialTab, setModuleInitialTab] = useState(null);
+  const [initialPkceCallback] = useState(() => (
+    typeof window !== "undefined"
+      ? hasPendingPkceCallback(window.location.search, window.sessionStorage)
+      : false
+  ));
+  const [activeView, setActiveView] = useState(() => (initialPkceCallback ? "ABOUT" : "HOME"));
+  const viewHistoryRef = useRef(initialPkceCallback ? ["HOME", "ABOUT"] : ["HOME"]);
+  const [moduleInitialTab, setModuleInitialTab] = useState(() => (initialPkceCallback ? "DEV_SERVICES" : null));
   const [singleTabMode, setSingleTabMode] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
   const [portalTemplate, setPortalTemplate] = useState(() => {
