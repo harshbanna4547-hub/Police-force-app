@@ -72,44 +72,6 @@ export default function StrengthModule({
     return stats;
   }, [genderFilteredRecords]);
 
-  // Live working count per rank/cadre filter pill
-  const postTabCounts = useMemo(() => {
-    const counts = {};
-    POST_FILTER_TABS.forEach((tab) => {
-      if (!tab.groupIds) {
-        counts[tab.id] = genderFilteredRecords.length;
-        return;
-      }
-      const matchingGroups = CADRE_GROUPS.filter((g) => tab.groupIds.includes(g.id));
-      let total = 0;
-      matchingGroups.forEach((g) => {
-        const ranks = tab.rankFilter
-          ? g.ranks.filter((r) => tab.rankFilter.includes(r.code))
-          : g.ranks;
-        ranks.forEach((rk) => {
-          total += workStats[rk.code]?.working || 0;
-        });
-      });
-      counts[tab.id] = total;
-    });
-    return counts;
-  }, [genderFilteredRecords.length, workStats]);
-
-  const postPillGroups = useMemo(() => [
-    {
-      id: "EXECUTIVE",
-      enLabel: "Executive Police Ranks",
-      hiLabel: "कार्यकारी पुलिस पद",
-      items: POST_FILTER_TABS.filter((pt) => pt.group === "EXECUTIVE")
-    },
-    {
-      id: "SUPPORT",
-      enLabel: "Support & Other Cadres",
-      hiLabel: "अन्य संवर्ग",
-      items: POST_FILTER_TABS.filter((pt) => pt.group === "SUPPORT")
-    }
-  ], []);
-
   // Tab 1: Visible cadre groups for Post-Wise tab
   const visibleGroups = useMemo(() => {
     const tabSpec = POST_FILTER_TABS.find((t) => t.id === selectedPostTab);
@@ -352,26 +314,16 @@ export default function StrengthModule({
       {subTab === "POST_WISE" && (
         <div>
           <div className="strength-post-pills" role="group" aria-label={english ? "Rank and cadre filters" : "पद एवं संवर्ग फ़िल्टर"}>
-            {postPillGroups.map((group) => (
-              <div key={group.id} className="strength-pill-group-row">
-                <span className="strength-pill-group-label">
-                  {english ? group.enLabel : group.hiLabel}
-                </span>
-                <div className="strength-pill-list">
-                  {group.items.map((pt) => (
-                    <button
-                      type="button"
-                      key={pt.id}
-                      onClick={() => setSelectedPostTab(pt.id)}
-                      aria-pressed={selectedPostTab === pt.id}
-                      className={`strength-post-pill${selectedPostTab === pt.id ? " is-active" : ""}`}
-                    >
-                      <span className="strength-pill-label">{english ? pt.enLabel : pt.label}</span>
-                      <span className="strength-pill-count">{postTabCounts[pt.id] ?? 0}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
+            {POST_FILTER_TABS.map((pt) => (
+              <button
+                type="button"
+                key={pt.id}
+                onClick={() => setSelectedPostTab(pt.id)}
+                aria-pressed={selectedPostTab === pt.id}
+                className={`strength-post-pill${selectedPostTab === pt.id ? " is-active" : ""}`}
+              >
+                {english ? pt.enLabel : pt.label}
+              </button>
             ))}
           </div>
 
