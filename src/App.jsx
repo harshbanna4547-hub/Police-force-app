@@ -41,7 +41,7 @@ export default function App() {
   const [portalTemplate, setPortalTemplate] = useState(() => {
     try {
       const saved = localStorage.getItem("police_portal_template");
-      if (["novara", "finora", "aurora", "wizardz", "twinkle", "xenon"].includes(saved)) return saved;
+      if (["novara", "finora", "aurora", "wizardz", "twinkle", "xenon", "soul", "dallo", "fleur", "citrus"].includes(saved)) return saved;
       return localStorage.getItem("police_portal_theme") === "dark" ? "twinkle" : "aurora";
     } catch {
       return "aurora";

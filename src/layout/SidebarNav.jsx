@@ -8,7 +8,11 @@ const TEMPLATE_OPTIONS = [
   { id: "aurora", label: "3. Aurora (Editorial)" },
   { id: "wizardz", label: "4. WizardZ (Lime)" },
   { id: "twinkle", label: "5. Twinkle (Dark Gold)" },
-  { id: "xenon", label: "6. Xenon (Liquid Glass)" }
+  { id: "xenon", label: "6. Xenon (Liquid Glass)" },
+  { id: "soul", label: "7. Soul (Sage Therapy)" },
+  { id: "dallo", label: "8. Dallo (Neumorphic)" },
+  { id: "fleur", label: "9. Fleur (Boho Sand)" },
+  { id: "citrus", label: "10. Citrus (Orange Fresh)" }
 ];
 
 /**
