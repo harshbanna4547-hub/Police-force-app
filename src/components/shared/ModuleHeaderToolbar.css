@@ -1,71 +1,40 @@
 /* ==========================================================================
-   COMPACT SINGLE-ROW MODULE HEADER TOOLBAR (एक-पंक्ति मॉड्यूल नियंत्रण पट्टी)
-   Zero Inline Styles · Clickable Breadcrumbs + Compact Search + Icon Actions
+   MODULE HEADER TOOLBAR & DEDICATED BREADCRUMB STRIP
+   Zero Inline Styles · Zero Text Clipping · Clickable Breadcrumbs Below Toolbar
    ========================================================================== */
 
+.module-toolbar-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+/* === 1. TOP ACTION TOOLBAR (TITLE + COMPACT SEARCH + ICON EXPORT BAR) === */
 .module-header-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: nowrap;
-  margin-bottom: 16px;
   padding: 10px 14px;
   border: 1px solid var(--border, #e2e8f0);
   border-radius: 14px;
   background: var(--surface, #f8fafc);
 }
 
-/* === 1. CLICKABLE BREADCRUMB PATH (Home >> Module >> Section) === */
-.module-toolbar-breadcrumb {
-  display: flex;
-  align-items: center;
+.module-toolbar-title {
   flex: 1 1 auto;
   min-width: 0;
-  gap: 6px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.module-crumb-link {
-  padding: 3px 8px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--royal-blue, #435339);
+  margin: 0;
   font-family: var(--font-ui);
-  font-size: 0.86rem;
-  font-weight: 700;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.module-crumb-link:hover {
-  background: var(--surface-tint, #eef1e9);
-  text-decoration: underline;
-}
-
-.module-crumb-sep {
-  color: var(--muted, #64748b);
-  font-size: 0.78rem;
-  font-weight: 700;
-  flex-shrink: 0;
-  user-select: none;
-}
-
-.module-crumb-current {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: var(--text-strong, #0b1e3d);
-  font-family: var(--font-ui);
-  font-size: 0.9rem;
+  font-size: clamp(14px, 1.25vw, 20px);
   font-weight: 800;
   letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
-/* === 2. RIGHT CONTROLS: COMPACT SEARCH + EXTRA ACTIONS + ICON EXPORT BAR === */
 .module-toolbar-controls {
   display: flex;
   align-items: center;
@@ -101,6 +70,51 @@
   border-color: var(--royal-blue, #1d63dc);
 }
 
+/* === 2. FULL-WIDTH BREADCRUMB PATH (BETWEEN TOOLBAR & TABLE BELOW) === */
+.module-toolbar-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 11px;
+  background: var(--surface-raised, #ffffff);
+}
+
+.module-crumb-link {
+  padding: 3px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--royal-blue, #435339);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.module-crumb-link:hover {
+  background: var(--surface-tint, #eef1e9);
+  text-decoration: underline;
+}
+
+.module-crumb-sep {
+  color: var(--muted, #64748b);
+  font-size: 0.78rem;
+  font-weight: 700;
+  user-select: none;
+}
+
+.module-crumb-current {
+  color: var(--text-strong, #0b1e3d);
+  font-family: var(--font-ui);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -121,7 +135,7 @@
     gap: 8px;
   }
 
-  .module-toolbar-breadcrumb {
+  .module-toolbar-title {
     flex: 1 1 100%;
   }
 
@@ -129,6 +143,10 @@
     flex: 1 1 100%;
     flex-wrap: wrap;
     justify-content: space-between;
+  }
+
+  .module-toolbar-breadcrumb {
+    padding: 6px 12px;
   }
 }
 

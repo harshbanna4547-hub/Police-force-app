@@ -12,9 +12,9 @@ function stripLeadingIcon(text) {
 }
 
 /**
- * [COMPONENT] ModuleHeaderToolbar — एक-पंक्ति कॉम्पैक्ट मॉड्यूल हेडर टूलबार
- * Left: Clickable Breadcrumb Path (Home >> Module >> Section)
- * Right: Slim Search Bar + Extra Actions + 4 Icon-Only Action Buttons (Excel, Word, PDF, Print)
+ * [COMPONENT] ModuleHeaderToolbar — मॉड्यूल शीर्ष नियंत्रण पट्टी एवं नेविगेशन ब्रेडक्रम्ब
+ * Row 1: Module Title + Slim Search Bar + Extra Actions + 4 Icon-Only Action Buttons
+ * Row 2: Full-width Clickable Breadcrumb Path (Home >> Module >> Section)
  */
 export default function ModuleHeaderToolbar({
   title,
@@ -43,8 +43,35 @@ export default function ModuleHeaderToolbar({
   const handleModuleRootClick = onModuleRoot || navContext.onModuleRoot;
 
   return (
-    <header className="module-header-toolbar module-no-print">
-      {/* === 1. CLICKABLE BREADCRUMB NAVIGATION TRAIL === */}
+    <div className="module-toolbar-wrapper module-no-print">
+      {/* === 1. TOP ACTION TOOLBAR (TITLE + SEARCH + ICON EXPORT/PRINT) === */}
+      <header className="module-header-toolbar">
+        <h2 className="module-toolbar-title">{title}</h2>
+
+        <div className="module-toolbar-controls">
+          {onSearchChange && (
+            <label className="module-toolbar-search">
+              <span className="visually-hidden">{english ? "Search" : "खोजें"}</span>
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => onSearchChange(event.target.value)}
+                placeholder={searchPlaceholder || (english ? "🔍 Search..." : "🔍 खोजें...")}
+              />
+            </label>
+          )}
+          {extraActions}
+          <ExportBar
+            title={title}
+            rows={rows}
+            fileName={fileName}
+            actions={["excel", "word", "pdf", "print"]}
+            language={language}
+          />
+        </div>
+      </header>
+
+      {/* === 2. FULL-WIDTH CLICKABLE BREADCRUMB PATH (BELOW TOOLBAR, ZERO CLIPPING) === */}
       <nav
         className="module-toolbar-breadcrumb"
         aria-label={english ? "Module breadcrumb" : "मॉड्यूल नेविगेशन पथ"}
@@ -81,35 +108,12 @@ export default function ModuleHeaderToolbar({
         {leafLabel && (
           <>
             <span className="module-crumb-sep" aria-hidden="true">&gt;&gt;</span>
-            <span className="module-crumb-current" aria-current="page" title={leafLabel}>
+            <span className="module-crumb-current" aria-current="page">
               {leafLabel}
             </span>
           </>
         )}
       </nav>
-
-      {/* === 2. COMPACT SEARCH BAR, EXTRA ACTIONS & ICON-ONLY EXPORT/PRINT BUTTONS === */}
-      <div className="module-toolbar-controls">
-        {onSearchChange && (
-          <label className="module-toolbar-search">
-            <span className="visually-hidden">{english ? "Search" : "खोजें"}</span>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder={searchPlaceholder || (english ? "🔍 Search..." : "🔍 खोजें...")}
-            />
-          </label>
-        )}
-        {extraActions}
-        <ExportBar
-          title={title}
-          rows={rows}
-          fileName={fileName}
-          actions={["excel", "word", "pdf", "print"]}
-          language={language}
-        />
-      </div>
-    </header>
+    </div>
   );
 }
