@@ -312,7 +312,10 @@ export async function synchronizeOneDriveVault(district, localVault) {
   const localTime = Date.parse(localVault?.updatedAt || "") || 0;
   const remoteTime = Date.parse(remote?.updatedAt || remoteVault?.updatedAt || "") || 0;
 
-  if (remoteVault && (!localVault || remoteTime > localTime)) {
+  const localRecordsCount = Array.isArray(localVault?.records) ? localVault.records.length : 0;
+  const remoteRecordsCount = Array.isArray(remoteVault?.records) ? remoteVault.records.length : 0;
+
+  if (remoteVault && (!localVault || remoteTime > localTime || (localRecordsCount === 0 && remoteRecordsCount > 0))) {
     return { direction: "pull", vault: remoteVault, updatedAt: remote.updatedAt || remoteVault.updatedAt };
   }
   if (!localVault && !remoteVault) {

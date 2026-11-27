@@ -146,10 +146,26 @@
 }
 
 .dev-services-feedback {
+  margin: 0 0 12px;
   padding: 10px 12px;
   border-radius: 7px;
+  border: 1px solid #bfdbfe;
   background: #eff6ff;
   color: #1e40af;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dev-services-feedback.is-error {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.dev-services-sync-detail {
+  color: #334155 !important;
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .dev-services-panel {

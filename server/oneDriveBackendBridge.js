@@ -87,12 +87,17 @@ export function createOneDriveBackendBridge({
     return String(env.ONEDRIVE_TENANT_ID || "common").trim();
   }
 
-  function getClientCredentials() {
+  function getClientCredentials({ requireSecret = true } = {}) {
     const clientId = String(env.ONEDRIVE_CLIENT_ID || "").trim();
     const clientSecret = String(env.ONEDRIVE_CLIENT_SECRET || "").trim();
     const redirectUri = String(env.ONEDRIVE_REDIRECT_URI || "").trim();
-    if (!clientId || !clientSecret) {
-      throw makeError("OneDrive server configuration is incomplete. Set ONEDRIVE_CLIENT_ID and ONEDRIVE_CLIENT_SECRET.", 503);
+    if (!clientId || (requireSecret && !clientSecret)) {
+      throw makeError(
+        requireSecret
+          ? "OneDrive server configuration is incomplete. Set ONEDRIVE_CLIENT_ID and ONEDRIVE_CLIENT_SECRET."
+          : "OneDrive server configuration is incomplete. Set ONEDRIVE_CLIENT_ID.",
+        503
+      );
     }
     return { clientId, clientSecret, redirectUri };
   }
@@ -120,21 +125,31 @@ export function createOneDriveBackendBridge({
     env.ONEDRIVE_REFRESH_TOKEN = refreshToken;
   }
 
-  async function exchangeToken(parameters) {
-    const { clientId, clientSecret } = getClientCredentials();
-    const body = new URLSearchParams({
+  async function exchangeToken(parameters, { includeSecret = true, origin = "" } = {}) {
+    const { clientId, clientSecret } = getClientCredentials({ requireSecret: includeSecret });
+    const bodyParams = {
       client_id: clientId,
-      client_secret: clientSecret,
+      ...(includeSecret && clientSecret ? { client_secret: clientSecret } : {}),
       ...parameters
-    });
+    };
+    const body = new URLSearchParams(bodyParams);
+    const headers = {
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...(origin ? { Origin: origin } : {})
+    };
     const response = await fetchImpl(`${TOKEN_ENDPOINT_BASE}/${encodeURIComponent(getTenant())}/oauth2/v2.0/token`, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      headers,
       body
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result.access_token) {
-      throw makeError(`Microsoft token request failed (${response.status}).`, response.status === 400 ? 401 : 502);
+      const detail = result.error_description || result.error || "";
+      const suffix = detail ? `: ${detail}` : "";
+      throw makeError(
+        `Microsoft token request failed (${response.status})${suffix}`,
+        response.status === 400 ? 401 : 502
+      );
     }
     return result;
   }
@@ -145,13 +160,17 @@ export function createOneDriveBackendBridge({
     tokenRefreshInFlight = (async () => {
       const refreshToken = await getRefreshToken();
       if (!refreshToken) {
-        throw makeError("OneDrive is not connected. Complete the one-time /api/onedrive/auth-init setup.", 503);
+        throw makeError("OneDrive is not connected. Generate ONEDRIVE_REFRESH_TOKEN in About -> Development Services.", 503);
       }
-      const result = await exchangeToken({
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-        scope: "offline_access Files.ReadWrite.All"
-      });
+      const origin = String(env.ONEDRIVE_ORIGIN || "http://localhost:5174").trim();
+      const result = await exchangeToken(
+        {
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+          scope: "offline_access Files.ReadWrite User.Read"
+        },
+        { includeSecret: false, origin }
+      );
       if (result.refresh_token && result.refresh_token !== refreshToken) {
         await persistRefreshToken(result.refresh_token);
       }

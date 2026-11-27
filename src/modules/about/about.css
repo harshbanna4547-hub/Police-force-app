@@ -311,6 +311,45 @@
   box-shadow: var(--shadow-card);
 }
 
+.about-dev-container .dev-services {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.about-dev-container .dev-services-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.about-dev-container .dev-services-status-card {
+  border-radius: 14px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #faf8f4);
+  box-shadow: var(--shadow-card);
+  padding: 16px;
+}
+
+.about-dev-container .dev-services-panel {
+  border-radius: 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  background: var(--surface, #faf8f4);
+  padding: 18px;
+}
+
+.about-dev-container .dev-services-pkce-card {
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+}
+
+@media (max-width: 768px) {
+  .about-dev-container .dev-services-status-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* === DARK MODE & TEMPLATE OVERRIDES === */
 .app-shell[data-template="wizardz"] .about-tab-btn.is-active,
 .app-shell[data-template="wizardz"] .about-open-dev-btn {

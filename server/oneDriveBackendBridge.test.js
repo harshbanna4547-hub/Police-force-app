@@ -22,7 +22,11 @@ test("refreshes the Microsoft token and reads/writes district JSON through Graph
     graphCalls.push({ url: requestUrl, method: options.method || "GET" });
     if (requestUrl.includes("/oauth2/v2.0/token")) {
       tokenRequests += 1;
-      assert.match(String(options.body), /grant_type=refresh_token/);
+      const params = new URLSearchParams(String(options.body));
+      assert.equal(params.get("grant_type"), "refresh_token");
+      assert.equal(params.get("client_secret"), null);
+      assert.equal(params.get("scope"), "offline_access Files.ReadWrite User.Read");
+      assert.equal(options.headers?.Origin, "http://localhost:5174");
       return Response.json({
         access_token: "mock-access-token",
         refresh_token: "rotated-refresh-token",

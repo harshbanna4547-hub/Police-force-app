@@ -31,6 +31,8 @@ function formatDate(value) {
 function statusLabel(state) {
   if (state === "synced") return { icon: "🟢", label: "Synced" };
   if (state === "syncing" || state === "checking") return { icon: "🟡", label: "Syncing" };
+  if (state === "error") return { icon: "🔴", label: "Sync Error" };
+  if (state === "offline") return { icon: "🟠", label: "Offline" };
   return { icon: "⚪", label: "Background Sync" };
 }
 
@@ -234,11 +236,17 @@ export default function DevServicesModule({ districtId, portalData }) {
     setFeedback("");
     try {
       const completed = await action();
-      await portalData.refreshActiveDevices();
-      setFeedback(completed ? successMessage : (portalData.cloudSyncStatus || "Sync पूरा नहीं हुआ।"));
+      if (completed) {
+        try {
+          await portalData.refreshActiveDevices();
+        } catch (deviceError) {
+          console.warn("Active devices refresh after sync failed:", deviceError);
+        }
+        setFeedback(`✅ ${successMessage} (Last Synced: ${new Date().toLocaleString()})`);
+      }
     } catch (error) {
       console.error("OneDrive action failed:", error);
-      setFeedback(`कार्रवाई असफल: ${error.message}`);
+      setFeedback(`⚠️ कार्रवाई असफल: ${error.message}`);
     } finally {
       setIsRefreshing(false);
     }
@@ -328,7 +336,8 @@ export default function DevServicesModule({ districtId, portalData }) {
           <div>
             <h2>OneDrive Cloud Database</h2>
             <p>{syncStatus.icon} {syncStatus.label}</p>
-            <p>Last Synced: {formatDate(portalData.lastSyncedAt)}</p>
+            <p className="dev-services-sync-detail">{portalData.cloudSyncStatus || "Standby"}</p>
+            <p><strong>Last Synced:</strong> {formatDate(portalData.lastSyncedAt)}</p>
             <div className="dev-services-card-actions">
               <button type="button" disabled={isRefreshing || portalData.isCloudSyncing} onClick={() => void runSyncAction(portalData.onForceOneDriveSync, "OneDrive sync पूरा हुआ।")}>
                 🔄 Force Sync Now
@@ -356,7 +365,16 @@ export default function DevServicesModule({ districtId, portalData }) {
         ))}
       </nav>
 
-      {feedback && <p className="dev-services-feedback" role="status">{feedback}</p>}
+      {portalData.cloudSyncState === "error" && portalData.cloudSyncStatus && (
+        <p className="dev-services-feedback is-error" role="alert">
+          ⚠️ {portalData.cloudSyncStatus}
+        </p>
+      )}
+      {feedback && (
+        <p className={`dev-services-feedback${feedback.startsWith("⚠️") ? " is-error" : ""}`} role="status">
+          {feedback}
+        </p>
+      )}
 
       {activeTab === "onedrive" && (
         <section className="dev-services-panel">
