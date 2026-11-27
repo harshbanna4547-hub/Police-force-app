@@ -2,19 +2,19 @@ import { getBeltNo, getRankCode } from "../../shared/commonFunctions.js";
 import { filterEmployeesByGender, getEmployeeGender, matchesEmployeeSearch } from "../../forceLogic.js";
 
 export const POST_FILTER_TABS = [
-  { id: "ALL", label: "सभी पद (ALL)", enLabel: "All Posts", groupIds: null },
-  { id: "SP", label: "SP", enLabel: "SP", groupIds: ["IPS_OFFICERS"] },
-  { id: "ASP", label: "ASP", enLabel: "ASP", groupIds: ["RPS_OFFICERS"], rankFilter: ["ASP"] },
-  { id: "DYSP", label: "DySP", enLabel: "DySP", groupIds: ["RPS_OFFICERS"], rankFilter: ["DYSP"] },
-  { id: "CI", label: "CI / MTO", enLabel: "CI / MTO", groupIds: ["CI_GROUP"] },
-  { id: "SI", label: "SI", enLabel: "SI", groupIds: ["SI_GROUP"] },
-  { id: "ASI", label: "ASI", enLabel: "ASI", groupIds: ["ASI_GROUP"] },
-  { id: "HC", label: "HC", enLabel: "HC", groupIds: ["HC_GROUP"] },
-  { id: "FC", label: "FC", enLabel: "FC", groupIds: ["FC_GROUP"] },
-  { id: "MINISTERIAL", label: "मंत्रालयिक संवर्ग (Ministerial)", enLabel: "Ministerial Cadre", groupIds: ["MINISTERIAL_CADRE"] },
-  { id: "ACCOUNTS", label: "लेखा संवर्ग (Accounts)", enLabel: "Accounts Cadre", groupIds: ["ACCOUNTS_CADRE"] },
-  { id: "IT", label: "आईटी संवर्ग (IT)", enLabel: "IT Cadre", groupIds: ["IT_CADRE"] },
-  { id: "CLASS_4", label: "चतुर्थ श्रेणी संवर्ग (Class-IV)", enLabel: "Class-IV Cadre", groupIds: ["CLASS_4_CADRE"] }
+  { id: "ALL", group: "EXECUTIVE", label: "सभी पद (ALL)", enLabel: "All Posts", groupIds: null },
+  { id: "SP", group: "EXECUTIVE", label: "SP", enLabel: "SP", groupIds: ["IPS_OFFICERS"] },
+  { id: "ASP", group: "EXECUTIVE", label: "ASP", enLabel: "ASP", groupIds: ["RPS_OFFICERS"], rankFilter: ["ASP"] },
+  { id: "DYSP", group: "EXECUTIVE", label: "DySP", enLabel: "DySP", groupIds: ["RPS_OFFICERS"], rankFilter: ["DYSP"] },
+  { id: "CI", group: "EXECUTIVE", label: "CI / MTO", enLabel: "CI / MTO", groupIds: ["CI_GROUP"] },
+  { id: "SI", group: "EXECUTIVE", label: "SI", enLabel: "SI", groupIds: ["SI_GROUP"] },
+  { id: "ASI", group: "EXECUTIVE", label: "ASI", enLabel: "ASI", groupIds: ["ASI_GROUP"] },
+  { id: "HC", group: "EXECUTIVE", label: "HC", enLabel: "HC", groupIds: ["HC_GROUP"] },
+  { id: "FC", group: "EXECUTIVE", label: "FC", enLabel: "FC", groupIds: ["FC_GROUP"] },
+  { id: "MINISTERIAL", group: "SUPPORT", label: "मंत्रालयिक संवर्ग", enLabel: "Ministerial Cadre", groupIds: ["MINISTERIAL_CADRE"] },
+  { id: "ACCOUNTS", group: "SUPPORT", label: "लेखा संवर्ग", enLabel: "Accounts Cadre", groupIds: ["ACCOUNTS_CADRE"] },
+  { id: "IT", group: "SUPPORT", label: "आईटी संवर्ग", enLabel: "IT Cadre", groupIds: ["IT_CADRE"] },
+  { id: "CLASS_4", group: "SUPPORT", label: "चतुर्थ श्रेणी संवर्ग", enLabel: "Class-IV Cadre", groupIds: ["CLASS_4_CADRE"] }
 ];
 
 export function formatVacancy(sanc, work) {
