@@ -9,9 +9,18 @@ import Pi300ChartModule from "./Pi300ChartModule";
 import { createDutyRosterEntry } from "./rosterLogic";
 import "./roster.css";
 
-export default function RosterModule({ reports, records = [], plSummary = [], allSheets = {}, setAllSheets, language = "hi" }) {
+export default function RosterModule({
+  reports,
+  records = [],
+  plSummary = [],
+  allSheets = {},
+  setAllSheets,
+  initialTab = "PS_ROSTER",
+  singleTabMode = false,
+  language = "hi"
+}) {
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const [belt, setBelt] = useState("");
   const [dutyDate, setDutyDate] = useState("");
   const [dutyType, setDutyType] = useState("गश्त");
@@ -51,16 +60,21 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
     setDutyDate("");
   };
 
+  const showGuardOnly = singleTabMode && initialTab === "GUARD_CHART";
+  const showPsRosterOnly = singleTabMode && initialTab === "PS_ROSTER";
+  const rosterSectionLabel = showGuardOnly
+    ? (english ? "Guard & Duty Chart" : "गार्ड एवं विशेष ड्यूटी")
+    : (english ? "PS Daily Roster" : "थाना दैनिक रोस्टर");
+
   return (
     <div className="roster-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "🏢 PS-Wise Strength & Duty Roster" : "🏢 थाना-वार नफरी एवं ड्यूटी रोस्टर"}
+        sectionLabel={rosterSectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
-        rows={rows}
-        fileName="Monthly_PS_Roster"
+        rows={showGuardOnly ? dutyExportRows : rows}
+        fileName={showGuardOnly ? "Guard_Special_Duty_Chart" : "Monthly_PS_Roster"}
         language={language}
         extraActions={(
           <button
@@ -74,100 +88,110 @@ export default function RosterModule({ reports, records = [], plSummary = [], al
       />
 
       {/* [FORM] Add Daily / Weekly Duty Entry (दैनिक / साप्ताहिक ड्यूटी जोड़ने का फॉर्म) */}
-      <form onSubmit={addDuty} className="module-form-card">
-        <input required type="date" value={dutyDate} onChange={(event) => setDutyDate(event.target.value)} className="module-cell-tnr" />
-        <select required value={belt} onChange={(event) => setBelt(event.target.value)}>
-          <option value="">{english ? "Select Employee" : "कर्मचारी चुनें"}</option>
-          {genderFilteredRecords.map((record) => (
-            <option
-              key={record._uid || record["BELT NO"]}
-              value={String(record["BELT NO"] || "").trim().toUpperCase()}
-              className={isDevlysText(record.NAME) ? "devlys-text" : undefined}
-            >
-              {record["BELT NO"]} — {record.NAME}
-            </option>
-          ))}
-        </select>
-        <select value={shift} onChange={(event) => setShift(event.target.value)}>
-          <option value="दैनिक">{english ? "Daily" : "दैनिक"}</option>
-          <option value="साप्ताहिक">{english ? "Weekly" : "साप्ताहिक"}</option>
-        </select>
-        <select value={dutyType} onChange={(event) => setDutyType(event.target.value)}>
-          <option value="गश्त">{english ? "Patrol" : "गश्त"}</option>
-          <option value="संतरी">{english ? "Sentry" : "संतरी"}</option>
-          <option value="कोर्ट">{english ? "Court" : "कोर्ट"}</option>
-          <option value="VIP ड्यूटी">{english ? "VIP Duty" : "VIP ड्यूटी"}</option>
-        </select>
-        <button type="submit" className="module-btn-success">
-          {english ? "Add Duty" : "ड्यूटी जोड़ें"}
-        </button>
-      </form>
+      {!showPsRosterOnly && (
+        <form onSubmit={addDuty} className="module-form-card">
+          <input required type="date" value={dutyDate} onChange={(event) => setDutyDate(event.target.value)} className="module-cell-tnr" />
+          <select required value={belt} onChange={(event) => setBelt(event.target.value)}>
+            <option value="">{english ? "Select Employee" : "कर्मचारी चुनें"}</option>
+            {genderFilteredRecords.map((record) => (
+              <option
+                key={record._uid || record["BELT NO"]}
+                value={String(record["BELT NO"] || "").trim().toUpperCase()}
+                className={isDevlysText(record.NAME) ? "devlys-text" : undefined}
+              >
+                {record["BELT NO"]} — {record.NAME}
+              </option>
+            ))}
+          </select>
+          <select value={shift} onChange={(event) => setShift(event.target.value)}>
+            <option value="दैनिक">{english ? "Daily" : "दैनिक"}</option>
+            <option value="साप्ताहिक">{english ? "Weekly" : "साप्ताहिक"}</option>
+          </select>
+          <select value={dutyType} onChange={(event) => setDutyType(event.target.value)}>
+            <option value="गश्त">{english ? "Patrol" : "गश्त"}</option>
+            <option value="संतरी">{english ? "Sentry" : "संतरी"}</option>
+            <option value="कोर्ट">{english ? "Court" : "कोर्ट"}</option>
+            <option value="VIP ड्यूटी">{english ? "VIP Duty" : "VIP ड्यूटी"}</option>
+          </select>
+          <button type="submit" className="module-btn-success">
+            {english ? "Add Duty" : "ड्यूटी जोड़ें"}
+          </button>
+        </form>
+      )}
 
       {/* [TABLE 1] Station-Wise Strength Summary (थाना-वार नफरी विवरण) */}
-      <div className="module-table-wrap table-responsive-box">
-        <table className="module-table">
-          <thead>
-            <tr>
-              <th>{english ? "S.N." : "क्र.सं."}</th>
-              <th className="module-cell-left">{english ? "PS / Branch / Office" : "थाना / शाखा / कार्यालय"}</th>
-              <th>HC (M)</th>
-              <th>MHC (F)</th>
-              <th>FC (M)</th>
-              <th>MFC (F)</th>
-              <th>MT</th>
-              <th>RT</th>
-              <th>{english ? "Total" : "कुल नफरी"}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i}>
-                <td className="module-cell-center module-cell-tnr">{r["क्र.सं."]}</td>
-                <td className="module-cell-bold"><HindiText text={r["थाना / शाखा / कार्यालय"]} /></td>
-                <td className="module-cell-center module-cell-tnr">{r["HC (पुरुष)"]}</td>
-                <td className="module-cell-center module-cell-tnr">{r["MHC (महिला)"]}</td>
-                <td className="module-cell-center module-cell-tnr">{r["FC (पुरुष)"]}</td>
-                <td className="module-cell-center module-cell-tnr">{r["MFC (महिला)"]}</td>
-                <td className="module-cell-center module-cell-tnr">{r["MT (चालक)"]}</td>
-                <td className="module-cell-center module-cell-tnr">{r["Recruit (RT)"]}</td>
-                <td className="module-cell-center module-cell-tnr roster-total-cell">{r["कुल कार्यरत नफरी"]}</td>
+      {!showGuardOnly && (
+        <div className="module-table-wrap table-responsive-box">
+          <table className="module-table">
+            <thead>
+              <tr>
+                <th>{english ? "S.N." : "क्र.सं."}</th>
+                <th className="module-cell-left">{english ? "PS / Branch / Office" : "थाना / शाखा / कार्यालय"}</th>
+                <th>HC (M)</th>
+                <th>MHC (F)</th>
+                <th>FC (M)</th>
+                <th>MFC (F)</th>
+                <th>MT</th>
+                <th>RT</th>
+                <th>{english ? "Total" : "कुल नफरी"}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i}>
+                  <td className="module-cell-center module-cell-tnr">{r["क्र.सं."]}</td>
+                  <td className="module-cell-bold"><HindiText text={r["थाना / शाखा / कार्यालय"]} /></td>
+                  <td className="module-cell-center module-cell-tnr">{r["HC (पुरुष)"]}</td>
+                  <td className="module-cell-center module-cell-tnr">{r["MHC (महिला)"]}</td>
+                  <td className="module-cell-center module-cell-tnr">{r["FC (पुरुष)"]}</td>
+                  <td className="module-cell-center module-cell-tnr">{r["MFC (महिला)"]}</td>
+                  <td className="module-cell-center module-cell-tnr">{r["MT (चालक)"]}</td>
+                  <td className="module-cell-center module-cell-tnr">{r["Recruit (RT)"]}</td>
+                  <td className="module-cell-center module-cell-tnr roster-total-cell">{r["कुल कार्यरत नफरी"]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* [TABLE 2] Daily / Weekly Duty Log (दैनिक / साप्ताहिक ड्यूटी लॉग) */}
-      <h3>{english ? `Daily / Weekly Duty (${dutyRows.length})` : `दैनिक / साप्ताहिक ड्यूटी (${dutyRows.length})`}</h3>
-      <div className="module-table-wrap table-responsive-box roster-duty-wrap">
-        <table className="module-table">
-          <thead>
-            <tr>
-              {[
-                english ? "Date" : "दिनांक",
-                english ? "Shift" : "अवधि",
-                english ? "Station / Office" : "थाना / कार्यालय",
-                english ? "Belt No." : "बेल्ट नं.",
-                english ? "Name" : "नाम",
-                english ? "Duty" : "ड्यूटी"
-              ].map((heading) => <th key={heading}>{heading}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {dutyExportRows.map((row, index) => (
-              <tr key={`${row["BELT NO"]}-${row["दिनांक"]}-${index}`}>
-                <td className="module-cell-center module-cell-tnr">{row["दिनांक"]}</td>
-                <td className="module-cell-center">{row["अवधि"]}</td>
-                <td><HindiText text={row["थाना / कार्यालय"]} /></td>
-                <td className="module-cell-center module-cell-tnr">{row["BELT NO"]}</td>
-                <td className="module-cell-bold"><HindiText text={row["NAME"]} /></td>
-                <td className="module-cell-center">{row["ड्यूटी"]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <Pi300ChartModule plSummary={plSummary} search={search} language={language} />
+      {!showPsRosterOnly && (
+        <>
+          <h3>{english ? `Daily / Weekly Duty (${dutyRows.length})` : `दैनिक / साप्ताहिक ड्यूटी (${dutyRows.length})`}</h3>
+          <div className="module-table-wrap table-responsive-box roster-duty-wrap">
+            <table className="module-table">
+              <thead>
+                <tr>
+                  {[
+                    english ? "Date" : "दिनांक",
+                    english ? "Shift" : "अवधि",
+                    english ? "Station / Office" : "थाना / कार्यालय",
+                    english ? "Belt No." : "बेल्ट नं.",
+                    english ? "Name" : "नाम",
+                    english ? "Duty" : "ड्यूटी"
+                  ].map((heading) => <th key={heading}>{heading}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {dutyExportRows.map((row, index) => (
+                  <tr key={`${row["BELT NO"]}-${row["दिनांक"]}-${index}`}>
+                    <td className="module-cell-center module-cell-tnr">{row["दिनांक"]}</td>
+                    <td className="module-cell-center">{row["अवधि"]}</td>
+                    <td><HindiText text={row["थाना / कार्यालय"]} /></td>
+                    <td className="module-cell-center module-cell-tnr">{row["BELT NO"]}</td>
+                    <td className="module-cell-bold"><HindiText text={row["NAME"]} /></td>
+                    <td className="module-cell-center">{row["ड्यूटी"]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+      {!showGuardOnly && (
+        <Pi300ChartModule plSummary={plSummary} search={search} language={language} />
+      )}
     </div>
   );
 }

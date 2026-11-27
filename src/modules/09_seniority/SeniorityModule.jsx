@@ -9,10 +9,14 @@ import "./seniority.css";
 /**
  * [COMPONENT] SeniorityModule — संवर्ग-वार वरिष्ठता सूची
  */
-export default function SeniorityModule({ seniorityList = [], records = [], language = "hi" }) {
+export default function SeniorityModule({
+  seniorityList = [],
+  records = [],
+  language = "hi"
+}) {
   const [caderFilter, setCaderFilter] = useState("ALL");
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const english = language === "en";
 
   const genderAllowedSet = useMemo(() => {
@@ -49,10 +53,9 @@ export default function SeniorityModule({ seniorityList = [], records = [], lang
     <div className="seniority-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "📋 Cadre-Wise Seniority List" : "📋 संवर्ग-वार वरिष्ठता सूची"}
+        sectionLabel={caderFilter === "ALL" ? (english ? "Cadre-Wise" : "संवर्ग-वार") : caderFilter}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName={`Seniority_${caderFilter}`}
         language={language}

@@ -10,9 +10,15 @@ import "./increment.css";
 /**
  * [COMPONENT] IncrementModule — 1 जुलाई वार्षिक वेतन वृद्धि पात्रता समीक्षा एवं आदेश
  */
-export default function IncrementModule({ records = [], allSheets = {}, setAllSheets, language = "hi" }) {
+export default function IncrementModule({
+  records = [],
+  allSheets = {},
+  setAllSheets,
+  initialTab = "ANNUAL",
+  language = "hi"
+}) {
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const [belt, setBelt] = useState("");
   const [payLevel, setPayLevel] = useState("");
   const [orderNo, setOrderNo] = useState("");
@@ -80,14 +86,17 @@ export default function IncrementModule({ records = [], allSheets = {}, setAllSh
     setOrderNo("");
   };
 
+  const incrementSectionLabel = initialTab === "WITHHELD"
+    ? (english ? "Withheld / Deferred" : "रोकी / स्थगित जांच")
+    : (english ? `1 July (${incDate})` : `1 जुलाई (${incDate})`);
+
   return (
     <div className="increment-module module-panel">
       <ModuleHeaderToolbar
         title={english ? `📈 Annual Increment — 1 July (${incDate})` : `📈 वार्षिक वेतन वृद्धि — 1 जुलाई (${incDate})`}
+        sectionLabel={incrementSectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName="Annual_Increment_Review"
         language={language}

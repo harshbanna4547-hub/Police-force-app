@@ -6,16 +6,23 @@ import { appendRowToSheet, formatDateOnly } from "../../shared/commonFunctions";
 import { getCleanRecordEmployees } from "./punishmentLogic";
 import "./punishment.css";
 
-export default function PunishmentModule({ records = [], allSheets = {}, setAllSheets, language = "hi" }) {
+export default function PunishmentModule({
+  records = [],
+  allSheets = {},
+  setAllSheets,
+  initialTab = "PUNISHMENT",
+  singleTabMode = false,
+  language = "hi"
+}) {
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const [belt, setBelt] = useState("");
   const [name, setName] = useState("");
   const [sajaType, setSajaType] = useState("17 CC - Censure (निंदा)");
   const [orderNo, setOrderNo] = useState("");
   const [orderDate, setOrderDate] = useState("");
   const [reason, setReason] = useState("");
-  const [cleanOnly, setCleanOnly] = useState(false);
+  const [cleanOnly, setCleanOnly] = useState(() => initialTab === "CLEAN");
   const english = language === "en";
 
   const rows = useMemo(() => allSheets["Saja_Record"] || [], [allSheets]);
@@ -58,54 +65,61 @@ export default function PunishmentModule({ records = [], allSheets = {}, setAllS
     setReason("");
   };
 
+  const punishmentSectionLabel = cleanOnly
+    ? (english ? "Clean Record" : "स्वच्छ छवि")
+    : (english ? "Punishment (CCA 16/17)" : "विभागीय सज़ा (CCA 16/17)");
+
   return (
     <div className="punishment-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "⚖️ Departmental Punishment & Clean Record" : "⚖️ विभागीय सज़ा / दण्ड रिकॉर्ड (17 CC / 16 CC)"}
+        sectionLabel={punishmentSectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName={cleanOnly ? "Clean_Record_List" : "Punishment_Record"}
         language={language}
       />
 
       {/* [FORM] New Punishment Entry (नया सज़ा विवरण दर्ज करने का फॉर्म) */}
-      <form onSubmit={handleSave} className="module-form-card">
-        <input type="text" required placeholder={english ? "Belt No." : "बेल्ट नं."} value={belt} onChange={(e) => setBelt(e.target.value)} />
-        <input type="text" required placeholder={english ? "Employee Name" : "कर्मचारी का नाम"} value={name} onChange={(e) => setName(e.target.value)} />
-        <select value={sajaType} onChange={(e) => setSajaType(e.target.value)}>
-          <option>17 CC - Censure (निंदा)</option>
-          <option>17 CC - Increment Stop (वेतन वृद्धि रोक)</option>
-          <option>16 CC - Major Penalty</option>
-          <option>Suspension (निलंबन)</option>
-        </select>
-        <input type="text" required placeholder={english ? "DOB / Order No." : "DOB / आदेश नं."} value={orderNo} onChange={(e) => setOrderNo(e.target.value)} />
-        <input type="text" placeholder={english ? "Date (DD-MM-YYYY)" : "दिनांक (DD-MM-YYYY)"} value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
-        <input type="text" placeholder={english ? "Brief Reason" : "संक्षिप्त कारण"} value={reason} onChange={(e) => setReason(e.target.value)} />
-        <button type="submit" className="module-btn-danger">
-          ➕ {english ? "Save Punishment" : "सज़ा रिकॉर्ड सेव करें"}
-        </button>
-      </form>
+      {(!singleTabMode || !cleanOnly) && (
+        <form onSubmit={handleSave} className="module-form-card">
+          <input type="text" required placeholder={english ? "Belt No." : "बेल्ट नं."} value={belt} onChange={(e) => setBelt(e.target.value)} />
+          <input type="text" required placeholder={english ? "Employee Name" : "कर्मचारी का नाम"} value={name} onChange={(e) => setName(e.target.value)} />
+          <select value={sajaType} onChange={(e) => setSajaType(e.target.value)}>
+            <option>17 CC - Censure (निंदा)</option>
+            <option>17 CC - Increment Stop (वेतन वृद्धि रोक)</option>
+            <option>16 CC - Major Penalty</option>
+            <option>Suspension (निलंबन)</option>
+          </select>
+          <input type="text" required placeholder={english ? "DOB / Order No." : "DOB / आदेश नं."} value={orderNo} onChange={(e) => setOrderNo(e.target.value)} />
+          <input type="text" placeholder={english ? "Date (DD-MM-YYYY)" : "दिनांक (DD-MM-YYYY)"} value={orderDate} onChange={(e) => setOrderDate(e.target.value)} />
+          <input type="text" placeholder={english ? "Brief Reason" : "संक्षिप्त कारण"} value={reason} onChange={(e) => setReason(e.target.value)} />
+          <button type="submit" className="module-btn-danger">
+            ➕ {english ? "Save Punishment" : "सज़ा रिकॉर्ड सेव करें"}
+          </button>
+        </form>
+      )}
 
-      {/* [TOGGLE] Punishment Records vs Clean Record Filter (सज़ा बनाम स्वच्छ छवि टैब) */}
-      <div className="punishment-filter-tabs">
-        <button
-          type="button"
-          onClick={() => setCleanOnly(false)}
-          className={`punishment-filter-btn${!cleanOnly ? " is-active" : ""}`}
-        >
-          {english ? `Punishment Records (${rows.length})` : `सजा रिकॉर्ड (${rows.length})`}
-        </button>
-        <button
-          type="button"
-          onClick={() => setCleanOnly(true)}
-          className={`punishment-filter-btn${cleanOnly ? " is-active" : ""}`}
-        >
-          {english ? `Clean Record (${cleanRows.length})` : `स्वच्छ छवि (${cleanRows.length})`}
-        </button>
-      </div>
+      {/* [TOGGLE] Punishment Records vs Clean Record Filter (Hidden in singleTabMode) */}
+      {!singleTabMode && (
+        <div className="punishment-filter-tabs">
+          <button
+            type="button"
+            onClick={() => setCleanOnly(false)}
+            className={`punishment-filter-btn${!cleanOnly ? " is-active" : ""}`}
+          >
+            {english ? `Punishment Records (${rows.length})` : `सजा रिकॉर्ड (${rows.length})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setCleanOnly(true)}
+            className={`punishment-filter-btn${cleanOnly ? " is-active" : ""}`}
+          >
+            {english ? `Clean Record (${cleanRows.length})` : `स्वच्छ छवि (${cleanRows.length})`}
+          </button>
+        </div>
+      )}
 
       {/* [TABLE] Punishment / Clean Force List (सज़ा एवं स्वच्छ छवि तालिका) */}
       <div className="module-table-wrap table-responsive-box">

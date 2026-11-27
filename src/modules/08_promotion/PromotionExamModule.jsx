@@ -16,10 +16,20 @@ const EXAM_PATHS = {
 /**
  * [COMPONENT] PromotionExamModule — PCC एवं DPC पदोन्नति परीक्षा पात्रता समीक्षा
  */
-export default function PromotionExamModule({ records = [], setRecords, allSheets = {}, setAllSheets, language = "hi" }) {
+export default function PromotionExamModule({
+  records = [],
+  setRecords,
+  allSheets = {},
+  setAllSheets,
+  initialTab = "PCC",
+  singleTabMode = false,
+  language = "hi"
+}) {
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
-  const [examType, setExamType] = useState(Object.keys(EXAM_PATHS)[0]);
+  const [gender] = useState("ALL");
+  const [examType, setExamType] = useState(() =>
+    initialTab === "DPC" ? "DPC Promotion (ASI to SI)" : Object.keys(EXAM_PATHS)[0]
+  );
   const [minimumService, setMinimumService] = useState("0");
   const [educationFilter, setEducationFilter] = useState("ALL");
   const [belt, setBelt] = useState("");
@@ -115,14 +125,23 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
     setOrderDate("");
   };
 
+  const visibleExamPaths = singleTabMode
+    ? Object.keys(EXAM_PATHS).filter((type) =>
+      initialTab === "DPC" ? type.startsWith("DPC") : type.startsWith("PCC")
+    )
+    : Object.keys(EXAM_PATHS);
+
+  const promotionSectionLabel = examType.startsWith("DPC")
+    ? (english ? "DPC Promotion Review" : "DPC पदोन्नति समीक्षा")
+    : (english ? "PCC Exam Eligibility" : "PCC परीक्षा पात्रता");
+
   return (
     <div className="promotion-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "🎓 Promotion & Exam Eligibility Review" : "🎓 पदोन्नति एवं परीक्षा पात्रता समीक्षा"}
+        sectionLabel={promotionSectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName="Promotion_Eligibility_Review"
         language={language}
@@ -136,7 +155,7 @@ export default function PromotionExamModule({ records = [], setRecords, allSheet
 
       <div className="promotion-filter-grid">
         <select value={examType} onChange={(event) => { setExamType(event.target.value); setBelt(""); }} className="module-select-control">
-          {Object.keys(EXAM_PATHS).map((type) => <option key={type}>{type}</option>)}
+          {visibleExamPaths.map((type) => <option key={type}>{type}</option>)}
         </select>
         <label className="promotion-service-label">
           <span>{english ? "Minimum Service Years" : "न्यूनतम सेवा वर्ष"}</span>

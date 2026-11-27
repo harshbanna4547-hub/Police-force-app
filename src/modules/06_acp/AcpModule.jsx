@@ -10,9 +10,15 @@ import "./acp.css";
 /**
  * [COMPONENT] AcpModule — 9 / 18 / 27 वर्ष एसीपी सेवा-अवधि समीक्षा एवं आदेश प्रविष्टि
  */
-export default function AcpModule({ records = [], allSheets = {}, setAllSheets, language = "hi" }) {
+export default function AcpModule({
+  records = [],
+  allSheets = {},
+  setAllSheets,
+  initialTab = "REVIEW",
+  language = "hi"
+}) {
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const [selectedBelt, setSelectedBelt] = useState("");
   const [orderNo, setOrderNo] = useState("");
   const [orderDate, setOrderDate] = useState("");
@@ -87,14 +93,17 @@ export default function AcpModule({ records = [], allSheets = {}, setAllSheets, 
     setOrderDate("");
   };
 
+  const acpSectionLabel = initialTab === "ORDERS"
+    ? (english ? "ACP Orders" : "ACP आदेश पत्रक")
+    : (english ? "9 / 18 / 27 Review" : "9 / 18 / 27 समीक्षा");
+
   return (
     <div className="acp-module module-panel">
       <ModuleHeaderToolbar
         title={english ? `🎖️ 9 / 18 / 27 Years ACP Service Review (${acpEligibleList.length})` : `🎖️ 9 / 18 / 27 वर्ष ACP सेवा-अवधि सूची (${acpEligibleList.length})`}
+        sectionLabel={acpSectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName="ACP_Eligibility_Review"
         language={language}

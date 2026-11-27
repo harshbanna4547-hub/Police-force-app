@@ -213,10 +213,14 @@ export default function TransferModule({
   setAttRecords,
   depRecords = [],
   setDepRecords,
+  initialTab = "CREATE",
+  singleTabMode = false,
   language = "hi"
 }) {
-  const [activeTab, setActiveTab] = useState("CREATE");
-  const [genderFilter, setGenderFilter] = useState("ALL");
+  const [activeTab, setActiveTab] = useState(() =>
+    ["CREATE", "TENURE", "ISSUED", "DUTY"].includes(initialTab) ? initialTab : "CREATE"
+  );
+  const [genderFilter] = useState("ALL");
   const [rankFilter, setRankFilter] = useState("ALL");
   const [stationFilter, setStationFilter] = useState("ALL");
   const [searchText, setSearchText] = useState("");
@@ -528,35 +532,39 @@ export default function TransferModule({
     <option key={rank} value={rank}>{rank === "ALL" ? (english ? "All Posts" : "सभी पद") : rank}</option>
   ));
 
+  const transferSectionLabel = TAB_ITEMS.find((t) => t.id === activeTab)?.[english ? "en" : "hi"]
+    || (english ? "Transfer Orders" : "स्थानांतरण आदेश");
+
   return (
     <section className="transfer-module">
       <ModuleHeaderToolbar
         title={english ? "⇄ Transfer & Order Management" : "⇄ स्थानांतरण / आदेश प्रबंधन"}
+        sectionLabel={transferSectionLabel}
         search={searchText}
         onSearchChange={setSearchText}
-        gender={genderFilter}
-        onGenderChange={setGenderFilter}
         rows={toolbarExportRows}
         fileName={activeTab === "ISSUED" && currentOrder ? `Transfer_Order_${currentOrder.orderNo}` : `Transfer_${activeTab}`}
         language={language}
       />
 
-      <nav className="transfer-tabs" role="tablist" aria-label={english ? "Transfer module tabs" : "स्थानांतरण मॉड्यूल टैब"}>
-        {TAB_ITEMS.map((tab) => (
-          <button
-            key={tab.id}
-            id={`transfer-tab-${tab.id.toLowerCase()}`}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            aria-controls={`transfer-panel-${tab.id.toLowerCase()}`}
-            className={activeTab === tab.id ? "transfer-tab is-active" : "transfer-tab"}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            {english ? tab.en : tab.hi}
-          </button>
-        ))}
-      </nav>
+      {!singleTabMode && (
+        <nav className="transfer-tabs" role="tablist" aria-label={english ? "Transfer module tabs" : "स्थानांतरण मॉड्यूल टैब"}>
+          {TAB_ITEMS.map((tab) => (
+            <button
+              key={tab.id}
+              id={`transfer-tab-${tab.id.toLowerCase()}`}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={`transfer-panel-${tab.id.toLowerCase()}`}
+              className={activeTab === tab.id ? "transfer-tab is-active" : "transfer-tab"}
+              onClick={() => setActiveTab(tab.id)}
+            >
+              {english ? tab.en : tab.hi}
+            </button>
+          ))}
+        </nav>
+      )}
 
       {activeTab === "CREATE" && (
         <div

@@ -10,10 +10,20 @@ import "./bharti.css";
 /**
  * [COMPONENT] BhartiModule — नवीन भर्ती पंजीयन, रिक्रूट सूची एवं स्थायीकरण आदेश
  */
-export default function BhartiModule({ records = [], setRecords, allSheets = {}, setAllSheets, language = "hi" }) {
-  const [subTab, setSubTab] = useState("FORM"); // FORM | RT_LIST | CONFIRMATION
+export default function BhartiModule({
+  records = [],
+  setRecords,
+  allSheets = {},
+  setAllSheets,
+  initialTab = "FORM",
+  singleTabMode = false,
+  language = "hi"
+}) {
+  const [subTab, setSubTab] = useState(() =>
+    ["FORM", "RT_LIST", "CONFIRMATION"].includes(initialTab) ? initialTab : "FORM"
+  ); // FORM | RT_LIST | CONFIRMATION
   const [search, setSearch] = useState("");
-  const [gender, setGender] = useState("ALL");
+  const [gender] = useState("ALL");
   const [confirmationBelt, setConfirmationBelt] = useState("");
   const [confirmationDate, setConfirmationDate] = useState("");
   const [confirmationOrder, setConfirmationOrder] = useState("");
@@ -105,30 +115,37 @@ export default function BhartiModule({ records = [], setRecords, allSheets = {},
     ? recruitExportRows.filter((row) => row["स्थिति"] === "आदेश हेतु लंबित")
     : recruitExportRows;
 
+  const bhartiSectionLabel = subTab === "CONFIRMATION"
+    ? (english ? "Confirmation Orders" : "स्थायीकरण आदेश")
+    : subTab === "RT_LIST"
+      ? (english ? "All Recruits (RT)" : "सभी रिक्रूट (RT) सूची")
+      : (english ? "New Recruitment" : "नवीन भर्ती");
+
   return (
     <div className="bharti-module module-panel">
       <ModuleHeaderToolbar
         title={english ? "⚡ Recruitment (Bharti) & Confirmation" : "⚡ भर्ती एवं स्थायीकरण"}
+        sectionLabel={bhartiSectionLabel}
         search={search}
         onSearchChange={setSearch}
-        gender={gender}
-        onGenderChange={setGender}
         rows={exportRows}
         fileName={subTab === "CONFIRMATION" ? "Confirmation_Review" : "Recruit_Probation_List"}
         language={language}
       />
 
-      <div className="module-tab-bar">
-        <button type="button" onClick={() => setSubTab("FORM")} className={`module-tab-btn ${subTab === "FORM" ? "is-active" : ""}`}>
-          ➕ {english ? `New Recruitment Form (Vacant Belts: ${vacantBelts.length})` : `नवीन भर्ती पंजीयन फॉर्म (खाली बेल्ट: ${vacantBelts.length})`}
-        </button>
-        <button type="button" onClick={() => setSubTab("RT_LIST")} className={`module-tab-btn ${subTab === "RT_LIST" ? "is-active" : ""}`}>
-          ⚡ {english ? `All Recruits (RT) (${rtList.length})` : `सभी रिक्रूट (RT) सूची (${rtList.length})`}
-        </button>
-        <button type="button" onClick={() => setSubTab("CONFIRMATION")} className={`module-tab-btn ${subTab === "CONFIRMATION" ? "is-active" : ""}`}>
-          ✅ {english ? "Confirmation Orders" : "स्थायीकरण आदेश"}
-        </button>
-      </div>
+      {!singleTabMode && (
+        <div className="module-tab-bar">
+          <button type="button" onClick={() => setSubTab("FORM")} className={`module-tab-btn ${subTab === "FORM" ? "is-active" : ""}`}>
+            ➕ {english ? `New Recruitment Form (Vacant Belts: ${vacantBelts.length})` : `नवीन भर्ती पंजीयन फॉर्म (खाली बेल्ट: ${vacantBelts.length})`}
+          </button>
+          <button type="button" onClick={() => setSubTab("RT_LIST")} className={`module-tab-btn ${subTab === "RT_LIST" ? "is-active" : ""}`}>
+            ⚡ {english ? `All Recruits (RT) (${rtList.length})` : `सभी रिक्रूट (RT) सूची (${rtList.length})`}
+          </button>
+          <button type="button" onClick={() => setSubTab("CONFIRMATION")} className={`module-tab-btn ${subTab === "CONFIRMATION" ? "is-active" : ""}`}>
+            ✅ {english ? "Confirmation Orders" : "स्थायीकरण आदेश"}
+          </button>
+        </div>
+      )}
 
       {subTab === "FORM" ? (
         <form onSubmit={handleSave} className="bharti-form-grid">
