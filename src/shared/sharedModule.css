@@ -154,7 +154,7 @@
 }
 
 .module-table thead tr {
-  background: linear-gradient(135deg, #273123 0%, #3d4d35 100%);
+  background: var(--hero-gradient, linear-gradient(135deg, #273123 0%, #3d4d35 100%));
   color: #fff;
 }
 
@@ -258,4 +258,57 @@
   .module-no-print {
     display: none !important;
   }
+}
+
+/* ==========================================================================
+   NEW THEME OVERRIDES — Soul, Dallo, Fleur, Citrus (tab & btn active states)
+   ========================================================================== */
+
+/* Soul — sage green active state */
+.app-shell[data-template="soul"] .module-tab-btn.is-active,
+.app-shell[data-template="soul"] .module-btn-primary {
+  background: linear-gradient(135deg, #4a7044 0%, #2e4a2b 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Dallo — neumorphic active inset */
+.app-shell[data-template="dallo"] .module-tab-btn.is-active {
+  background: linear-gradient(145deg, #d8d8de, #e8e8ec);
+  color: #4a4a7a;
+  box-shadow: inset 4px 4px 8px rgba(180, 180, 200, 0.5), inset -4px -4px 8px rgba(255, 255, 255, 0.85);
+  border: none;
+}
+
+/* Fleur — boho tan active */
+.app-shell[data-template="fleur"] .module-tab-btn.is-active,
+.app-shell[data-template="fleur"] .module-btn-primary {
+  background: linear-gradient(135deg, #6b4c32 0%, #4a3626 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* Citrus — orange active */
+.app-shell[data-template="citrus"] .module-tab-btn.is-active,
+.app-shell[data-template="citrus"] .module-btn-primary {
+  background: linear-gradient(135deg, #f26618 0%, #c44e08 100%);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* All light themes — select control matches theme border */
+.app-shell[data-template="soul"] .module-select-control,
+.app-shell[data-template="fleur"] .module-select-control,
+.app-shell[data-template="citrus"] .module-select-control {
+  border-color: var(--border-strong);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+/* Dallo neumorphic select */
+.app-shell[data-template="dallo"] .module-select-control {
+  background: #e4e4ea;
+  box-shadow: inset 3px 3px 7px rgba(180, 180, 200, 0.4), inset -3px -3px 7px rgba(255, 255, 255, 0.8);
+  border: none;
+  color: #2d2d3a;
 }

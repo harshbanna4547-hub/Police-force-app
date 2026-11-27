@@ -11,6 +11,7 @@
   margin: 0 0 4px;
   color: var(--text, #0B1E3D);
   font-size: 1.25rem;
+  font-family: var(--font-editorial, "Playfair Display", serif);
 }
 
 .module-grid-subheading {
@@ -34,18 +35,30 @@
   gap: 10px;
   border: 1px solid var(--border, #E2E8F0);
   border-top: 4px solid #1D63DC;
-  border-radius: 12px;
+  border-radius: var(--radius-card, 16px);
   background: var(--surface-raised, #fff);
   color: var(--text, #0F172A);
   text-align: left;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--shadow-card, 0 4px 16px rgba(15, 23, 42, 0.07));
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.module-card-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+/* Shimmer overlay on hover */
+.module-card-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.module-card-btn:hover::before {
+  opacity: 1;
 }
 
 .module-card-icon-row {
@@ -62,6 +75,7 @@
 .module-card-title {
   color: var(--text, #0B1E3D);
   font-size: 1.02rem;
+  font-weight: 700;
 }
 
 .module-card-desc {
@@ -71,17 +85,17 @@
 }
 
 /* Accent border variants per module */
-.card-accent-STRENGTH { border-top-color: #2563EB; }
-.card-accent-POSTING { border-top-color: #0F766E; }
-.card-accent-ARCHIVE { border-top-color: #475569; }
-.card-accent-TRANSFER { border-top-color: #DC2626; }
-.card-accent-LEAVE { border-top-color: #15803D; }
-.card-accent-ACP { border-top-color: #4338CA; }
-.card-accent-PROMOTION { border-top-color: #B45309; }
-.card-accent-SENIORITY { border-top-color: #6D28D9; }
-.card-accent-BHARTI { border-top-color: #D97706; }
-.card-accent-INCREMENT { border-top-color: #0369A1; }
-.card-accent-TRAINING { border-top-color: #7C3AED; }
+.card-accent-STRENGTH   { border-top-color: #2563EB; }
+.card-accent-POSTING    { border-top-color: #0F766E; }
+.card-accent-ARCHIVE    { border-top-color: #475569; }
+.card-accent-TRANSFER   { border-top-color: #DC2626; }
+.card-accent-LEAVE      { border-top-color: #15803D; }
+.card-accent-ACP        { border-top-color: #4338CA; }
+.card-accent-PROMOTION  { border-top-color: #B45309; }
+.card-accent-SENIORITY  { border-top-color: #6D28D9; }
+.card-accent-BHARTI     { border-top-color: #D97706; }
+.card-accent-INCREMENT  { border-top-color: #0369A1; }
+.card-accent-TRAINING   { border-top-color: #7C3AED; }
 .card-accent-PUNISHMENT { border-top-color: #B91C1C; }
-.card-accent-ROSTER { border-top-color: #065F46; }
-.card-accent-REPORTS { border-top-color: #4F46E5; }
+.card-accent-ROSTER     { border-top-color: #065F46; }
+.card-accent-REPORTS    { border-top-color: #4F46E5; }

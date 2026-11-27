@@ -332,3 +332,234 @@
 .app-shell[data-theme="dark"] .portal-context-item:hover {
   color: #60a5fa;
 }
+
+/* ==========================================================================
+   GLOBAL SITE-WIDE DESIGN LANGUAGE — Depth, Animation, Hover, Typography
+   Applied to ALL modules via theme token system (no inline styles)
+   ========================================================================== */
+
+/* === GLOBAL PAGE ENTRY ANIMATION === */
+@keyframes pageFadeSlideIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.app-main-area {
+  animation: pageFadeSlideIn 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* === GLOBAL MODULE PANEL — depth + blur glass === */
+.module-panel {
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* === GLOBAL MODULE CARD HOVER DEPTH === */
+.module-card-btn {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+}
+
+.module-card-btn:hover {
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* === GLOBAL TABLE STYLES — themed header + stripe rows === */
+.module-table thead tr {
+  background: var(--hero-gradient, linear-gradient(135deg, #273123 0%, #3d4d35 100%));
+  color: #fff;
+}
+
+.module-table tbody tr {
+  transition: background-color 0.14s ease;
+}
+
+.module-table tbody tr:nth-child(even) {
+  background-color: color-mix(in srgb, var(--surface-muted, #f1f5f9) 50%, transparent);
+}
+
+.module-table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--surface-tint, #eef1e9) 70%, transparent);
+}
+
+/* === GLOBAL TAB BAR — smooth active indicator === */
+.module-tab-btn {
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.14s ease;
+}
+
+.module-tab-btn:hover:not(.is-active) {
+  transform: translateY(-1px);
+  background-color: var(--surface-raised, #fff);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* === GLOBAL BUTTON STYLES — micro-bounce === */
+.module-btn-primary,
+.module-btn-success,
+.module-btn-danger,
+.module-btn-neutral,
+.module-btn-small {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.14s ease;
+}
+
+.module-btn-primary:hover,
+.module-btn-success:hover,
+.module-btn-danger:hover,
+.module-btn-neutral:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+}
+
+.module-btn-primary:active,
+.module-btn-success:active,
+.module-btn-danger:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* === GLOBAL FORM INPUTS — focus glow === */
+.module-form-card input:focus,
+.module-form-card select:focus,
+.module-select-control:focus {
+  outline: none;
+  border-color: var(--royal-blue, #435339);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--royal-blue, #435339) 18%, transparent);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* === GLOBAL SCROLL REVEAL — fade-in stagger for card grids === */
+@keyframes revealCardUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.module-card-grid .module-card-btn {
+  animation: revealCardUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.module-card-grid .module-card-btn:nth-child(1)  { animation-delay: 0.04s; }
+.module-card-grid .module-card-btn:nth-child(2)  { animation-delay: 0.08s; }
+.module-card-grid .module-card-btn:nth-child(3)  { animation-delay: 0.12s; }
+.module-card-grid .module-card-btn:nth-child(4)  { animation-delay: 0.16s; }
+.module-card-grid .module-card-btn:nth-child(5)  { animation-delay: 0.20s; }
+.module-card-grid .module-card-btn:nth-child(6)  { animation-delay: 0.24s; }
+.module-card-grid .module-card-btn:nth-child(7)  { animation-delay: 0.28s; }
+.module-card-grid .module-card-btn:nth-child(8)  { animation-delay: 0.32s; }
+.module-card-grid .module-card-btn:nth-child(n+9) { animation-delay: 0.36s; }
+
+/* === GLOBAL AMBIENT ORB — theme-sensitive tinting === */
+.app-shell[data-template="soul"] .ambient-orb-one {
+  background: radial-gradient(circle, rgba(107, 136, 102, 0.3), rgba(176, 96, 64, 0.1));
+}
+.app-shell[data-template="soul"] .ambient-orb-two {
+  background: radial-gradient(circle, rgba(74, 112, 68, 0.2), rgba(200, 168, 130, 0.1));
+}
+
+.app-shell[data-template="dallo"] .ambient-orb-one,
+.app-shell[data-template="dallo"] .ambient-orb-two {
+  opacity: 0.1;
+  background: radial-gradient(circle, rgba(100, 100, 150, 0.3), transparent);
+}
+
+.app-shell[data-template="fleur"] .ambient-orb-one {
+  background: radial-gradient(circle, rgba(196, 124, 90, 0.2), rgba(200, 168, 130, 0.1));
+}
+.app-shell[data-template="fleur"] .ambient-orb-two {
+  background: radial-gradient(circle, rgba(107, 76, 50, 0.15), rgba(232, 200, 156, 0.1));
+}
+
+.app-shell[data-template="citrus"] .ambient-orb-one {
+  background: radial-gradient(circle, rgba(242, 102, 24, 0.22), rgba(251, 216, 184, 0.14));
+}
+.app-shell[data-template="citrus"] .ambient-orb-two {
+  background: radial-gradient(circle, rgba(196, 78, 8, 0.15), rgba(242, 102, 24, 0.08));
+}
+
+/* === GLOBAL WAVE HEADER DECORATION (behind portal title) === */
+@keyframes waveShift {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.portal-top-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 200%;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--royal-blue, #435339) 0px,
+    var(--royal-blue, #435339) 60px,
+    transparent 60px,
+    transparent 100px
+  );
+  opacity: 0.15;
+  animation: waveShift 12s linear infinite;
+  pointer-events: none;
+  border-radius: 0 0 var(--radius-header, 20px) var(--radius-header, 20px);
+}
+
+/* === GLOBAL SIDEBAR NAV — smooth item transitions === */
+.sidebar-nav-item {
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.14s ease;
+}
+
+.sidebar-nav-item:hover:not(.is-active) {
+  transform: translateX(3px);
+}
+
+/* === GLOBAL MODULE SECTION — heading underline accent === */
+.module-section-heading {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+}
+
+.module-section-heading::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  border-radius: 999px;
+  background: var(--hero-gradient, linear-gradient(135deg, #435339, #273123));
+}
+
+/* === GLOBAL EXPORT BAR — themed icon buttons === */
+.export-bar-icon-btn {
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.export-bar-icon-btn:hover {
+  transform: translateY(-2px) scale(1.07);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* === GLOBAL STAT CARDS — Citrus/Soul/Fleur adaptive accent === */
+.stat-card {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* === GLOBAL PORTAL RESOURCE COMPANION LINKS === */
+.resource-portal-link {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.14s ease;
+}
+
+.resource-portal-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+}
+
+/* === GLOBAL PRINT SAFETY (preserve fonts on print) === */
+@media print {
+  .portal-ambient-canvas,
+  .portal-top-header::after {
+    display: none !important;
+  }
+}
