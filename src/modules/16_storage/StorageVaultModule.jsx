@@ -42,6 +42,17 @@ const PINNED_APPS_KEY = "win11_pinned_apps";
 const DESKX_WIDGET_KEY = "win11_deskx_widget";
 const DESKX_SPEED_KEY = "win11_deskx_speed";
 const DESKX_BLUR_KEY = "win11_deskx_blur";
+const DESKTOP_ICON_POSITIONS_KEY = "win11_desktop_icon_positions";
+
+function readStoredObject(key, fallback) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || "null");
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+  } catch {
+    // ignore storage errors
+  }
+  return fallback;
+}
 
 function readStoredText(key, fallback) {
   try {
@@ -159,9 +170,13 @@ export default function StorageVaultModule({
   const [renameDraft, setRenameDraft] = useState("");
   const [moveTargetItem, setMoveTargetItem] = useState(null);
   const [clockLabel, setClockLabel] = useState(() => formatIstClockDate());
+  const [iconPositions, setIconPositions] = useState(() => readStoredObject(DESKTOP_ICON_POSITIONS_KEY, {}));
 
   const fileInputRef = useRef(null);
   const contextMenuRef = useRef(null);
+  const desktopIconsRef = useRef(null);
+  const iconTileRefs = useRef(new Map());
+  const suppressIconClickRef = useRef(null);
   const liveBgCanvasRef = useRef(null);
   const analogCanvasRef = useRef(null);
 
@@ -1196,6 +1211,93 @@ export default function StorageVaultModule({
     setExplorerMode(explorerVisible ? "MINIMIZED" : "NORMAL");
   };
 
+  /* === DESKTOP ICON DRAG-AND-DROP & POSITION PERSISTENCE (Zero JSX Inline Styles) === */
+  const setIconTileRef = useCallback((iconKey) => (node) => {
+    if (node) iconTileRefs.current.set(iconKey, node);
+    else iconTileRefs.current.delete(iconKey);
+  }, []);
+
+  useLayoutEffect(() => {
+    iconTileRefs.current.forEach((node, key) => {
+      const pos = iconPositions[key];
+      if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
+        node.style.left = `${pos.x}px`;
+        node.style.top = `${pos.y}px`;
+      } else {
+        node.style.left = "";
+        node.style.top = "";
+      }
+    });
+  }, [iconPositions, items, pinnedApps]);
+
+  const handleIconPointerDown = (event, iconKey) => {
+    if (event.button !== 0) return;
+    if (event.target.closest("button, input")) return;
+    const tileEl = iconTileRefs.current.get(iconKey);
+    const areaEl = desktopIconsRef.current;
+    if (!tileEl || !areaEl) return;
+
+    const areaRect = areaEl.getBoundingClientRect();
+    const tileRect = tileEl.getBoundingClientRect();
+    const startClientX = event.clientX;
+    const startClientY = event.clientY;
+    const baseLeft = tileRect.left - areaRect.left;
+    const baseTop = tileRect.top - areaRect.top;
+    const maxLeft = Math.max(0, areaRect.width - tileRect.width);
+    const maxTop = Math.max(0, areaRect.height - tileRect.height);
+
+    let moved = false;
+    let finalX = baseLeft;
+    let finalY = baseTop;
+
+    const onPointerMove = (moveEvent) => {
+      const dx = moveEvent.clientX - startClientX;
+      const dy = moveEvent.clientY - startClientY;
+      if (!moved && Math.hypot(dx, dy) < 5) return;
+      moved = true;
+      finalX = Math.round(Math.max(0, Math.min(baseLeft + dx, maxLeft)));
+      finalY = Math.round(Math.max(0, Math.min(baseTop + dy, maxTop)));
+      tileEl.classList.add("is-custom-pos", "is-dragging");
+      tileEl.style.left = `${finalX}px`;
+      tileEl.style.top = `${finalY}px`;
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", onPointerUp);
+      tileEl.classList.remove("is-dragging");
+      if (!moved) return;
+
+      suppressIconClickRef.current = iconKey;
+      window.setTimeout(() => {
+        if (suppressIconClickRef.current === iconKey) suppressIconClickRef.current = null;
+      }, 0);
+
+      setIconPositions((prev) => {
+        const next = { ...prev, [iconKey]: { x: finalX, y: finalY } };
+        try {
+          localStorage.setItem(DESKTOP_ICON_POSITIONS_KEY, JSON.stringify(next));
+        } catch {
+          // ignore storage errors
+        }
+        return next;
+      });
+    };
+
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", onPointerUp);
+  };
+
+  const handleResetIconAlignment = () => {
+    setContextMenu(null);
+    setIconPositions({});
+    try {
+      localStorage.removeItem(DESKTOP_ICON_POSITIONS_KEY);
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const activeFolderDestinations = useMemo(
     () => items.filter((i) => !i.isTrashed && i.kind === "FOLDER").sort((a, b) => a.name.localeCompare(b.name)),
     [items]
@@ -1314,14 +1416,17 @@ export default function StorageVaultModule({
           <path d="M460,180 C650,150 820,280 790,460 C760,610 530,620 420,490 C320,370 310,210 460,180 Z" fill="url(#win11PetalB)" />
         </svg>
 
-        {/* Left-Aligned Top-to-Bottom Desktop Icons Grid */}
-        <div className="win11-desktop-icons">
+        {/* Left-Aligned Top-to-Bottom Vertical Desktop Icons Area (Movable & Resettable) */}
+        <div ref={desktopIconsRef} className="win11-desktop-icons desktop-icons-area">
           {/* Pinned 1: 💻 This PC */}
           <div
+            ref={setIconTileRef("THIS_PC")}
             role="button"
             tabIndex={0}
+            onPointerDown={(e) => handleIconPointerDown(e, "THIS_PC")}
             onClick={(e) => {
               e.stopPropagation();
+              if (suppressIconClickRef.current === "THIS_PC") return;
               setSearch("");
               navigateExplorerTo("ROOT");
             }}
@@ -1331,7 +1436,7 @@ export default function StorageVaultModule({
               navigateExplorerTo("ROOT");
             }}
             onContextMenu={(e) => openContextMenu(e, "THIS_PC")}
-            className={`win11-desktop-tile${selectedId === "THIS_PC" ? " is-selected" : ""}`}
+            className={`win11-desktop-tile${selectedId === "THIS_PC" ? " is-selected" : ""}${iconPositions.THIS_PC ? " is-custom-pos" : ""}`}
           >
             <span className="win11-tile-icon">💻</span>
             <span className="win11-tile-label">This PC ({activeProfile})</span>
@@ -1339,10 +1444,13 @@ export default function StorageVaultModule({
 
           {/* Pinned 2: 🗑️ Recycle Bin */}
           <div
+            ref={setIconTileRef(RECYCLE_BIN_ID)}
             role="button"
             tabIndex={0}
+            onPointerDown={(e) => handleIconPointerDown(e, RECYCLE_BIN_ID)}
             onClick={(e) => {
               e.stopPropagation();
+              if (suppressIconClickRef.current === RECYCLE_BIN_ID) return;
               setSearch("");
               navigateExplorerTo(RECYCLE_BIN_ID);
             }}
@@ -1352,7 +1460,7 @@ export default function StorageVaultModule({
               navigateExplorerTo(RECYCLE_BIN_ID);
             }}
             onContextMenu={(e) => openContextMenu(e, "RECYCLE_BIN")}
-            className={`win11-desktop-tile${selectedId === RECYCLE_BIN_ID ? " is-selected" : ""}`}
+            className={`win11-desktop-tile${selectedId === RECYCLE_BIN_ID ? " is-selected" : ""}${iconPositions[RECYCLE_BIN_ID] ? " is-custom-pos" : ""}`}
           >
             {trashedTopItems.length > 0 && (
               <span className="win11-tile-badge">{trashedTopItems.length}</span>
@@ -1370,37 +1478,49 @@ export default function StorageVaultModule({
           </div>
 
           {/* Pinned Built-in Store Apps on Desktop */}
-          {pinnedDesktopApps.map((app) => (
-            <div
-              key={`pin-${app.id}`}
-              role="button"
-              tabIndex={0}
-              onClick={(e) => {
-                e.stopPropagation();
-                openDesktopApp(app.id);
-              }}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                openDesktopApp(app.id);
-              }}
-              className="win11-desktop-tile"
-            >
-              <span className="win11-tile-icon">{app.icon}</span>
-              <span className="win11-tile-label">{app.title}</span>
-            </div>
-          ))}
+          {pinnedDesktopApps.map((app) => {
+            const pinKey = `pin-${app.id}`;
+            return (
+              <div
+                key={pinKey}
+                ref={setIconTileRef(pinKey)}
+                role="button"
+                tabIndex={0}
+                onPointerDown={(e) => handleIconPointerDown(e, pinKey)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (suppressIconClickRef.current === pinKey) return;
+                  openDesktopApp(app.id);
+                }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  openDesktopApp(app.id);
+                }}
+                className={`win11-desktop-tile${iconPositions[pinKey] ? " is-custom-pos" : ""}`}
+              >
+                <span className="win11-tile-icon">{app.icon}</span>
+                <span className="win11-tile-label">{app.title}</span>
+              </div>
+            );
+          })}
 
           {/* Deduplicated District Folders & Root User Files */}
           {desktopRootItems.map((item) => {
             const isCut = clipboard?.mode === "CUT" && clipboard.itemId === item.id;
             const isRenaming = renamingId === item.id;
+            const hasCustomPos = Boolean(iconPositions[item.id]);
             return (
               <div
                 key={item.id}
+                ref={setIconTileRef(item.id)}
                 role="button"
                 tabIndex={0}
+                onPointerDown={(e) => {
+                  if (!isRenaming) handleIconPointerDown(e, item.id);
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (suppressIconClickRef.current === item.id) return;
                   openVaultItem(item);
                 }}
                 onDoubleClick={(e) => {
@@ -1408,7 +1528,7 @@ export default function StorageVaultModule({
                   openVaultItem(item);
                 }}
                 onContextMenu={(e) => openContextMenu(e, "ITEM", item)}
-                className={`win11-desktop-tile${selectedId === item.id ? " is-selected" : ""}${isCut ? " is-cut" : ""}`}
+                className={`win11-desktop-tile${selectedId === item.id ? " is-selected" : ""}${isCut ? " is-cut" : ""}${hasCustomPos ? " is-custom-pos" : ""}`}
               >
                 <button
                   type="button"
@@ -1868,22 +1988,25 @@ export default function StorageVaultModule({
         )}
       </div>
 
-      {/* === 4. BOTTOM GLASSMORPHIC WINDOWS 11 TASKBAR === */}
+      {/* === 4. BOTTOM GLASSMORPHIC WINDOWS 11 TASKBAR (STRICT SINGLE-ROW LANDSCAPE) === */}
       <footer className="win11-taskbar" onClick={(e) => e.stopPropagation()}>
         <div className="win11-taskbar-left">
           <button
             type="button"
+            title="Start"
+            aria-label="Start Menu"
             onClick={() => setStartMenuOpen((prev) => !prev)}
             className={`win11-start-btn${startMenuOpen ? " is-active" : ""}`}
           >
-            ⊞ Start
+            <span aria-hidden="true">⊞</span>
+            <span className="win11-task-label">Start</span>
           </button>
 
           <input
             type="search"
             value={search}
             onChange={(e) => handleTaskbarSearchChange(e.target.value)}
-            placeholder={english ? "🔍 Search Files & Folders..." : "🔍 फ़ाइल व फ़ोल्डर खोजें..."}
+            placeholder={english ? "🔍 Search..." : "🔍 खोजें..."}
             aria-label="Search Files and Folders"
             className="win11-taskbar-search"
           />
@@ -1891,34 +2014,62 @@ export default function StorageVaultModule({
           <div className="win11-taskbar-pins">
             <button
               type="button"
+              title="File Explorer"
+              aria-label="File Explorer"
               onClick={toggleExplorerTaskbar}
               className={`win11-task-app-btn${explorerMode !== "CLOSED" ? " is-open" : ""}`}
             >
-              📁 Explorer
+              <span aria-hidden="true">📁</span>
+              <span className="win11-task-label">Explorer</span>
             </button>
-            <button type="button" onClick={() => openDesktopApp("app-store")} className="win11-task-app-btn">
-              🛍️ Store
+            <button
+              type="button"
+              title="App Store"
+              aria-label="App Store"
+              onClick={() => openDesktopApp("app-store")}
+              className="win11-task-app-btn"
+            >
+              <span aria-hidden="true">🛍️</span>
+              <span className="win11-task-label">Store</span>
             </button>
-            <button type="button" onClick={() => navigateExplorerTo(RECYCLE_BIN_ID)} className={`win11-task-app-btn${explorerVisible && inRecycleBin ? " is-open" : ""}`}>
-              🗑️ Bin {trashedTopItems.length > 0 ? `(${trashedTopItems.length})` : ""}
+            <button
+              type="button"
+              title="Recycle Bin"
+              aria-label="Recycle Bin"
+              onClick={() => navigateExplorerTo(RECYCLE_BIN_ID)}
+              className={`win11-task-app-btn${explorerVisible && inRecycleBin ? " is-open" : ""}`}
+            >
+              <span aria-hidden="true">🗑️</span>
+              <span className="win11-task-label">
+                Bin {trashedTopItems.length > 0 ? `(${trashedTopItems.length})` : ""}
+              </span>
             </button>
 
             {openWindows.map((win) => (
               <button
                 key={`tb-${win.id}`}
                 type="button"
+                title={win.title}
+                aria-label={win.title}
                 onClick={() => toggleTaskbarWindow(win.id)}
                 className={`win11-task-app-btn${!win.minimized ? " is-open" : ""}`}
               >
-                {win.icon} {win.title}
+                <span aria-hidden="true">{win.icon}</span>
+                <span className="win11-task-label">{win.title}</span>
               </button>
             ))}
           </div>
         </div>
 
         <div className="win11-taskbar-tray">
-          <span className="win11-sync-pill">
-            🟢 {activeProfile} · {english ? "OneDrive Ready" : "सिंक सक्रिय"}
+          <span
+            className="win11-sync-pill"
+            title={`${activeProfile} · ${english ? "OneDrive Ready" : "सिंक सक्रिय"}`}
+          >
+            <span aria-hidden="true">🟢</span>
+            <span className="win11-task-label">
+              {activeProfile} · {english ? "OneDrive Ready" : "सिंक सक्रिय"}
+            </span>
           </span>
           <span className="win11-clock">{clockLabel}</span>
         </div>
@@ -2113,6 +2264,17 @@ export default function StorageVaultModule({
               >
                 🔄 Refresh
               </button>
+              {contextMenu.type === "EMPTY" && (
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={Object.keys(iconPositions).length === 0}
+                  onClick={handleResetIconAlignment}
+                  className="storage-context-item"
+                >
+                  📐 {english ? "Reset Icon Alignment" : "Reset Icon Alignment (आइकन रीसेट)"}
+                </button>
+              )}
             </>
           )}
 

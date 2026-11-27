@@ -3,9 +3,11 @@
    Zero Inline Styles — All layout, wallpaper, glassmorphism & icons live here.
    ========================================================================== */
 
-.win11-desktop-shell {
+.win11-desktop-shell,
+.win11-desktop {
   position: relative;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   min-height: clamp(560px, 78vh, 780px);
   border-radius: 18px;
@@ -26,6 +28,8 @@
 .win11-desktop-stage {
   position: relative;
   flex: 1;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -129,37 +133,44 @@
   opacity: 0.72;
 }
 
-/* Left-Aligned Top-to-Bottom Desktop Icons Grid (Windows 11 Style) */
-.win11-desktop-icons {
+/* Left-Aligned Top-to-Bottom Vertical Columns Desktop Icons Area (Windows 11 Style) */
+.win11-desktop-icons,
+.desktop-icons-area {
   position: relative;
   z-index: 2;
   flex: 1;
+  width: 100%;
+  max-width: 100%;
+  height: calc(100% - 52px);
   min-height: 0;
-  padding: 14px 16px 20px;
-  display: grid;
-  grid-auto-flow: column;
-  grid-template-rows: repeat(auto-fill, 94px);
-  grid-auto-columns: 96px;
-  gap: 8px 8px;
-  align-content: start;
-  justify-content: start;
-  overflow-x: auto;
-  overflow-y: hidden;
+  padding: 14px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 12px 16px;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
-  .win11-desktop-icons {
-    grid-auto-flow: row;
-    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
-    grid-template-rows: auto;
-    grid-auto-columns: unset;
+  .win11-desktop-icons,
+  .desktop-icons-area {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    justify-content: flex-start;
     overflow-x: hidden;
     overflow-y: auto;
+    gap: 10px;
   }
 }
 
 .win11-desktop-tile {
   position: relative;
+  width: 96px;
+  min-height: 86px;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -172,7 +183,22 @@
   color: #ffffff;
   cursor: pointer;
   text-align: center;
+  touch-action: none;
   transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.12s ease;
+}
+
+.win11-desktop-tile.is-custom-pos {
+  position: absolute;
+  z-index: 3;
+}
+
+.win11-desktop-tile.is-dragging {
+  z-index: 12;
+  cursor: grabbing;
+  opacity: 0.88;
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(147, 197, 253, 0.75);
+  transition: none;
 }
 
 .win11-desktop-tile:hover {
@@ -669,16 +695,22 @@
   color: #1d4ed8;
 }
 
-/* === 3. WINDOWS 11 GLASSMORPHIC TASKBAR === */
+/* === 3. WINDOWS 11 GLASSMORPHIC TASKBAR (SINGLE-ROW LANDSCAPE) === */
 .win11-taskbar {
   position: relative;
   z-index: 30;
+  width: 100%;
+  max-width: 100%;
+  height: 46px;
+  min-height: 46px;
+  box-sizing: border-box;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
   gap: 8px;
-  padding: 6px 14px;
+  padding: 0 12px;
+  overflow: hidden;
   background: rgba(12, 24, 48, 0.82);
   backdrop-filter: blur(22px);
   border-top: 1px solid rgba(255, 255, 255, 0.16);
@@ -688,23 +720,30 @@
 .win11-taskbar-left {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  flex: 1 1 auto;
   min-width: 0;
+  overflow: hidden;
 }
 
 .win11-start-btn {
   border: 1px solid rgba(96, 165, 250, 0.45);
   background: rgba(37, 99, 235, 0.28);
   color: #ffffff;
-  padding: 5px 11px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 10px;
   border-radius: 8px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .win11-start-btn:hover,
@@ -713,13 +752,17 @@
 }
 
 .win11-taskbar-search {
-  width: clamp(135px, 16vw, 220px);
-  padding: 5px 11px;
+  width: clamp(110px, 14vw, 190px);
+  height: 30px;
+  min-height: 30px;
+  min-width: 82px;
+  flex-shrink: 1;
+  padding: 0 10px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   outline: none;
 }
 
@@ -735,8 +778,16 @@
 .win11-taskbar-pins {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.win11-taskbar-pins::-webkit-scrollbar {
+  display: none;
 }
 
 .win11-task-app-btn {
@@ -744,15 +795,25 @@
   border: 1px solid transparent;
   background: rgba(255, 255, 255, 0.08);
   color: #f8fafc;
-  padding: 5px 10px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0 9px;
   border-radius: 8px;
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  max-width: 170px;
+  max-width: 160px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.win11-task-label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -781,13 +842,19 @@
 .win11-taskbar-tray {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: nowrap;
+  gap: 8px;
   margin-left: auto;
-  font-size: 0.75rem;
+  flex-shrink: 0;
+  font-size: 0.74rem;
 }
 
 .win11-sync-pill {
-  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 9px;
   border-radius: 999px;
   background: rgba(22, 163, 74, 0.22);
   border: 1px solid rgba(74, 222, 128, 0.45);
@@ -801,6 +868,40 @@
   font-weight: 700;
   color: #f8fafc;
   white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .win11-taskbar {
+    padding: 0 8px;
+    gap: 5px;
+  }
+
+  .win11-task-label {
+    display: none;
+  }
+
+  .win11-start-btn,
+  .win11-task-app-btn {
+    padding: 0 8px;
+    min-width: 32px;
+    height: 30px;
+    min-height: 30px;
+  }
+
+  .win11-taskbar-search {
+    width: clamp(92px, 24vw, 145px);
+    height: 30px;
+    min-height: 30px;
+    font-size: 0.72rem;
+  }
+
+  .win11-sync-pill {
+    padding: 0 6px;
+  }
+
+  .win11-clock {
+    font-size: 0.68rem;
+  }
 }
 
 /* Windows 11 Start Menu Popover (Search, Pinned Apps & App Store) */
