@@ -13,9 +13,7 @@ export function toBase64Url(bytes) {
   for (let index = 0; index < byteArray.length; index += 1) {
     binary += String.fromCharCode(byteArray[index]);
   }
-  const base64 = typeof globalThis.btoa === "function"
-    ? globalThis.btoa(binary)
-    : Buffer.from(byteArray).toString("base64");
+  const base64 = globalThis.btoa(binary);
   return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
 
