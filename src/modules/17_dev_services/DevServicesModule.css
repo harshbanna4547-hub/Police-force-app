@@ -56,11 +56,11 @@
   align-items: flex-start;
   gap: 12px;
   min-width: 0;
-  padding: 15px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  padding: 16px 18px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--surface-raised, #fff);
+  box-shadow: var(--shadow-card, 0 8px 24px rgba(15, 23, 42, 0.06));
 }
 
 .dev-services-card-icon {
@@ -106,15 +106,16 @@
 .dev-services-device-rename button,
 .dev-services-primary-button,
 .dev-services-secondary-link {
-  padding: 7px 10px;
+  padding: 9px 14px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 10px;
   background: #1d4ed8;
   color: #fff;
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-decoration: none;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
 }
 
 .dev-services-card-actions button:disabled {
@@ -169,10 +170,11 @@
 }
 
 .dev-services-panel {
-  padding: 18px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
+  padding: 20px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 16px;
+  background: var(--surface-raised, #fff);
+  box-shadow: var(--shadow-card, 0 8px 24px rgba(15, 23, 42, 0.05));
 }
 
 .dev-services-panel h2 {

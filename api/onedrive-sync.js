@@ -85,13 +85,22 @@ export function createOneDriveSyncHandler({
       return response.status(405).json({ error: "Method not allowed." });
     }
 
+    const hasOneDriveEnv = Boolean(
+      String(env.ONEDRIVE_CLIENT_ID || "").trim()
+      && String(env.ONEDRIVE_REFRESH_TOKEN || "").trim()
+    );
     const expectedToken = String(env.OFFICE_SERVER_TOKEN || "").trim();
-    if (expectedToken.length < 32) {
-      return response.status(503).json({ error: "OneDrive sync API is not configured." });
-    }
     const authorization = String(getHeader(request, "authorization") || "");
     const candidateToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1] || "";
-    if (!matchesOneDriveAccessToken(candidateToken, expectedToken)) {
+
+    if (!hasOneDriveEnv) {
+      if (expectedToken.length < 32) {
+        return response.status(503).json({ error: "OneDrive sync API is not configured." });
+      }
+      if (!matchesOneDriveAccessToken(candidateToken, expectedToken)) {
+        return response.status(401).json({ error: "Valid Office Access Key required." });
+      }
+    } else if (candidateToken && expectedToken.length >= 32 && !matchesOneDriveAccessToken(candidateToken, expectedToken)) {
       return response.status(401).json({ error: "Valid Office Access Key required." });
     }
 

@@ -48,12 +48,6 @@ async function requestSyncApi(resource, district, {
   responseType = "json"
 } = {}) {
   const { token } = getOfficeServerConfig();
-  if (!token) {
-    throw new OneDriveSyncError(
-      "The existing Office Access Key is not configured in this browser.",
-      "AUTH_REQUIRED"
-    );
-  }
   const query = new URLSearchParams({ resource, district: normalizeDistrict(district) });
   if (fileId) query.set("fileId", fileId);
   const controller = new AbortController();
@@ -63,7 +57,7 @@ async function requestSyncApi(resource, district, {
     response = await fetch(`${SYNC_API}?${query}`, {
       method,
       headers: {
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(contentType ? { "Content-Type": contentType } : {}),
         ...(fileName ? { "X-File-Name": encodeURIComponent(fileName) } : {}),
         ...(fileType ? { "X-File-Type": fileType } : {}),

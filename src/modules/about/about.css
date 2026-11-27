@@ -325,22 +325,23 @@
 }
 
 .about-dev-container .dev-services-status-card {
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--border, #e2e8f0);
   background: var(--surface, #faf8f4);
   box-shadow: var(--shadow-card);
-  padding: 16px;
+  padding: 16px 18px;
 }
 
 .about-dev-container .dev-services-panel {
   border-radius: 16px;
   border: 1px solid var(--border, #e2e8f0);
   background: var(--surface, #faf8f4);
-  padding: 18px;
+  padding: 20px;
+  box-shadow: var(--shadow-card);
 }
 
 .about-dev-container .dev-services-pkce-card {
-  border-radius: 14px;
+  border-radius: 16px;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
 }
 

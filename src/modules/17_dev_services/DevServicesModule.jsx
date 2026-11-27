@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import "../about/about.css";
 import "./DevServicesModule.css";
 import { getDistrictStorageItems } from "../../utils/vaultStorage.js";
 import { getOfficeServerConfig } from "../../core/lanSyncClient.js";
