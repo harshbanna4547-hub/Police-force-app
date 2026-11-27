@@ -1,12 +1,13 @@
 /* ==========================================================================
-   MODULE HEADER TOOLBAR & DEDICATED BREADCRUMB STRIP
-   Zero Inline Styles · Zero Text Clipping · Clickable Breadcrumbs Below Toolbar
+   MODULE HEADER TOOLBAR
+   Zero Inline Styles · Zero Text Clipping — Breadcrumb strip removed.
+   Navigation is handled by Back buttons inside each module.
    ========================================================================== */
 
 .module-toolbar-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   margin-bottom: 14px;
 }
 
@@ -70,50 +71,8 @@
   border-color: var(--royal-blue, #1d63dc);
 }
 
-/* === 2. FULL-WIDTH BREADCRUMB PATH (BETWEEN TOOLBAR & TABLE BELOW) === */
-.module-toolbar-breadcrumb {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 7px 14px;
-  border: 1px solid var(--border, #e2e8f0);
-  border-radius: 11px;
-  background: var(--surface-raised, #ffffff);
-}
-
-.module-crumb-link {
-  padding: 3px 8px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--royal-blue, #435339);
-  font-family: var(--font-ui);
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.module-crumb-link:hover {
-  background: var(--surface-tint, #eef1e9);
-  text-decoration: underline;
-}
-
-.module-crumb-sep {
-  color: var(--muted, #64748b);
-  font-size: 0.78rem;
-  font-weight: 700;
-  user-select: none;
-}
-
-.module-crumb-current {
-  color: var(--text-strong, #0b1e3d);
-  font-family: var(--font-ui);
-  font-size: 0.86rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
+/* === 2. FULL-WIDTH BREADCRUMB PATH — REMOVED (strip no longer rendered) === */
+/* All .module-toolbar-breadcrumb, .module-crumb-* rules deleted. */
 
 .visually-hidden {
   position: absolute;
