@@ -126,87 +126,7 @@
   border-color: rgba(216, 180, 137, 0.25);
 }
 
-.sidebar-accordion-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.sidebar-accordion-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.sidebar-accordion-trigger.is-expanded {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.14);
-  color: #ffffff;
-}
-
-.sidebar-accordion-caret {
-  font-size: 0.78rem;
-  opacity: 0.85;
-  flex-shrink: 0;
-}
-
-/* === 3. ABOUT PORTAL & DEVELOPMENT SERVICES PANEL === */
-.sidebar-about-card {
-  padding: 10px 11px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.58);
-  border: 1px solid rgba(147, 197, 253, 0.22);
-  color: #e2e8f0;
-  font-size: 0.74rem;
-  line-height: 1.42;
-  display: grid;
-  gap: 5px;
-}
-
-.sidebar-about-name {
-  font-size: 0.82rem;
-  font-weight: 800;
-  color: #d8b489;
-}
-
-.sidebar-about-row strong {
-  color: #cbd5e1;
-}
-
-.sidebar-about-mail {
-  color: #d8b489;
-  text-decoration: underline;
-  word-break: break-all;
-}
-
-.sidebar-dev-btn {
-  margin-top: 4px;
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 10px;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.08);
-  color: #f8fafc;
-  font-weight: 700;
-  font-size: 0.78rem;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.sidebar-dev-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-  border-color: rgba(255, 255, 255, 0.36);
-}
-
-.sidebar-dev-btn.is-active {
-  background: var(--hero-gradient, linear-gradient(135deg, #4b5d40 0%, #37462f 100%));
-  border-color: rgba(216, 180, 137, 0.35);
-  color: #ffffff;
-}
-
-/* === 5. BOTTOM UTILITY CONTROLS (SUNRISE/MOONRISE, LANGUAGE & THEME STYLE) === */
+/* === 3. BOTTOM UTILITY CONTROLS (SUNRISE/MOONRISE, LANGUAGE & THEME STYLE) === */
 .sidebar-footer-wrap {
   margin-top: auto;
   padding-top: 8px;
@@ -347,15 +267,13 @@
 }
 
 /* === TEMPLATE ACTIVE OVERRIDES === */
-.app-shell[data-template="wizardz"] .sidebar-nav-btn.is-active,
-.app-shell[data-template="wizardz"] .sidebar-dev-btn.is-active {
+.app-shell[data-template="wizardz"] .sidebar-nav-btn.is-active {
   background: #b9ff66;
   color: #191a23;
   border-color: #b9ff66;
 }
 
-.app-shell[data-template="xenon"] .sidebar-nav-btn.is-active,
-.app-shell[data-template="xenon"] .sidebar-dev-btn.is-active {
+.app-shell[data-template="xenon"] .sidebar-nav-btn.is-active {
   background: rgba(30, 215, 96, 0.16);
   border-color: rgba(30, 215, 96, 0.45);
   color: #1ed760;
